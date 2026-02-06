@@ -41,9 +41,9 @@ class HomeViewModel @Inject constructor(
         )
 
     private fun calculateSummary(loans: List<LoanWithPayments>): HomeUiState {
-        var totalLent = 0.0
-        var totalBorrowed = 0.0
-        var pendingAmount = 0.0
+        var totalLentBalance = 0.0
+        var totalBorrowedBalance = 0.0
+        var pendingNet = 0.0
         var overdueAmount = 0.0
         var overdueCount = 0
         var dueSoonCount = 0
@@ -57,14 +57,14 @@ class HomeViewModel @Inject constructor(
         loans.forEach { item ->
             val loan = item.loan
             val paid = item.payments.sumOf { it.amount }
-            val balance = loan.amount - paid
+            val balance = (loan.amount - paid).coerceAtLeast(0.0)
 
             if (loan.type == LoanType.LEND) {
-                totalLent += loan.amount
-                if (balance > 0) pendingAmount += balance
+                totalLentBalance += balance
+                pendingNet += balance
             } else {
-                totalBorrowed += loan.amount
-                if (balance > 0) pendingAmount -= balance
+                totalBorrowedBalance += balance
+                pendingNet -= balance
             }
 
             if (balance > 0) {
@@ -78,9 +78,9 @@ class HomeViewModel @Inject constructor(
         }
 
         return HomeUiState(
-            totalLent = totalLent,
-            totalBorrowed = totalBorrowed,
-            pendingAmount = pendingAmount,
+            totalLent = totalLentBalance,
+            totalBorrowed = totalBorrowedBalance,
+            pendingAmount = pendingNet,
             overdueAmount = overdueAmount,
             overdueCount = overdueCount,
             dueSoonCount = dueSoonCount,
