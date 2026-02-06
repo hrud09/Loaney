@@ -1,5 +1,8 @@
 package com.sbs.loaney.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -74,7 +77,7 @@ fun LoanTrackerScreen(
                     list.add(TimelineItem(
                         date = item.loan.loanDate,
                         title = "Loan Created",
-                        description = "Amount: ৳${item.loan.amount}",
+                        description = "Amount: ৳${item.loan.amount}${if (item.loan.email != null) "\nEmail: ${item.loan.email}" else ""}",
                         icon = Icons.Default.Info,
                         color = primaryColor
                     ))
@@ -121,8 +124,8 @@ fun LoanTrackerScreen(
         if (showAddPaymentSheet) {
             AddPaymentBottomSheet(
                 onDismiss = { showAddPaymentSheet = false },
-                onAddPayment = { amount, method, note ->
-                    viewModel.addPayment(amount, method, note)
+                onAddPayment = { amount, method, note, proofUri ->
+                    viewModel.addPayment(amount, method, note, proofUri)
                     showAddPaymentSheet = false
                 }
             )
@@ -134,7 +137,7 @@ fun LoanTrackerScreen(
 fun LoanSnapshotPanel(item: LoanWithPayments) {
     val loan = item.loan
     val paid = item.payments.sumOf { it.amount }
-    val balance = loan.amount - paid
+    val balance = (loan.amount - paid).coerceAtLeast(0.0)
     val typeColor = if (loan.type == LoanType.LEND) Color(0xFF4CAF50) else Color(0xFFFF9800)
 
     Card(
@@ -150,6 +153,10 @@ fun LoanSnapshotPanel(item: LoanWithPayments) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 SnapshotItem("Paid Amount", "৳$paid", Color(0xFF4CAF50))
                 SnapshotItem("Deadline", SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(loan.promisedReturnDate), MaterialTheme.colorScheme.onSurface)
+            }
+            
+            if (loan.email != null) {
+                Text(text = "Contact: ${loan.email}", style = MaterialTheme.typography.bodySmall)
             }
             
             val statusColor = when (loan.status) {
@@ -239,11 +246,19 @@ fun QuickActionBar(onAddPayment: () -> Unit, onMarkAsSettled: () -> Unit) {
 @Composable
 fun AddPaymentBottomSheet(
     onDismiss: () -> Unit,
-    onAddPayment: (Double, String, String?) -> Unit
+    onAddPayment: (Double, String, String?, String?) -> Unit
 ) {
     var amount by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var method by remember { mutableStateOf("Cash") }
+    var proofUri by remember { mutableStateOf<Uri?>(null) }
+    
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        proofUri = uri
+    }
+    
     val methods = listOf("Cash", "Bank", "bKash", "Nagad", "Rocket")
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -277,9 +292,31 @@ fun AddPaymentBottomSheet(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Proof of Payment Upload
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Proof of Payment", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            text = if (proofUri != null) "Image Selected" else "Optional",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Button(onClick = { launcher.launch("image/*") }) {
+                        Text(if (proofUri != null) "Change" else "Upload")
+                    }
+                }
+            }
+
             Button(
                 onClick = { 
-                    amount.toDoubleOrNull()?.let { onAddPayment(it, method, note.ifBlank { null }) }
+                    amount.toDoubleOrNull()?.let { onAddPayment(it, method, note.ifBlank { null }, proofUri?.toString()) }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = amount.isNotBlank()

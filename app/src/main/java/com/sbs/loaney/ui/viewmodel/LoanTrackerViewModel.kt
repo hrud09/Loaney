@@ -39,7 +39,7 @@ class LoanTrackerViewModel @Inject constructor(
         _selectedLoanId.value = loanId
     }
 
-    fun addPayment(amount: Double, method: String, note: String?) {
+    fun addPayment(amount: Double, method: String, note: String?, proofUri: String? = null) {
         val loanId = _selectedLoanId.value ?: return
         viewModelScope.launch {
             val payment = PaymentEntity(
@@ -48,7 +48,7 @@ class LoanTrackerViewModel @Inject constructor(
                 date = Date(),
                 method = method,
                 note = note,
-                proofUri = null
+                proofUri = proofUri
             )
             repository.insertPayment(payment)
             updateLoanStatus(loanId)

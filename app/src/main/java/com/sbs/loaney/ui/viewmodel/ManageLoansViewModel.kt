@@ -50,31 +50,35 @@ class ManageLoansViewModel @Inject constructor(
         type: LoanType,
         name: String,
         phone: String,
+        email: String?,
         amount: Double,
         loanDate: Date,
         returnDate: Date,
         purpose: String?,
         notes: String?,
-        interest: Double?
+        interest: Double?,
+        proofUri: String? = null
     ) {
         viewModelScope.launch {
             val loan = LoanEntity(
                 type = type,
                 personName = name,
                 phoneNumber = phone,
+                email = email,
                 amount = amount,
                 loanDate = loanDate,
                 promisedReturnDate = returnDate,
                 purpose = purpose,
                 notes = notes,
                 interest = interest,
+                proofUri = proofUri,
                 status = LoanStatus.ACTIVE
             )
             repository.insertLoan(loan)
         }
     }
 
-    fun addPayment(loanId: Long, amount: Double, method: String, note: String?) {
+    fun addPayment(loanId: Long, amount: Double, method: String, note: String?, proofUri: String? = null) {
         viewModelScope.launch {
             val payment = PaymentEntity(
                 loanId = loanId,
@@ -82,7 +86,7 @@ class ManageLoansViewModel @Inject constructor(
                 date = Date(),
                 method = method,
                 note = note,
-                proofUri = null
+                proofUri = proofUri
             )
             repository.insertPayment(payment)
             updateLoanStatus(loanId)

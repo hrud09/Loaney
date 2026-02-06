@@ -12,12 +12,14 @@ data class LoanEntity(
     val type: LoanType,
     val personName: String,
     val phoneNumber: String,
+    val email: String? = null,
     val amount: Double,
     val loanDate: Date,
     val promisedReturnDate: Date,
     val purpose: String?,
     val notes: String?,
     val interest: Double?,
+    val proofUri: String? = null,
     val status: LoanStatus = LoanStatus.ACTIVE,
     val createdAt: Long = System.currentTimeMillis()
 )
