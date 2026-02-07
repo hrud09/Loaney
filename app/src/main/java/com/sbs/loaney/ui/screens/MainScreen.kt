@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -33,7 +32,6 @@ fun MainScreen() {
     
     val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route)
     val isTopLevel = currentDestination?.route in topLevelRoutes
-    val isHome = currentDestination?.route == Screen.Home.route
 
     val items = listOf(
         NavigationItem("Home", Screen.Home.route, Icons.Default.Home),
@@ -50,14 +48,14 @@ fun MainScreen() {
                      shape = CircleShape,
                      modifier = Modifier
                          .padding(bottom = 16.dp)
-                         .height(72.dp)
+                         .height(64.dp)
                          .wrapContentWidth(),
                      shadowElevation = 8.dp
                  ) {
                      Row(
-                         modifier = Modifier.padding(horizontal = 8.dp),
+                         modifier = Modifier.padding(horizontal = 12.dp),
                          verticalAlignment = Alignment.CenterVertically,
-                         horizontalArrangement = Arrangement.spacedBy(8.dp)
+                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                      ) {
                          items.forEach { item ->
                              val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
@@ -79,24 +77,6 @@ fun MainScreen() {
                                      contentDescription = item.label,
                                      tint = if (selected) Color.Black else Color.Gray,
                                      modifier = Modifier.size(24.dp)
-                                 )
-                             }
-                         }
-
-                         // Add Loan FAB inside the bar - only shown when NOT on Home
-                         if (!isHome) {
-                             Spacer(modifier = Modifier.width(8.dp))
-                             IconButton(
-                                 onClick = { navController.navigate(Screen.AddLoan.route) },
-                                 modifier = Modifier
-                                     .clip(CircleShape)
-                                     .background(MaterialTheme.colorScheme.secondary)
-                                     .size(48.dp)
-                             ) {
-                                 Icon(
-                                     Icons.Default.Add,
-                                     contentDescription = "Add Loan",
-                                     tint = Color.Black
                                  )
                              }
                          }

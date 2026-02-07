@@ -117,8 +117,8 @@ fun ManageLoansScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 100.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    contentPadding = PaddingValues(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 100.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(uiState.loans) { item ->
                         SwipeableManageLoanCard(
@@ -283,7 +283,7 @@ fun ManageLoanCard(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = cardColor)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -292,29 +292,29 @@ fun ManageLoanCard(
                 Column {
                     Text(
                         text = loan.personName,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = textColor
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                         Icon(Icons.Default.DateRange, contentDescription = null, tint = textColor.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                         Icon(Icons.Default.DateRange, contentDescription = null, tint = textColor.copy(alpha = 0.6f), modifier = Modifier.size(12.dp))
                          Spacer(modifier = Modifier.width(4.dp))
                          Text(
                             text = dateFormat.format(loan.promisedReturnDate),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.labelSmall,
                             color = textColor.copy(alpha = 0.6f)
                         )
                     }
                 }
                 Text(
                     text = "৳${String.format("%.0f", loan.amount)}",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = textColor
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             
             // Progress Bar
             Column {
@@ -325,16 +325,16 @@ fun ManageLoanCard(
                     Text("Progress", style = MaterialTheme.typography.labelSmall, color = textColor.copy(alpha = 0.7f))
                     Text("${(progress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor)
                 }
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 LinearProgressIndicator(
                     progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                     color = Color.Black,
                     trackColor = Color.Black.copy(alpha = 0.1f),
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             
             // Footer with Status Pill
             Row(
@@ -345,11 +345,11 @@ fun ManageLoanCard(
                 Surface(
                     color = Color.Black.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(50),
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.height(28.dp)
                 ) {
                      Box(
                          contentAlignment = Alignment.Center,
-                         modifier = Modifier.padding(horizontal = 12.dp)
+                         modifier = Modifier.padding(horizontal = 10.dp)
                      ) {
                          Text(
                             text = loan.status.name,
@@ -363,12 +363,13 @@ fun ManageLoanCard(
                 // Avatars Mock
                  Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(28.dp)
                         .background(Color.White.copy(alpha = 0.5f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = loan.personName.take(1), 
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold, 
                         color = textColor
                     )
