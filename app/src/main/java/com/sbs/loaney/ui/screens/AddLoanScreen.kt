@@ -8,6 +8,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -71,6 +73,8 @@ fun AddLoanScreen(
 
     var showLoanDatePicker by remember { mutableStateOf(false) }
     var showReturnDatePicker by remember { mutableStateOf(false) }
+
+    val loanReasons = listOf("🍔 Food", "🚑 Emergency", "🛍️ Shopping", "🚌 Travel", "Bills", "Other")
 
     if (showLoanDatePicker) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = loanDate)
@@ -255,6 +259,42 @@ fun AddLoanScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // Reason for Loan Section
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Reason for Loan", 
+                        style = MaterialTheme.typography.labelLarge, 
+                        color = Color.Gray,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    ) {
+                        items(loanReasons) { reason ->
+                            val isSelected = purpose == reason
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { purpose = if (isSelected) "" else reason },
+                                label = { Text(reason) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = Color.White.copy(alpha = 0.05f),
+                                    labelColor = Color.Gray,
+                                    selectedContainerColor = PrimaryLime,
+                                    selectedLabelColor = Color.Black
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    borderColor = Color.Gray.copy(alpha = 0.3f),
+                                    selectedBorderColor = PrimaryLime,
+                                    enabled = true,
+                                    selected = isSelected
+                                ),
+                                shape = CircleShape
+                            )
+                        }
+                    }
+                }
 
                 CustomTextField(
                     value = dateFormat.format(Date(loanDate)),

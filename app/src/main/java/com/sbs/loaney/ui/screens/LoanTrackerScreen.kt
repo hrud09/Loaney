@@ -55,6 +55,7 @@ fun LoanTrackerScreen(
     var showAddPaymentSheet by remember { mutableStateOf(false) }
     var showAddLoanSheet by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showSettleConfirmation by remember { mutableStateOf(false) }
 
     LaunchedEffect(loanId) {
         viewModel.selectLoan(loanId)
@@ -82,6 +83,34 @@ fun LoanTrackerScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = Color.White,
+            textContentColor = Color.Gray
+        )
+    }
+
+    if (showSettleConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showSettleConfirmation = false },
+            icon = { Icon(Icons.Default.CheckCircle, contentDescription = null, tint = PrimaryLime) },
+            title = { Text("Settle Loan?") },
+            text = { Text("Are you sure you want to mark this loan as fully paid? This will set the balance to zero.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.markAsSettled()
+                        showSettleConfirmation = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = PrimaryLime)
+                ) {
+                    Text("Settle", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSettleConfirmation = false }) {
                     Text("Cancel", color = Color.Gray)
                 }
             },
@@ -152,7 +181,7 @@ fun LoanTrackerScreen(
                          }
                          
                          FilledIconButton(
-                             onClick = { viewModel.markAsSettled() },
+                             onClick = { showSettleConfirmation = true },
                              modifier = Modifier.size(56.dp),
                              shape = RoundedCornerShape(16.dp),
                              colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
