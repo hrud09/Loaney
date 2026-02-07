@@ -180,7 +180,7 @@ fun AddLoanScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Segmented Control
             Surface(
@@ -212,196 +212,172 @@ fun AddLoanScreen(
             }
 
             // Input Section
-            Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text("Loan Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("Loan Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
 
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        CustomTextField(
-                            value = name,
-                            onValueChange = { 
-                                name = it
-                                showSuggestions = true 
-                            },
-                            label = "Person Name",
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        
-                        if (showSuggestions && nameSuggestions.isNotEmpty()) {
-                            DropdownMenu(
-                                expanded = true,
-                                onDismissRequest = { showSuggestions = false },
-                                properties = PopupProperties(focusable = false),
-                                modifier = Modifier.fillMaxWidth(0.8f).background(MaterialTheme.colorScheme.surface)
-                            ) {
-                                nameSuggestions.forEach { suggestion ->
-                                    DropdownMenuItem(
-                                        text = { Text(suggestion, color = Color.White) },
-                                        onClick = {
-                                            name = suggestion
-                                            showSuggestions = false
-                                        }
-                                    )
-                                }
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    CustomTextField(
+                        value = name,
+                        onValueChange = { 
+                            name = it
+                            showSuggestions = true 
+                        },
+                        label = "Person Name",
+                        leadingIcon = Icons.Default.Person,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    if (showSuggestions && nameSuggestions.isNotEmpty()) {
+                        DropdownMenu(
+                            expanded = true,
+                            onDismissRequest = { showSuggestions = false },
+                            properties = PopupProperties(focusable = false),
+                            modifier = Modifier.fillMaxWidth(0.8f).background(MaterialTheme.colorScheme.surface)
+                        ) {
+                            nameSuggestions.forEach { suggestion ->
+                                DropdownMenuItem(
+                                    text = { Text(suggestion, color = Color.White) },
+                                    onClick = {
+                                        name = suggestion
+                                        showSuggestions = false
+                                    }
+                                )
                             }
                         }
                     }
-
-                    CustomTextField(
-                        value = amount,
-                        onValueChange = { if (it.all { char -> char.isDigit() || char == '.' }) amount = it },
-                        label = "Amount (৳)",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Box(Modifier.weight(1f)) {
-                            CustomTextField(
-                                value = dateFormat.format(Date(loanDate)),
-                                onValueChange = {},
-                                label = "Date",
-                                readOnly = true,
-                                trailingIcon = Icons.Default.DateRange,
-                                onTrailingIconClick = { showLoanDatePicker = true },
-                                modifier = Modifier.clickable { showLoanDatePicker = true }
-                            )
-                        }
-                        Box(Modifier.weight(1f)) {
-                            CustomTextField(
-                                value = dateFormat.format(Date(returnDate)),
-                                onValueChange = {},
-                                label = "Due Date",
-                                readOnly = true,
-                                trailingIcon = Icons.Default.DateRange,
-                                onTrailingIconClick = { showReturnDatePicker = true },
-                                modifier = Modifier.clickable { showReturnDatePicker = true }
-                            )
-                        }
-                    }
                 }
+
+                CustomTextField(
+                    value = amount,
+                    onValueChange = { if (it.all { char -> char.isDigit() || char == '.' }) amount = it },
+                    label = "Amount",
+                    leadingIcon = Icons.Default.Payments,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                CustomTextField(
+                    value = dateFormat.format(Date(loanDate)),
+                    onValueChange = {},
+                    label = "Date",
+                    readOnly = true,
+                    leadingIcon = Icons.Default.CalendarToday,
+                    trailingIcon = Icons.Default.EditCalendar,
+                    onTrailingIconClick = { showLoanDatePicker = true },
+                    modifier = Modifier.clickable { showLoanDatePicker = true }
+                )
+
+                CustomTextField(
+                    value = dateFormat.format(Date(returnDate)),
+                    onValueChange = {},
+                    label = "Due Date",
+                    readOnly = true,
+                    leadingIcon = Icons.Default.Event,
+                    trailingIcon = Icons.Default.EditCalendar,
+                    onTrailingIconClick = { showReturnDatePicker = true },
+                    modifier = Modifier.clickable { showReturnDatePicker = true }
+                )
             }
 
             // Contact Info
-            Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text("Contact & Location", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("Contact & Location", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
 
-                    CustomTextField(
-                        value = phone,
-                        onValueChange = { phone = it },
-                        label = "Phone",
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        trailingIcon = Icons.Default.Phone,
-                        onTrailingIconClick = { 
-                            val intent = android.content.Intent(android.content.Intent.ACTION_PICK).apply {
-                                type = ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE
-                            }
-                            contactLauncher.launch(intent) 
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                CustomTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = "Phone",
+                    leadingIcon = Icons.Default.Phone,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    trailingIcon = Icons.Default.ContactPhone,
+                    onTrailingIconClick = { 
+                        val intent = android.content.Intent(android.content.Intent.ACTION_PICK).apply {
+                            type = ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE
+                        }
+                        contactLauncher.launch(intent) 
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                    CustomTextField(
-                        value = address,
-                        onValueChange = { address = it },
-                        label = "Location / Address",
-                        trailingIcon = Icons.Default.LocationOn,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                CustomTextField(
+                    value = address,
+                    onValueChange = { address = it },
+                    label = "Location / Address",
+                    leadingIcon = Icons.Default.LocationOn,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             // Attachments
-            Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Attachment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text("Attachment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    // Upload Button
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .clickable { imageLauncher.launch("image/*") },
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Upload Button
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color.White.copy(alpha = 0.05f))
-                                .clickable { imageLauncher.launch("image/*") },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = "Add Attachment", tint = Color.Gray)
-                        }
+                        Icon(Icons.Default.Add, contentDescription = "Add Attachment", tint = Color.Gray)
+                    }
 
-                        // Preview Section
-                        if (proofUri != null) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                horizontalAlignment = Alignment.Start
+                    // Preview Section
+                    if (proofUri != null) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(Color.Black.copy(alpha = 0.2f))
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(80.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(Color.Black.copy(alpha = 0.2f))
-                                ) {
-                                    AsyncImage(
-                                        model = proofUri,
-                                        contentDescription = "Attachment Preview",
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                    // Remove button
-                                    IconButton(
-                                        onClick = { 
-                                            proofUri = null
-                                            proofFileName = null
-                                        },
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .size(24.dp)
-                                            .padding(4.dp)
-                                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                                    ) {
-                                        Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.White, modifier = Modifier.size(12.dp))
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = proofFileName ?: "attachment.jpg",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.Gray,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                AsyncImage(
+                                    model = proofUri,
+                                    contentDescription = "Attachment Preview",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
                                 )
+                                // Remove button
+                                IconButton(
+                                    onClick = { 
+                                        proofUri = null
+                                        proofFileName = null
+                                    },
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(24.dp)
+                                        .padding(4.dp)
+                                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                ) {
+                                    Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.White, modifier = Modifier.size(12.dp))
+                                }
                             }
-                        } else {
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                "No attachment selected",
-                                style = MaterialTheme.typography.bodySmall,
+                                text = proofFileName ?: "attachment.jpg",
+                                style = MaterialTheme.typography.labelSmall,
                                 color = Color.Gray,
-                                modifier = Modifier.weight(1f)
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
+                    } else {
+                        Text(
+                            "No attachment selected",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
@@ -426,7 +402,7 @@ fun AddLoanScreen(
                     containerColor = themeColor,
                     contentColor = Color.Black
                 ),
-                shape = RoundedCornerShape(16.dp),
+                shape = CircleShape,
                 enabled = name.isNotBlank() && amount.isNotBlank()
             ) {
                 Text("Save Loan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -444,42 +420,39 @@ fun CustomTextField(
     label: String,
     modifier: Modifier = Modifier,
     readOnly: Boolean = false,
+    leadingIcon: ImageVector? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     trailingIcon: ImageVector? = null,
     onTrailingIconClick: (() -> Unit)? = null
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.Gray,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.White.copy(alpha = 0.2f),
-                unfocusedBorderColor = Color.White.copy(alpha = 0.1f),
-                focusedContainerColor = Color.White.copy(alpha = 0.05f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                cursorColor = Color.White
-            ),
-            readOnly = readOnly,
-            keyboardOptions = keyboardOptions,
-            trailingIcon = if (trailingIcon != null) {
-                {
-                    IconButton(onClick = { onTrailingIconClick?.invoke() }) {
-                        Icon(trailingIcon, contentDescription = null, tint = Color.Gray)
-                    }
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        modifier = modifier.fillMaxWidth(),
+        shape = CircleShape,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = PrimaryLime,
+            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+            focusedLabelColor = PrimaryLime,
+            unfocusedLabelColor = Color.Gray,
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            cursorColor = PrimaryLime
+        ),
+        leadingIcon = leadingIcon?.let {
+            { Icon(it, contentDescription = null, tint = if (value.isNotEmpty()) PrimaryLime else Color.Gray) }
+        },
+        trailingIcon = if (trailingIcon != null) {
+            {
+                IconButton(onClick = { onTrailingIconClick?.invoke() }) {
+                    Icon(trailingIcon, contentDescription = null, tint = Color.Gray)
                 }
-            } else null,
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyMedium
-        )
-    }
+            }
+        } else null,
+        readOnly = readOnly,
+        keyboardOptions = keyboardOptions,
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyMedium
+    )
 }
