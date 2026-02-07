@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.model.LoanStatus
+import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.ui.theme.AccentYellow
 import com.sbs.loaney.ui.theme.PrimaryLime
 import com.sbs.loaney.ui.theme.SecondaryOrange
@@ -97,7 +98,7 @@ fun HomeScreen(
                 }
             }
 
-            // Summary Section (Horizontal Scroll or Grid)
+            // Summary Section
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -118,7 +119,7 @@ fun HomeScreen(
                 )
             }
 
-            // Add Loan Button - Extended Long Button (Home Screen Only)
+            // Add Loan Button
             Button(
                 onClick = onNavigateToAddLoan,
                 modifier = Modifier
@@ -136,7 +137,7 @@ fun HomeScreen(
                 Text("Add New Loan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
 
-            // Section: Recent Activity / Loans
+            // Section: Recent Activity
             Text(
                 text = "Recent Activity",
                 style = MaterialTheme.typography.titleLarge,
@@ -156,16 +157,13 @@ fun HomeScreen(
                     Text("No loans yet. Tap + to add one.", color = Color.Gray)
                 }
             } else {
-                // Combine and show a few
+                // Combine and show
                 val allLoans = (uiState.lentLoans + uiState.borrowedLoans).sortedByDescending { it.loan.loanDate }
                 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    allLoans.take(5).forEachIndexed { index, item ->
-                        val cardColor = when (index % 3) {
-                            0 -> PrimaryLime
-                            1 -> SecondaryOrange
-                            else -> TertiaryRed
-                        }
+                    allLoans.take(10).forEach { item ->
+                        // Distinguish color by LoanType
+                        val cardColor = if (item.loan.type == LoanType.LEND) PrimaryLime else SecondaryOrange
                         val textColor = Color.Black
 
                         SwipeableLoanItem(
@@ -180,7 +178,7 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(100.dp)) // Bottom padding for FAB/Nav
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
 
@@ -378,7 +376,7 @@ fun HomeLoanItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Avatar Groups (Mock visual from design)
+            // Avatar
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -396,16 +394,37 @@ fun HomeLoanItem(
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.loan.personName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = contentColor
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = item.loan.personName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = contentColor
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    // Type Tag
+                    Surface(
+                        color = Color.Black.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(50),
+                        modifier = Modifier.height(20.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        ) {
+                            Text(
+                                text = if (item.loan.type == LoanType.LEND) "Lent" else "Borrowed",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = contentColor
+                            )
+                        }
+                    }
+                }
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        Icons.Default.Notifications, // Calendar icon equivalent
+                        Icons.Default.Notifications,
                         contentDescription = null,
                         modifier = Modifier.size(12.dp),
                         tint = contentColor.copy(alpha = 0.6f)
@@ -429,8 +448,13 @@ fun HomeLoanItem(
                      contentAlignment = Alignment.Center,
                      modifier = Modifier.padding(horizontal = 12.dp)
                  ) {
+                     val statusText = when(item.loan.status) {
+                         LoanStatus.OVERDUE -> "Overdue"
+                         LoanStatus.FULLY_PAID -> "Paid"
+                         else -> "Active"
+                     }
                      Text(
-                        text = if (item.loan.status == LoanStatus.OVERDUE) "Overdue" else "Active",
+                        text = statusText,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = contentColor
