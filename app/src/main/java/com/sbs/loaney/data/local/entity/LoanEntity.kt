@@ -13,6 +13,7 @@ data class LoanEntity(
     val personName: String,
     val phoneNumber: String,
     val email: String? = null,
+    val address: String? = null,
     val amount: Double,
     val loanDate: Date,
     val promisedReturnDate: Date,
