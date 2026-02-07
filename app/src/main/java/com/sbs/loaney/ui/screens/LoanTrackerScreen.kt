@@ -18,6 +18,9 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,7 +62,7 @@ fun LoanTrackerScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Details", fontWeight = FontWeight.Bold) },
+                title = { Text("Loan Details", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -166,65 +169,66 @@ fun LoanTrackerScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Header Card
+                // Header Card - Rearranged to be thinner
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(32.dp),
+                    shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = statusColor)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Row(
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = loan.personName,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Due ${dateFormat.format(loan.promisedReturnDate)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Black.copy(alpha = 0.7f)
-                        )
-                         Spacer(modifier = Modifier.height(24.dp))
-                         Text(
-                            text = "৳${String.format("%.0f", remaining)}",
-                            style = MaterialTheme.typography.displayMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-                        Text(
-                            text = "Remaining Balance",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.Black.copy(alpha = 0.5f)
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = loan.personName,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Due ${dateFormat.format(loan.promisedReturnDate)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Black.copy(alpha = 0.6f)
+                            )
+                        }
                         
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        // Contact Actions
-                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            FilledIconButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${loan.phoneNumber}"))
-                                    context.startActivity(intent)
-                                },
-                                colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.Black.copy(alpha = 0.1f))
-                            ) {
-                                Icon(Icons.Default.Call, contentDescription = "Call", tint = Color.Black)
-                            }
-                            if (loan.email != null) {
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "৳${String.format("%.0f", remaining)}",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (!loan.email.isNullOrBlank()) {
+                                    FilledIconButton(
+                                        onClick = {
+                                             val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${loan.email}"))
+                                             context.startActivity(intent)
+                                        },
+                                        modifier = Modifier.size(36.dp),
+                                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.Black.copy(alpha = 0.1f))
+                                    ) {
+                                        Icon(Icons.Default.Email, contentDescription = "Email", tint = Color.Black, modifier = Modifier.size(18.dp))
+                                    }
+                                }
                                 FilledIconButton(
                                     onClick = {
-                                         val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${loan.email}"))
-                                         context.startActivity(intent)
+                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${loan.phoneNumber}"))
+                                        context.startActivity(intent)
                                     },
+                                    modifier = Modifier.size(36.dp),
                                     colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.Black.copy(alpha = 0.1f))
                                 ) {
-                                    Icon(Icons.Default.Email, contentDescription = "Email", tint = Color.Black)
+                                    Icon(Icons.Default.Call, contentDescription = "Call", tint = Color.Black, modifier = Modifier.size(18.dp))
                                 }
                             }
                         }
@@ -239,11 +243,24 @@ fun LoanTrackerScreen(
                         modifier = Modifier.weight(1f)
                     )
                     InfoTile(
-                        title = "Status", 
-                        value = loan.status.name, 
-                        highlight = true,
+                        title = "Loan Type", 
+                        value = loan.type.name, 
                         modifier = Modifier.weight(1f)
                     )
+                }
+                
+                // Detailed Information
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        DetailRow(icon = Icons.Default.Info, label = "Purpose", value = loan.purpose ?: "Not specified")
+                        DetailRow(icon = Icons.Default.LocationOn, label = "Address", value = loan.address ?: "Not specified")
+                        DetailRow(icon = Icons.Default.Notes, label = "Notes", value = loan.notes ?: "No notes")
+                        DetailRow(icon = Icons.Default.CheckCircle, label = "Status", value = loan.status.name, highlightColor = statusColor)
+                    }
                 }
 
                 // Timeline / History
@@ -289,6 +306,26 @@ fun LoanTrackerScreen(
                 showAddLoanSheet = false
             }
         )
+    }
+}
+
+@Composable
+fun DetailRow(icon: ImageVector, label: String, value: String, highlightColor: Color? = null) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+            Text(
+                value, 
+                style = MaterialTheme.typography.bodyMedium, 
+                fontWeight = FontWeight.Medium,
+                color = highlightColor ?: Color.White
+            )
+        }
     }
 }
 
