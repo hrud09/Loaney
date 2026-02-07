@@ -49,6 +49,7 @@ fun LoanTrackerScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showAddPaymentSheet by remember { mutableStateOf(false) }
+    var showAddLoanSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(loanId) {
         viewModel.selectLoan(loanId)
@@ -103,7 +104,18 @@ fun LoanTrackerScreen(
                              shape = RoundedCornerShape(16.dp),
                              colors = ButtonDefaults.buttonColors(containerColor = PrimaryLime, contentColor = Color.Black)
                          ) {
-                             Text("Add Payment", fontWeight = FontWeight.Bold)
+                             Text("Pay", fontWeight = FontWeight.Bold)
+                         }
+
+                         Button(
+                             onClick = { showAddLoanSheet = true },
+                             modifier = Modifier
+                                 .weight(1f)
+                                 .height(56.dp),
+                             shape = RoundedCornerShape(16.dp),
+                             colors = ButtonDefaults.buttonColors(containerColor = SecondaryOrange, contentColor = Color.Black)
+                         ) {
+                             Text("Add More", fontWeight = FontWeight.Bold)
                          }
                          
                          FilledIconButton(
@@ -126,9 +138,12 @@ fun LoanTrackerScreen(
         } else {
             val loanItem = uiState.selectedLoan!!
             val loan = loanItem.loan
-            val payments = loanItem.payments.sortedByDescending { it.date }
+            val payments = loanItem.payments
+            val loanItems = loanItem.loanItems
+            
+            val totalLoan = loan.amount + loanItems.sumOf { it.amount }
             val paid = payments.sumOf { it.amount }
-            val remaining = (loan.amount - paid).coerceAtLeast(0.0)
+            val remaining = (totalLoan - paid).coerceAtLeast(0.0)
             val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
             
              // Colors determine by status
@@ -137,6 +152,13 @@ fun LoanTrackerScreen(
                 LoanStatus.FULLY_PAID -> PrimaryLime
                 else -> SecondaryOrange
             }
+
+            // Combine all events for history
+            val historyEvents = (
+                listOf(HistoryEvent(loan.loanDate, "Initial Loan", "৳${String.format("%.0f", loan.amount)}", true)) +
+                loanItems.map { HistoryEvent(it.date, "Additional Loan", "+৳${String.format("%.0f", it.amount)}", true) } +
+                payments.map { HistoryEvent(it.date, "Payment Received", "-৳${String.format("%.0f", it.amount)}", false, it.method) }
+            ).sortedByDescending { it.date }
 
             Column(
                 modifier = Modifier
@@ -213,7 +235,7 @@ fun LoanTrackerScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     InfoTile(
                         title = "Total Amount", 
-                        value = "৳${String.format("%.0f", loan.amount)}", 
+                        value = "৳${String.format("%.0f", totalLoan)}", 
                         modifier = Modifier.weight(1f)
                     )
                     InfoTile(
@@ -233,20 +255,13 @@ fun LoanTrackerScreen(
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    // Loan Started Item
-                    TimelineItem(
-                        date = dateFormat.format(loan.loanDate),
-                        title = "Loan Started",
-                        subtitle = "Initial amount: ৳${String.format("%.0f", loan.amount)}",
-                        isStart = true
-                    )
-                    
-                    payments.forEach { payment ->
+                    historyEvents.forEach { event ->
                         TimelineItem(
-                            date = dateFormat.format(payment.date),
-                            title = "Payment Received",
-                            subtitle = "via ${payment.method} • ৳${String.format("%.0f", payment.amount)}",
-                            amount = "-৳${String.format("%.0f", payment.amount)}"
+                            date = dateFormat.format(event.date),
+                            title = event.title,
+                            subtitle = if (event.method != null) "via ${event.method}" else "",
+                            amount = event.amount,
+                            isLoan = event.isLoan
                         )
                     }
                 }
@@ -265,7 +280,25 @@ fun LoanTrackerScreen(
             }
         )
     }
+
+    if (showAddLoanSheet) {
+        AddMoreLoanBottomSheet(
+            onDismiss = { showAddLoanSheet = false },
+            onAddLoan = { amount, note, proofUri ->
+                viewModel.addLoanItem(amount, note, proofUri)
+                showAddLoanSheet = false
+            }
+        )
+    }
 }
+
+data class HistoryEvent(
+    val date: Date,
+    val title: String,
+    val amount: String,
+    val isLoan: Boolean,
+    val method: String? = null
+)
 
 @Composable
 fun InfoTile(title: String, value: String, highlight: Boolean = false, modifier: Modifier = Modifier) {
@@ -288,7 +321,7 @@ fun InfoTile(title: String, value: String, highlight: Boolean = false, modifier:
 }
 
 @Composable
-fun TimelineItem(date: String, title: String, subtitle: String, isStart: Boolean = false, amount: String? = null) {
+fun TimelineItem(date: String, title: String, subtitle: String, isLoan: Boolean = false, amount: String? = null) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(60.dp)) {
             Text(
@@ -318,15 +351,17 @@ fun TimelineItem(date: String, title: String, subtitle: String, isStart: Boolean
                 Box(
                     modifier = Modifier
                         .size(10.dp)
-                        .background(if (isStart) SecondaryOrange else PrimaryLime, CircleShape)
+                        .background(if (isLoan) SecondaryOrange else PrimaryLime, CircleShape)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                    Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    if (subtitle.isNotBlank()) {
+                        Text(subtitle, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    }
                 }
                 if (amount != null) {
-                    Text(amount, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = PrimaryLime)
+                    Text(amount, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = if (isLoan) SecondaryOrange else PrimaryLime)
                 }
             }
         }
@@ -440,6 +475,76 @@ fun AddPaymentBottomSheet(
                 enabled = amount.isNotBlank()
             ) {
                 Text("Confirm Payment", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddMoreLoanBottomSheet(
+    onDismiss: () -> Unit,
+    onAddLoan: (Double, String?, String?) -> Unit
+) {
+    var amount by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
+    var proofUri by remember { mutableStateOf<Uri?>(null) }
+    
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? -> proofUri = uri }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 48.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Text("Add More Loan", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
+            
+            OutlinedTextField(
+                value = amount,
+                onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) amount = it },
+                label = { Text("Amount") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedBorderColor = SecondaryOrange,
+                    cursorColor = SecondaryOrange
+                )
+            )
+
+            OutlinedTextField(
+                value = note,
+                onValueChange = { note = it },
+                label = { Text("Note (Optional)") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+            
+            Button(
+                onClick = {
+                    amount.toDoubleOrNull()?.let {
+                        onAddLoan(it, note.ifBlank { null }, proofUri?.toString())
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = SecondaryOrange, contentColor = Color.Black),
+                enabled = amount.isNotBlank()
+            ) {
+                Text("Add to Balance", fontWeight = FontWeight.Bold)
             }
         }
     }

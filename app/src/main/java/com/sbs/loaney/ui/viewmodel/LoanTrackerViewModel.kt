@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.local.entity.LoanEntity
+import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.repository.LoanRepository
@@ -56,6 +57,21 @@ class LoanTrackerViewModel @Inject constructor(
         }
     }
 
+    fun addLoanItem(amount: Double, note: String?, proofUri: String? = null) {
+        val loanId = _selectedLoanId.value ?: return
+        viewModelScope.launch {
+            val loanItem = LoanItemEntity(
+                loanId = loanId,
+                amount = amount,
+                date = Date(),
+                note = note,
+                proofUri = proofUri
+            )
+            repository.insertLoanItem(loanItem)
+            updateLoanStatus(loanId)
+        }
+    }
+
     fun deleteLoan(loan: LoanEntity) {
         viewModelScope.launch {
             repository.deleteLoan(loan)
@@ -66,7 +82,8 @@ class LoanTrackerViewModel @Inject constructor(
         val loanId = _selectedLoanId.value ?: return
         viewModelScope.launch {
             val loanWithPayments = repository.getLoanById(loanId).firstOrNull() ?: return@launch
-            val balance = loanWithPayments.loan.amount - loanWithPayments.payments.sumOf { it.amount }
+            val totalLoan = loanWithPayments.loan.amount + loanWithPayments.loanItems.sumOf { it.amount }
+            val balance = totalLoan - loanWithPayments.payments.sumOf { it.amount }
             if (balance > 0) {
                 // Add a final payment to settle
                 addPayment(balance, "Settled", "Final settlement")
@@ -78,11 +95,12 @@ class LoanTrackerViewModel @Inject constructor(
 
     private suspend fun updateLoanStatus(loanId: Long) {
         val loanWithPayments = repository.getLoanById(loanId).firstOrNull() ?: return
+        val totalLoan = loanWithPayments.loan.amount + loanWithPayments.loanItems.sumOf { it.amount }
         val totalPaid = loanWithPayments.payments.sumOf { it.amount }
         val loan = loanWithPayments.loan
 
         val newStatus = when {
-            totalPaid >= loan.amount -> LoanStatus.FULLY_PAID
+            totalPaid >= totalLoan -> LoanStatus.FULLY_PAID
             totalPaid > 0 -> LoanStatus.PARTIALLY_PAID
             Date().after(loan.promisedReturnDate) -> LoanStatus.OVERDUE
             else -> LoanStatus.ACTIVE
