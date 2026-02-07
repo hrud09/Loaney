@@ -4,6 +4,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -261,16 +262,30 @@ fun AddLoanScreen(
 
 @Composable
 fun DatePickerField(label: String, value: String, onClick: () -> Unit) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = {},
-        label = { Text(label) },
-        modifier = Modifier.fillMaxWidth(),
-        readOnly = true,
-        trailingIcon = {
-            IconButton(onClick = onClick) {
+    Box {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            label = { Text(label) },
+            modifier = Modifier.fillMaxWidth(),
+            readOnly = true,
+            trailingIcon = {
                 Icon(Icons.Default.DateRange, contentDescription = null)
-            }
-        }
-    )
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
+            enabled = false // Disable input but keep looking enabled via colors
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable(onClick = onClick)
+        )
+    }
 }

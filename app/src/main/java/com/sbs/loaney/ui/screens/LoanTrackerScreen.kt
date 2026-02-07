@@ -71,8 +71,9 @@ fun LoanTrackerScreen(
             } else {
                 val item = uiState.selectedLoan!!
                 val primaryColor = MaterialTheme.colorScheme.primary
+                val secondaryColor = MaterialTheme.colorScheme.secondary
                 
-                val timelineItems = remember(item) {
+                val timelineItems = remember(item, primaryColor, secondaryColor) {
                     val list = mutableListOf<TimelineItem>()
                     list.add(TimelineItem(
                         date = item.loan.loanDate,
@@ -88,7 +89,7 @@ fun LoanTrackerScreen(
                             title = "Repayment Added",
                             description = "Amount: ৳${payment.amount} via ${payment.method}${if (payment.note != null) "\nNote: ${payment.note}" else ""}",
                             icon = Icons.Default.CheckCircle,
-                            color = Color(0xFF4CAF50)
+                            color = secondaryColor
                         ))
                     }
                     list.sortByDescending { it.date }
@@ -138,7 +139,7 @@ fun LoanSnapshotPanel(item: LoanWithPayments) {
     val loan = item.loan
     val paid = item.payments.sumOf { it.amount }
     val balance = (loan.amount - paid).coerceAtLeast(0.0)
-    val typeColor = if (loan.type == LoanType.LEND) Color(0xFF4CAF50) else Color(0xFFFF9800)
+    val typeColor = if (loan.type == LoanType.LEND) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -147,11 +148,11 @@ fun LoanSnapshotPanel(item: LoanWithPayments) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 SnapshotItem("Total Amount", "৳${loan.amount}", typeColor)
-                SnapshotItem("Remaining", "৳$balance", if (balance > 0) Color.Red else Color(0xFF4CAF50))
+                SnapshotItem("Remaining", "৳$balance", if (balance > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary)
             }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                SnapshotItem("Paid Amount", "৳$paid", Color(0xFF4CAF50))
+                SnapshotItem("Paid Amount", "৳$paid", MaterialTheme.colorScheme.secondary)
                 SnapshotItem("Deadline", SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(loan.promisedReturnDate), MaterialTheme.colorScheme.onSurface)
             }
             
@@ -160,9 +161,9 @@ fun LoanSnapshotPanel(item: LoanWithPayments) {
             }
             
             val statusColor = when (loan.status) {
-                LoanStatus.OVERDUE -> Color.Red
-                LoanStatus.FULLY_PAID -> Color(0xFF4CAF50)
-                LoanStatus.PARTIALLY_PAID -> Color(0xFF2196F3)
+                LoanStatus.OVERDUE -> MaterialTheme.colorScheme.error
+                LoanStatus.FULLY_PAID -> MaterialTheme.colorScheme.secondary
+                LoanStatus.PARTIALLY_PAID -> MaterialTheme.colorScheme.primary
                 else -> MaterialTheme.colorScheme.primary
             }
             
@@ -172,7 +173,7 @@ fun LoanSnapshotPanel(item: LoanWithPayments) {
                     .padding(horizontal = 12.dp, vertical = 4.dp)
                     .align(Alignment.CenterHorizontally)
             ) {
-                Text(loan.status.name, color = Color.White, style = MaterialTheme.typography.labelLarge)
+                Text(loan.status.name, color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge)
             }
         }
     }

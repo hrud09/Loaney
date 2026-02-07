@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="splash_bg">#FFFFFF</color>
+    <color name="splash_bg">#F2F2F7</color>
+    <color name="primary">#0066CC</color>
+    <color name="secondary">#34C759</color>
+    <color name="tertiary">#FF9500</color>
 </resources>
