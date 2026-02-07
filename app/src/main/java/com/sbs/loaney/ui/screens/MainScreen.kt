@@ -1,18 +1,23 @@
 package com.sbs.loaney.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -42,42 +47,78 @@ fun MainScreen() {
         bottomBar = {}, // We will overlay the custom bottom bar in the content using Box
         floatingActionButton = {
             if (isTopLevel) {
-                 // Custom Floating Bottom Navigation
-                 Surface(
-                     color = MaterialTheme.colorScheme.surfaceVariant,
-                     shape = CircleShape,
+                 // Custom Floating Bottom Navigation with Glassmorphism
+                 Box(
                      modifier = Modifier
                          .padding(bottom = 16.dp)
                          .height(64.dp)
-                         .wrapContentWidth(),
-                     shadowElevation = 8.dp
+                         .wrapContentWidth()
+                         .clip(CircleShape)
+                         .background(Color.Black.copy(alpha = 0.8f))
+                         .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
+                     contentAlignment = Alignment.Center
                  ) {
                      Row(
-                         modifier = Modifier.padding(horizontal = 12.dp),
+                         modifier = Modifier.padding(horizontal = 24.dp),
                          verticalAlignment = Alignment.CenterVertically,
-                         horizontalArrangement = Arrangement.spacedBy(12.dp)
+                         horizontalArrangement = Arrangement.spacedBy(32.dp)
                      ) {
                          items.forEach { item ->
                              val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
                              
-                             IconButton(
-                                 onClick = {
-                                     navController.navigate(item.route) {
-                                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                         launchSingleTop = true
-                                         restoreState = true
-                                     }
-                                 },
+                             // Selected state animation: 10% size increase
+                             val scale by animateFloatAsState(
+                                 targetValue = if (selected) 1.1f else 1.0f,
+                                 label = "iconScale"
+                             )
+                             
+                             Column(
+                                 horizontalAlignment = Alignment.CenterHorizontally,
                                  modifier = Modifier
-                                     .clip(CircleShape)
-                                     .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                     .clickable(
+                                         interactionSource = remember { MutableInteractionSource() },
+                                         indication = null
+                                     ) {
+                                         navController.navigate(item.route) {
+                                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                             launchSingleTop = true
+                                             restoreState = true
+                                         }
+                                     }
                              ) {
                                  Icon(
                                      imageVector = item.icon,
                                      contentDescription = item.label,
-                                     tint = if (selected) Color.Black else Color.Gray,
-                                     modifier = Modifier.size(24.dp)
+                                     tint = if (selected) MaterialTheme.colorScheme.primary else Color.Gray,
+                                     modifier = Modifier
+                                         .size(24.dp)
+                                         .graphicsLayer(scaleX = scale, scaleY = scale)
                                  )
+                                 
+                                 // Glowing indicator dot below the selected icon
+                                 AnimatedVisibility(
+                                     visible = selected,
+                                     enter = fadeIn() + expandVertically(),
+                                     exit = fadeOut() + shrinkVertically()
+                                 ) {
+                                     Box(
+                                         contentAlignment = Alignment.Center,
+                                         modifier = Modifier.padding(top = 4.dp)
+                                     ) {
+                                         // Outer Glow
+                                         Box(
+                                             modifier = Modifier
+                                                 .size(8.dp)
+                                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), CircleShape)
+                                         )
+                                         // Inner Dot
+                                         Box(
+                                             modifier = Modifier
+                                                 .size(4.dp)
+                                                 .background(MaterialTheme.colorScheme.primary, CircleShape)
+                                         )
+                                     }
+                                 }
                              }
                          }
                      }
