@@ -12,37 +12,44 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+
 private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryDark,
-    secondary = SecondaryDark,
-    tertiary = TertiaryDark,
-    background = BackgroundDark,
-    surface = SurfaceDark,
-    onPrimary = Color.White,
+    primary = PrimaryLime,
+    onPrimary = Color.Black,
+    secondary = SecondaryOrange,
     onSecondary = Color.Black,
+    tertiary = TertiaryRed,
     onTertiary = Color.Black,
+    background = BlackBG,
     onBackground = Color.White,
-    onSurface = Color.White
+    surface = ChipGrey,
+    onSurface = Color.White,
+    surfaceVariant = Color(0xFF3C3C3E),
+    onSurfaceVariant = Color.White,
+    error = Color(0xFFFF6B6B),
+    onError = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = PrimaryBlue,
-    secondary = SecondaryGreen,
-    tertiary = TertiaryOrange,
-    background = BackgroundLight,
-    surface = SurfaceWhite,
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color.Black,
-    onSurface = Color.Black
+    primary = PrimaryLime,
+    onPrimary = Color.Black,
+    secondary = SecondaryOrange,
+    onSecondary = Color.Black,
+    tertiary = TertiaryRed,
+    onTertiary = Color.Black,
+    background = BlackBG, // Force dark mode look even in light mode for consistency with the design request
+    onBackground = Color.White,
+    surface = ChipGrey,
+    onSurface = Color.White,
+    surfaceVariant = Color(0xFF3C3C3E),
+    onSurfaceVariant = Color.White
 )
 
 @Composable
 fun LoaneyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Disable dynamic color to stick to the art style
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -58,6 +65,7 @@ fun LoaneyTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = Shapes,
         content = content
     )
 }

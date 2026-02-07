@@ -10,10 +10,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,15 +25,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.model.LoanStatus
+import com.sbs.loaney.ui.theme.AccentYellow
+import com.sbs.loaney.ui.theme.PrimaryLime
+import com.sbs.loaney.ui.theme.SecondaryOrange
+import com.sbs.loaney.ui.theme.TertiaryRed
 import com.sbs.loaney.ui.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,285 +49,243 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        "Overview", 
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    ) 
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+             // Custom Floating Bottom Bar handled in MainScreen, but we add spacing here
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Summary Cards
+            // Header
             Row(
-                modifier = Modifier.fillMaxWidth(), 
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Good Morning,",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = "Manage Loans",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                IconButton(
+                    onClick = { /* TODO: Profile/Settings */ },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color.White)
+                }
+            }
+
+            // Summary Section (Horizontal Scroll or Grid)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 SummaryCard(
-                    title = "You Lent",
+                    title = "Total Lent",
                     amount = uiState.totalLent,
-                    icon = Icons.Rounded.ArrowUpward,
-                    gradient = Brush.linearGradient(
-                        colors = listOf(Color(0xFF34C759), Color(0xFF30D158))
-                    ),
+                    backgroundColor = PrimaryLime,
+                    textColor = Color.Black,
                     modifier = Modifier.weight(1f)
                 )
                 SummaryCard(
-                    title = "You Borrowed",
+                    title = "Total Borrowed",
                     amount = uiState.totalBorrowed,
-                    icon = Icons.Rounded.ArrowDownward,
-                    gradient = Brush.linearGradient(
-                        colors = listOf(Color(0xFFFF9500), Color(0xFFFF9F0A))
-                    ),
+                    backgroundColor = SecondaryOrange,
+                    textColor = Color.Black,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            // Quick Actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                QuickActionButton(
-                    text = "New Loan",
-                    icon = Icons.Default.Add,
-                    onClick = onNavigateToAddLoan,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.weight(1f)
-                )
-                QuickActionButton(
-                    text = "Manage All",
-                    icon = Icons.Default.List,
-                    onClick = onNavigateToManage,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            // Loans Given List
-            LoanSection(
-                title = "Active Loans Given",
-                loans = uiState.lentLoans,
-                onLoanClick = onNavigateToDetail,
-                emptyMessage = "No active loans given"
+            // Section: Recent Activity / Loans
+            Text(
+                text = "Recent Activity",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
             )
 
-            // Loans Taken List
-            LoanSection(
-                title = "Active Loans Taken",
-                loans = uiState.borrowedLoans,
-                onLoanClick = onNavigateToDetail,
-                emptyMessage = "No active loans taken"
-            )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-        }
-    }
-}
+            if (uiState.lentLoans.isEmpty() && uiState.borrowedLoans.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(24.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No loans yet. Tap + to add one.", color = Color.Gray)
+                }
+            } else {
+                // Combine and show a few
+                val allLoans = (uiState.lentLoans + uiState.borrowedLoans).sortedByDescending { it.loan.loanDate }
+                
+                allLoans.take(5).forEachIndexed { index, item ->
+                    // Alternate card colors for visual interest like the Dribbble shot
+                    val cardColor = when (index % 3) {
+                        0 -> PrimaryLime
+                        1 -> SecondaryOrange
+                        else -> TertiaryRed
+                    }
+                    val textColor = Color.Black // Dark text on pastel cards
 
-@Composable
-fun QuickActionButton(
-    text: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-    containerColor: Color,
-    contentColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.height(56.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
-            contentColor = contentColor
-        ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-    ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text, style = MaterialTheme.typography.labelLarge)
-    }
-}
-
-@Composable
-fun LoanSection(
-    title: String,
-    loans: List<LoanWithPayments>,
-    onLoanClick: (Long) -> Unit,
-    emptyMessage: String
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        
-        if (loans.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = emptyMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-            }
-        } else {
-            loans.take(5).forEach { item ->
-                HomeLoanItem(item = item, onClick = { onLoanClick(item.loan.id) })
-            }
-        }
-    }
-}
-
-@Composable
-fun HomeLoanItem(item: LoanWithPayments, onClick: () -> Unit) {
-    val paid = item.payments.sumOf { it.amount }
-    val balance = item.loan.amount - paid
-    
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Avatar Placeholder
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = item.loan.personName.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    HomeLoanItem(
+                        item = item, 
+                        backgroundColor = cardColor,
+                        contentColor = textColor,
+                        onClick = { onNavigateToDetail(item.loan.id) }
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.loan.personName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = item.loan.status.name.lowercase().replaceFirstChar { it.uppercase() },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (item.loan.status == LoanStatus.OVERDUE) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "৳${String.format("%.0f", balance)}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (paid > 0) {
-                    Text(
-                        text = "${String.format("%.0f", (paid / item.loan.amount) * 100)}% paid",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            Icon(
-                Icons.Default.ArrowForward,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                modifier = Modifier.size(16.dp)
-            )
+
+            Spacer(modifier = Modifier.height(100.dp)) // Bottom padding for FAB/Nav
         }
     }
 }
 
 @Composable
 fun SummaryCard(
-    title: String, 
-    amount: Double, 
-    icon: ImageVector,
-    gradient: Brush, 
+    title: String,
+    amount: Double,
+    backgroundColor: Color,
+    textColor: Color,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        modifier = modifier.height(140.dp),
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .background(gradient)
-                .padding(16.dp)
-                .fillMaxWidth()
+                .padding(20.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(Color.Black.copy(alpha = 0.1f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Rounded.AttachMoney, contentDescription = null, tint = textColor)
+            }
+            
             Column {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(Color.White.copy(alpha = 0.2f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        icon, 
-                        contentDescription = null, 
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
                 Text(
-                    text = title, 
-                    style = MaterialTheme.typography.labelMedium, 
-                    color = Color.White.copy(alpha = 0.9f)
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor.copy(alpha = 0.7f)
                 )
-                
                 Text(
                     text = "৳${String.format("%.0f", amount)}",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = textColor
                 )
             }
         }
     }
 }
+
+@Composable
+fun HomeLoanItem(
+    item: LoanWithPayments,
+    backgroundColor: Color,
+    contentColor: Color,
+    onClick: () -> Unit
+) {
+    val paid = item.payments.sumOf { it.amount }
+    val balance = item.loan.amount - paid
+    
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar Groups (Mock visual from design)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(Color.Black.copy(alpha = 0.1f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = item.loan.personName.take(1).uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.loan.personName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor
+                )
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Notifications, // Calendar icon equivalent
+                        contentDescription = null,
+                        modifier = Modifier.size(12.dp),
+                        tint = contentColor.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Balance: ৳${String.format("%.0f", balance)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = contentColor.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            // Status Pill
+            Surface(
+                color = Color.Black.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(50),
+                modifier = Modifier.height(32.dp)
+            ) {
+                 Box(
+                     contentAlignment = Alignment.Center,
+                     modifier = Modifier.padding(horizontal = 12.dp)
+                 ) {
+                     Text(
+                        text = if (item.loan.status == LoanStatus.OVERDUE) "Overdue" else "Active",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = contentColor
+                     )
+                 }
+            }
+        }
+    }
+}
+

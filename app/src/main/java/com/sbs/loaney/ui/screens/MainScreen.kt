@@ -1,16 +1,19 @@
 package com.sbs.loaney.ui.screens
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -33,61 +36,69 @@ fun MainScreen() {
 
     val items = listOf(
         NavigationItem("Home", Screen.Home.route, Icons.Default.Home),
-        NavigationItem("Manage", Screen.ManageLoans.route, Icons.Default.List)
+        NavigationItem("Manage", Screen.ManageLoans.route, Icons.AutoMirrored.Filled.List)
     )
 
     Scaffold(
-        bottomBar = {
-            if (isTopLevel) {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 8.dp
-                ) {
-                    items.forEach { item ->
-                        val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-                        NavigationBarItem(
-                            icon = { 
-                                Icon(
-                                    imageVector = item.icon, 
-                                    contentDescription = item.label,
-                                    tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                ) 
-                            },
-                            label = { 
-                                Text(
-                                    item.label,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                ) 
-                            },
-                            selected = selected,
-                            onClick = {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                            )
-                        )
-                    }
-                }
-            }
-        },
+        bottomBar = {}, // We will overlay the custom bottom bar in the content using Box
         floatingActionButton = {
             if (isTopLevel) {
-                FloatingActionButton(
-                    onClick = { navController.navigate(Screen.AddLoan.route) },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shape = CircleShape
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Loan")
-                }
+                 // Custom Floating Bottom Navigation
+                 Surface(
+                     color = MaterialTheme.colorScheme.surfaceVariant,
+                     shape = CircleShape,
+                     modifier = Modifier
+                         .padding(bottom = 16.dp)
+                         .height(72.dp)
+                         .wrapContentWidth(),
+                     shadowElevation = 8.dp
+                 ) {
+                     Row(
+                         modifier = Modifier.padding(horizontal = 8.dp),
+                         verticalAlignment = Alignment.CenterVertically,
+                         horizontalArrangement = Arrangement.spacedBy(8.dp)
+                     ) {
+                         items.forEach { item ->
+                             val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                             
+                             IconButton(
+                                 onClick = {
+                                     navController.navigate(item.route) {
+                                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                         launchSingleTop = true
+                                         restoreState = true
+                                     }
+                                 },
+                                 modifier = Modifier
+                                     .clip(CircleShape)
+                                     .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                             ) {
+                                 Icon(
+                                     imageVector = item.icon,
+                                     contentDescription = item.label,
+                                     tint = if (selected) Color.Black else Color.Gray,
+                                     modifier = Modifier.size(24.dp)
+                                 )
+                             }
+                         }
+
+                         // Add Loan FAB inside the bar
+                         Spacer(modifier = Modifier.width(8.dp))
+                         IconButton(
+                             onClick = { navController.navigate(Screen.AddLoan.route) },
+                             modifier = Modifier
+                                 .clip(CircleShape)
+                                 .background(MaterialTheme.colorScheme.secondary) // Orange/Yellow accent
+                                 .size(48.dp)
+                         ) {
+                             Icon(
+                                 Icons.Default.Add,
+                                 contentDescription = "Add Loan",
+                                 tint = Color.Black
+                             )
+                         }
+                     }
+                 }
             }
         },
         floatingActionButtonPosition = FabPosition.Center

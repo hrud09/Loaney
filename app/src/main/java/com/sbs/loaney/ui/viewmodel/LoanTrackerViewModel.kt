@@ -3,6 +3,7 @@ package com.sbs.loaney.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sbs.loaney.data.local.dao.LoanWithPayments
+import com.sbs.loaney.data.local.entity.LoanEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.repository.LoanRepository
@@ -52,6 +53,12 @@ class LoanTrackerViewModel @Inject constructor(
             )
             repository.insertPayment(payment)
             updateLoanStatus(loanId)
+        }
+    }
+
+    fun deleteLoan(loan: LoanEntity) {
+        viewModelScope.launch {
+            repository.deleteLoan(loan)
         }
     }
 
