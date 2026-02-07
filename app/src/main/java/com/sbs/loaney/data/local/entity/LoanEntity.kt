@@ -23,5 +23,6 @@ data class LoanEntity(
     val proofUri: String? = null,
     val status: LoanStatus = LoanStatus.ACTIVE,
     val relationshipType: String? = null,
+    val witness: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

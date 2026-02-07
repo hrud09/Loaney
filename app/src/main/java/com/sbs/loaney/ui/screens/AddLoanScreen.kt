@@ -3,6 +3,7 @@ package com.sbs.loaney.ui.screens
 import android.net.Uri
 import android.provider.ContactsContract
 import android.provider.OpenableColumns
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -64,6 +66,7 @@ fun AddLoanScreen(
     var proofUri by remember { mutableStateOf<Uri?>(null) }
     var proofFileName by remember { mutableStateOf<String?>(null) }
     var selectedRelationship by remember { mutableStateOf("Friend") }
+    var witness by remember { mutableStateOf("") }
     
     var showSuggestions by remember { mutableStateOf(false) }
     val nameSuggestions = remember(name, uiState.loans) {
@@ -164,13 +167,13 @@ fun AddLoanScreen(
                 title = { 
                     Text(
                         "New Loan", 
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
                     ) 
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -403,6 +406,39 @@ fun AddLoanScreen(
                 )
             }
 
+            // Witness / Reference
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Witness / Reference", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = { 
+                            Toast.makeText(context, "Note down who was present during this transaction for future reference.", Toast.LENGTH_LONG).show()
+                        },
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Icon(Icons.Default.Info, contentDescription = "Info", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                    }
+                }
+
+                OutlinedTextField(
+                    value = witness,
+                    onValueChange = { witness = it },
+                    placeholder = { Text("E.g., In front of Rahim", color = Color.Gray.copy(alpha = 0.5f)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CircleShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryLime,
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = PrimaryLime
+                    ),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyMedium
+                )
+            }
+
             // Attachments
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Attachment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
@@ -487,6 +523,7 @@ fun AddLoanScreen(
                         loanDate = Date(loanDate), returnDate = Date(returnDate),
                         purpose = purpose.ifBlank { null }, notes = notes.ifBlank { null },
                         interest = null, relationshipType = selectedRelationship,
+                        witness = witness.ifBlank { null },
                         proofUri = proofUri?.toString()
                     )
                     onNavigateBack()

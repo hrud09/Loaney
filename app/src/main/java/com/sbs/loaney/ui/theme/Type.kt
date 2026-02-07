@@ -6,13 +6,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Set of Material typography styles to start with
+// Commercial Type Scale
 val Typography = Typography(
-    displayLarge = TextStyle(
+    headlineLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
+        fontSize = 28.sp,
+        lineHeight = 36.sp,
         letterSpacing = 0.sp
     ),
     headlineMedium = TextStyle(
@@ -23,13 +23,13 @@ val Typography = Typography(
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
         lineHeight = 28.sp
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,
         fontSize = 18.sp,
         lineHeight = 24.sp
     ),
@@ -56,7 +56,7 @@ val Typography = Typography(
     ),
     labelSmall = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.Bold,
         fontSize = 11.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp

@@ -3,6 +3,8 @@ package com.sbs.loaney.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +16,7 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -30,6 +33,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,138 +61,143 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedLoanIdForPayment by remember { mutableStateOf<Long?>(null) }
-    var loanToDelete by remember { mutableStateOf<LoanWithPayments?>(null) }
+    var loanToDelete by remember { mutableStateOf<Long?>(null) }
+    
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-             // Custom Floating Bottom Bar handled in MainScreen, but we add spacing here
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header - Anchored Top Left, moved more upward
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp), // Reduced from 16.dp
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Good Morning,",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
-                    )
+        topBar = {
+            LargeTopAppBar(
+                title = {
                     Text(
                         text = "Manage Loans",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = Color.White,
+                        style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold
                     )
-                }
-                IconButton(
-                    onClick = { /* TODO: Profile/Settings */ },
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color.White)
-                }
-            }
-
-            // Summary Section
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                SummaryCard(
-                    title = "Total Lent",
-                    amount = uiState.totalLent,
-                    gradient = Brush.linearGradient(
-                        colors = listOf(Color(0xFFE8F5E9), Color(0xFFC5E1A5)) // Light pastel green to herbal green
-                    ),
-                    textColor = Color.Black,
-                    modifier = Modifier.weight(1f)
+                },
+                navigationIcon = {
+                    IconButton(onClick = { /* TODO: Open Drawer */ }) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { /* TODO: Profile */ },
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Icon(Icons.Default.Person, contentDescription = "Profile")
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.largeTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
                 )
-                SummaryCard(
-                    title = "Total Borrowed",
-                    amount = uiState.totalBorrowed,
-                    gradient = Brush.linearGradient(
-                        colors = listOf(Color(0xFFFFF3E0), Color(0xFFFFB74D)) // Light apricot to standard orange
-                    ),
-                    textColor = Color.Black,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            // Add Loan Button
-            Button(
-                onClick = onNavigateToAddLoan,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryLime,
-                    contentColor = Color.Black
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Add New Loan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-
-            // Section: Recent Activity
-            Text(
-                text = "Recent Activity",
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp)
             )
+        }
+    ) { padding ->
+        val allLoans = (uiState.lentLoans + uiState.borrowedLoans).sortedByDescending { it.loan.loanDate }
 
-            if (uiState.lentLoans.isEmpty() && uiState.borrowedLoans.isEmpty()) {
-                Box(
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                top = padding.calculateTopPadding() + 16.dp,
+                start = 16.dp,
+                end = 16.dp,
+                bottom = 100.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                // Summary Section
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    SummaryCard(
+                        title = "Total Lent",
+                        amount = uiState.totalLent,
+                        gradient = Brush.linearGradient(
+                            colors = listOf(Color(0xFFE8F5E9), Color(0xFFC5E1A5))
+                        ),
+                        textColor = Color.Black,
+                        modifier = Modifier.weight(1f)
+                    )
+                    SummaryCard(
+                        title = "Total Borrowed",
+                        amount = uiState.totalBorrowed,
+                        gradient = Brush.linearGradient(
+                            colors = listOf(Color(0xFFFFF3E0), Color(0xFFFFB74D))
+                        ),
+                        textColor = Color.Black,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            item {
+                // Add Loan Button
+                Button(
+                    onClick = onNavigateToAddLoan,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(24.dp)),
-                    contentAlignment = Alignment.Center
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryLime,
+                        contentColor = Color.Black
+                    )
                 ) {
-                    Text("No loans yet. Tap + to add one.", color = Color.Gray)
-                }
-            } else {
-                // Combine and show
-                val allLoans = (uiState.lentLoans + uiState.borrowedLoans).sortedByDescending { it.loan.loanDate }
-                
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    allLoans.take(10).forEach { item ->
-                        // Distinguish color by LoanType
-                        val cardColor = if (item.loan.type == LoanType.LEND) PrimaryLime else SecondaryOrange
-                        val textColor = Color.Black
-
-                        SwipeableLoanItem(
-                            item = item,
-                            backgroundColor = cardColor,
-                            contentColor = textColor,
-                            onClick = { onNavigateToDetail(item.loan.id) },
-                            onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
-                            onSwipeRight = { loanToDelete = item }
-                        )
-                    }
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Add New Loan", style = MaterialTheme.typography.titleMedium)
                 }
             }
 
-            Spacer(modifier = Modifier.height(100.dp))
+            item {
+                // Section: Recent Activity
+                Text(
+                    text = "Recent Activity",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                )
+            }
+
+            if (allLoans.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No loans yet. Tap + to add one.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            } else {
+                items(allLoans.take(10), key = { it.loan.id }) { item ->
+                    val cardColor = if (item.loan.type == LoanType.LEND) PrimaryLime else SecondaryOrange
+                    
+                    SwipeableLoanItem(
+                        item = item,
+                        backgroundColor = cardColor,
+                        contentColor = Color.Black,
+                        onClick = { onNavigateToDetail(item.loan.id) },
+                        onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
+                        onSwipeRight = { loanToDelete = item.loan.id }
+                    )
+                }
+            }
         }
     }
 
@@ -208,11 +217,12 @@ fun HomeScreen(
             onDismissRequest = { loanToDelete = null },
             icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = TertiaryRed) },
             title = { Text("Delete Loan?") },
-            text = { Text("Are you sure you want to delete the loan for ${loanToDelete?.loan?.personName}? This action cannot be undone.") },
+            text = { Text("Are you sure you want to delete this loan? This action cannot be undone.") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        loanToDelete?.loan?.let { trackerViewModel.deleteLoan(it) }
+                        val loan = (uiState.lentLoans + uiState.borrowedLoans).find { it.loan.id == loanToDelete }
+                        loan?.loan?.let { trackerViewModel.deleteLoan(it) }
                         loanToDelete = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = TertiaryRed)
@@ -222,12 +232,9 @@ fun HomeScreen(
             },
             dismissButton = {
                 TextButton(onClick = { loanToDelete = null }) {
-                    Text("Cancel", color = Color.Gray)
+                    Text("Cancel")
                 }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = Color.White,
-            textContentColor = Color.Gray
+            }
         )
     }
 }
@@ -255,8 +262,7 @@ fun SwipeableLoanItem(
                 }
                 else -> false
             }
-        },
-        positionalThreshold = { totalDistance -> totalDistance * 0.4f }
+        }
     )
 
     SwipeToDismissBox(
@@ -279,34 +285,21 @@ fun SwipeableLoanItem(
                 SwipeToDismissBoxValue.EndToStart -> Icons.Default.Add
                 else -> Icons.Default.Add
             }
-            val label = when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> "Delete"
-                SwipeToDismissBoxValue.EndToStart -> "Add Payment"
-                else -> ""
-            }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(vertical = 4.dp)
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(color),
                 contentAlignment = alignment
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (direction == SwipeToDismissBoxValue.StartToEnd) {
-                        Icon(icon, contentDescription = null, tint = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(label, color = Color.White, fontWeight = FontWeight.Bold)
-                    } else {
-                        Text(label, color = Color.Black, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(icon, contentDescription = null, tint = Color.Black)
-                    }
-                }
+                Icon(
+                    icon, 
+                    contentDescription = null, 
+                    tint = if (direction == SwipeToDismissBoxValue.StartToEnd) Color.White else Color.Black,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
             }
         }
     ) {
@@ -328,10 +321,8 @@ fun SummaryCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .height(140.dp)
-            .shadow(elevation = 8.dp, shape = RoundedCornerShape(32.dp)),
-        shape = RoundedCornerShape(32.dp),
+        modifier = modifier.height(140.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Box(
@@ -341,13 +332,13 @@ fun SummaryCard(
         ) {
             Column(
                 modifier = Modifier
-                    .padding(20.dp)
+                    .padding(16.dp)
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(36.dp)
                         .background(Color.Black.copy(alpha = 0.1f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
@@ -362,7 +353,7 @@ fun SummaryCard(
                     )
                     Text(
                         text = "৳${String.format("%.0f", amount)}",
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = textColor
                     )
@@ -392,20 +383,20 @@ fun HomeLoanItem(
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
-                    .padding(20.dp)
+                    .padding(16.dp)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Avatar
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(40.dp)
                         .background(Color.Black.copy(alpha = 0.1f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
@@ -431,8 +422,8 @@ fun HomeLoanItem(
                         // Type Tag
                         Surface(
                             color = Color.Black.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(50),
-                            modifier = Modifier.height(20.dp)
+                            shape = CircleShape,
+                            modifier = Modifier.height(18.dp)
                         ) {
                             Box(
                                 contentAlignment = Alignment.Center,
@@ -441,7 +432,6 @@ fun HomeLoanItem(
                                 Text(
                                     text = if (item.loan.type == LoanType.LEND) "Lent" else "Borrowed",
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.ExtraBold,
                                     color = contentColor
                                 )
                             }
@@ -449,64 +439,39 @@ fun HomeLoanItem(
                     }
                     
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Notifications,
-                            contentDescription = null,
-                            modifier = Modifier.size(12.dp),
-                            tint = contentColor.copy(alpha = 0.6f)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "Balance: ৳${String.format("%.0f", balance)}",
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.bodySmall,
                             color = contentColor.copy(alpha = 0.6f)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
-
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.CalendarToday,
-                            contentDescription = null,
-                            modifier = Modifier.size(12.dp),
-                            tint = if (isDueSoon) Color(0xFFFF9800) else contentColor.copy(alpha = 0.6f)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "Due: ${dateFormat.format(dueDate)}",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = if (isDueSoon) FontWeight.ExtraBold else FontWeight.Normal,
-                            color = if (isDueSoon) Color(0xFFFF9800) else contentColor.copy(alpha = 0.6f)
+                            color = if (isDueSoon) Color(0xFFD32F2F) else contentColor.copy(alpha = 0.6f)
                         )
                     }
                 }
-
-                // Placeholder for alignment if needed, though Box covers TopEnd
-                Spacer(modifier = Modifier.width(60.dp))
             }
 
-            // Status Chip - Dynamic based on state
-            val chipBgColor = if (isOverdue) TertiaryRed.copy(alpha = 0.2f) else Color.Black.copy(alpha = 0.1f)
-            val chipTextColor = if (isOverdue) TertiaryRed else if (item.loan.status == LoanStatus.FULLY_PAID) Color(0xFF4CAF50) else Color(0xFF2E7D32)
+            // Status Chip
+            val chipBgColor = if (isOverdue) Color(0xFFFFEBEE) else Color.Black.copy(alpha = 0.05f)
+            val chipTextColor = if (isOverdue) Color(0xFFD32F2F) else contentColor.copy(alpha = 0.7f)
             val statusText = if (isOverdue) "Overdue" else if (item.loan.status == LoanStatus.FULLY_PAID) "Paid" else "Active"
 
             Surface(
                 color = chipBgColor,
-                shape = RoundedCornerShape(bottomStart = 16.dp, topEnd = 24.dp), // Styled to fit corner
+                shape = RoundedCornerShape(bottomStart = 12.dp, topEnd = 16.dp),
                 modifier = Modifier.align(Alignment.TopEnd)
             ) {
-                 Box(
-                     contentAlignment = Alignment.Center,
-                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                 ) {
-                     Text(
-                        text = statusText,
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        fontWeight = FontWeight.ExtraBold,
-                        color = chipTextColor
-                     )
-                 }
+                 Text(
+                    text = statusText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = chipTextColor,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                 )
             }
         }
     }
