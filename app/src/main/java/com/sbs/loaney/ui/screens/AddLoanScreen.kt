@@ -63,6 +63,7 @@ fun AddLoanScreen(
     var notes by remember { mutableStateOf("") }
     var proofUri by remember { mutableStateOf<Uri?>(null) }
     var proofFileName by remember { mutableStateOf<String?>(null) }
+    var selectedRelationship by remember { mutableStateOf("Friend") }
     
     var showSuggestions by remember { mutableStateOf(false) }
     val nameSuggestions = remember(name, uiState.loans) {
@@ -75,6 +76,7 @@ fun AddLoanScreen(
     var showReturnDatePicker by remember { mutableStateOf(false) }
 
     val loanReasons = listOf("🍔 Food", "🚑 Emergency", "🛍️ Shopping", "🚌 Travel", "Bills", "Other")
+    val relationships = listOf("Friend", "Family", "Colleague", "Neighbor", "Other")
 
     if (showLoanDatePicker) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = loanDate)
@@ -219,31 +221,84 @@ fun AddLoanScreen(
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("Loan Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
 
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    CustomTextField(
-                        value = name,
-                        onValueChange = { 
-                            name = it
-                            showSuggestions = true 
-                        },
-                        label = "Person Name",
-                        leadingIcon = Icons.Default.Person,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    
-                    if (showSuggestions && nameSuggestions.isNotEmpty()) {
-                        DropdownMenu(
-                            expanded = true,
-                            onDismissRequest = { showSuggestions = false },
-                            properties = PopupProperties(focusable = false),
-                            modifier = Modifier.fillMaxWidth(0.8f).background(MaterialTheme.colorScheme.surface)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        CustomTextField(
+                            value = name,
+                            onValueChange = { 
+                                name = it
+                                showSuggestions = true 
+                            },
+                            label = "Person Name",
+                            leadingIcon = Icons.Default.Person,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        
+                        if (showSuggestions && nameSuggestions.isNotEmpty()) {
+                            DropdownMenu(
+                                expanded = true,
+                                onDismissRequest = { showSuggestions = false },
+                                properties = PopupProperties(focusable = false),
+                                modifier = Modifier.fillMaxWidth(0.8f).background(MaterialTheme.colorScheme.surface)
+                            ) {
+                                nameSuggestions.forEach { suggestion ->
+                                    DropdownMenuItem(
+                                        text = { Text(suggestion, color = Color.White) },
+                                        onClick = {
+                                            name = suggestion
+                                            showSuggestions = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Relationship Dropdown
+                    var expanded by remember { mutableStateOf(false) }
+                    val relationshipIcon = when (selectedRelationship) {
+                        "Friend", "Family" -> Icons.Default.Handshake
+                        "Colleague" -> Icons.Default.BusinessCenter
+                        else -> Icons.Default.Group
+                    }
+
+                    Box(modifier = Modifier.width(120.dp)) {
+                        OutlinedCard(
+                            onClick = { expanded = true },
+                            shape = CircleShape,
+                            colors = CardDefaults.outlinedCardColors(
+                                containerColor = Color.Transparent,
+                                contentColor = Color.White
+                            ),
+                            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(Color.Gray.copy(alpha = 0.5f)))
                         ) {
-                            nameSuggestions.forEach { suggestion ->
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp, vertical = 12.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Icon(relationshipIcon, contentDescription = null, modifier = Modifier.size(20.dp), tint = PrimaryLime)
+                                Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.Gray)
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                            modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                        ) {
+                            relationships.forEach { rel ->
                                 DropdownMenuItem(
-                                    text = { Text(suggestion, color = Color.White) },
+                                    text = { Text(rel, color = Color.White) },
                                     onClick = {
-                                        name = suggestion
-                                        showSuggestions = false
+                                        selectedRelationship = rel
+                                        expanded = false
                                     }
                                 )
                             }
@@ -355,7 +410,7 @@ fun AddLoanScreen(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     // Upload Button
                     Box(
@@ -372,7 +427,7 @@ fun AddLoanScreen(
                     // Preview Section
                     if (proofUri != null) {
                         Column(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f).padding(start = 16.dp),
                             horizontalAlignment = Alignment.Start
                         ) {
                             Box(
@@ -416,7 +471,7 @@ fun AddLoanScreen(
                             "No attachment selected",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f).padding(start = 16.dp)
                         )
                     }
                 }
@@ -431,7 +486,8 @@ fun AddLoanScreen(
                         amount = amount.toDoubleOrNull() ?: 0.0,
                         loanDate = Date(loanDate), returnDate = Date(returnDate),
                         purpose = purpose.ifBlank { null }, notes = notes.ifBlank { null },
-                        interest = null, proofUri = proofUri?.toString()
+                        interest = null, relationshipType = selectedRelationship,
+                        proofUri = proofUri?.toString()
                     )
                     onNavigateBack()
                 },

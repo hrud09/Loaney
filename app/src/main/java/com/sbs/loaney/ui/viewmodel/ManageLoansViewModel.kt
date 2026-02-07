@@ -58,6 +58,7 @@ class ManageLoansViewModel @Inject constructor(
         purpose: String?,
         notes: String?,
         interest: Double?,
+        relationshipType: String? = null,
         proofUri: String? = null
     ) {
         viewModelScope.launch {
@@ -74,6 +75,7 @@ class ManageLoansViewModel @Inject constructor(
                 notes = notes,
                 interest = interest,
                 proofUri = proofUri,
+                relationshipType = relationshipType,
                 status = LoanStatus.ACTIVE
             )
             repository.insertLoan(loan)

@@ -22,5 +22,6 @@ data class LoanEntity(
     val interest: Double?,
     val proofUri: String? = null,
     val status: LoanStatus = LoanStatus.ACTIVE,
+    val relationshipType: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )
