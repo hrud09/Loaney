@@ -12,9 +12,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +26,7 @@ import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.ui.theme.PrimaryLime
 import com.sbs.loaney.ui.theme.SecondaryOrange
 import com.sbs.loaney.ui.theme.TertiaryRed
+import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
 import com.sbs.loaney.ui.viewmodel.ManageLoansViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -38,10 +37,12 @@ fun ManageLoansScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAddLoan: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
-    viewModel: ManageLoansViewModel = hiltViewModel()
+    viewModel: ManageLoansViewModel = hiltViewModel(),
+    trackerViewModel: LoanTrackerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+    var selectedLoanIdForPayment by remember { mutableStateOf<Long?>(null) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -117,15 +118,74 @@ fun ManageLoansScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(uiState.loans) { item ->
-                        ManageLoanCard(
+                        SwipeableManageLoanCard(
                             item = item,
                             dateFormat = dateFormat,
-                            onClick = { onNavigateToDetail(item.loan.id) }
+                            onClick = { onNavigateToDetail(item.loan.id) },
+                            onSwipeLeft = { selectedLoanIdForPayment = item.loan.id }
                         )
                     }
                 }
             }
         }
+    }
+
+    if (selectedLoanIdForPayment != null) {
+        trackerViewModel.selectLoan(selectedLoanIdForPayment!!)
+        AddPaymentBottomSheet(
+            onDismiss = { selectedLoanIdForPayment = null },
+            onAddPayment = { amount, method, note, proofUri ->
+                trackerViewModel.addPayment(amount, method, note, proofUri)
+                selectedLoanIdForPayment = null
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeableManageLoanCard(
+    item: LoanWithPayments,
+    dateFormat: SimpleDateFormat,
+    onClick: () -> Unit,
+    onSwipeLeft: () -> Unit
+) {
+    val swipeState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onSwipeLeft()
+                false
+            } else false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = swipeState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(PrimaryLime),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Row(
+                    modifier = Modifier.padding(end = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Add Payment", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
+                }
+            }
+        }
+    ) {
+        ManageLoanCard(
+            item = item,
+            dateFormat = dateFormat,
+            onClick = onClick
+        )
     }
 }
 
@@ -140,7 +200,6 @@ fun ManageLoanCard(
     val paid = item.payments.sumOf { it.amount }
     val progress = if (loan.amount > 0) (paid / loan.amount).toFloat() else 0f
     
-    // Colorful card background based on status or type, similar to HomeScreen
     val cardColor = when (loan.status) {
         LoanStatus.OVERDUE -> TertiaryRed
         LoanStatus.FULLY_PAID -> PrimaryLime

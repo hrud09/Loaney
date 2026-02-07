@@ -19,9 +19,7 @@ import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.AttachMoney
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +35,7 @@ import com.sbs.loaney.ui.theme.PrimaryLime
 import com.sbs.loaney.ui.theme.SecondaryOrange
 import com.sbs.loaney.ui.theme.TertiaryRed
 import com.sbs.loaney.ui.viewmodel.HomeViewModel
+import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,9 +43,11 @@ fun HomeScreen(
     onNavigateToManage: () -> Unit,
     onNavigateToAddLoan: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    trackerViewModel: LoanTrackerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedLoanIdForPayment by remember { mutableStateOf<Long?>(null) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -145,17 +146,79 @@ fun HomeScreen(
                     }
                     val textColor = Color.Black // Dark text on pastel cards
 
-                    HomeLoanItem(
-                        item = item, 
+                    SwipeableLoanItem(
+                        item = item,
                         backgroundColor = cardColor,
                         contentColor = textColor,
-                        onClick = { onNavigateToDetail(item.loan.id) }
+                        onClick = { onNavigateToDetail(item.loan.id) },
+                        onSwipeLeft = { selectedLoanIdForPayment = item.loan.id }
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(100.dp)) // Bottom padding for FAB/Nav
         }
+    }
+
+    if (selectedLoanIdForPayment != null) {
+        trackerViewModel.selectLoan(selectedLoanIdForPayment!!)
+        AddPaymentBottomSheet(
+            onDismiss = { selectedLoanIdForPayment = null },
+            onAddPayment = { amount, method, note, proofUri ->
+                trackerViewModel.addPayment(amount, method, note, proofUri)
+                selectedLoanIdForPayment = null
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SwipeableLoanItem(
+    item: LoanWithPayments,
+    backgroundColor: Color,
+    contentColor: Color,
+    onClick: () -> Unit,
+    onSwipeLeft: () -> Unit
+) {
+    val swipeState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onSwipeLeft()
+                false // Don't actually dismiss the item
+            } else false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = swipeState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(PrimaryLime),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Row(
+                    modifier = Modifier.padding(end = 24.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Add Payment", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
+                }
+            }
+        }
+    ) {
+        HomeLoanItem(
+            item = item,
+            backgroundColor = backgroundColor,
+            contentColor = contentColor,
+            onClick = onClick
+        )
     }
 }
 
@@ -216,7 +279,7 @@ fun HomeLoanItem(
     
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
@@ -288,4 +351,3 @@ fun HomeLoanItem(
         }
     }
 }
-

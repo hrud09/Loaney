@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -53,9 +54,41 @@ fun LoanTrackerScreen(
     val context = LocalContext.current
     var showAddPaymentSheet by remember { mutableStateOf(false) }
     var showAddLoanSheet by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     LaunchedEffect(loanId) {
         viewModel.selectLoan(loanId)
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = TertiaryRed) },
+            title = { Text("Delete Loan?") },
+            text = { Text("Are you sure you want to delete this loan record? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        uiState.selectedLoan?.loan?.let {
+                            viewModel.deleteLoan(it)
+                            onNavigateBack()
+                        }
+                        showDeleteConfirmation = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = TertiaryRed)
+                ) {
+                    Text("Delete", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = Color.White,
+            textContentColor = Color.Gray
+        )
     }
 
     Scaffold(
@@ -70,10 +103,7 @@ fun LoanTrackerScreen(
                 },
                 actions = {
                     if (uiState.selectedLoan != null) {
-                        IconButton(onClick = { 
-                            viewModel.deleteLoan(uiState.selectedLoan!!.loan)
-                            onNavigateBack()
-                        }) {
+                        IconButton(onClick = { showDeleteConfirmation = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete", tint = TertiaryRed)
                         }
                     }
