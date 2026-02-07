@@ -2,6 +2,7 @@ package com.sbs.loaney.ui.screens
 
 import android.net.Uri
 import android.provider.ContactsContract
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -21,12 +22,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.ui.theme.PrimaryLime
 import com.sbs.loaney.ui.theme.SecondaryOrange
@@ -55,6 +59,7 @@ fun AddLoanScreen(
     var purpose by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var proofUri by remember { mutableStateOf<Uri?>(null) }
+    var proofFileName by remember { mutableStateOf<String?>(null) }
     
     var showSuggestions by remember { mutableStateOf(false) }
     val nameSuggestions = remember(name, uiState.loans) {
@@ -130,7 +135,17 @@ fun AddLoanScreen(
 
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> proofUri = uri }
+    ) { uri: Uri? -> 
+        proofUri = uri
+        uri?.let {
+            context.contentResolver.query(it, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (cursor.moveToFirst()) {
+                    proofFileName = cursor.getString(nameIndex)
+                }
+            }
+        }
+    }
 
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     val themeColor = if (selectedLoanType == LoanType.LEND) PrimaryLime else SecondaryOrange
@@ -313,27 +328,72 @@ fun AddLoanScreen(
                 ) {
                     Text("Attachment", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
                     
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color.White.copy(alpha = 0.05f))
-                            .clickable { imageLauncher.launch("image/*") },
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
+                        // Upload Button
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color.White.copy(alpha = 0.05f))
+                                .clickable { imageLauncher.launch("image/*") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "Add Attachment", tint = Color.Gray)
+                        }
+
+                        // Preview Section
                         if (proofUri != null) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = PrimaryLime)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Document Attached", color = Color.White)
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(Color.Black.copy(alpha = 0.2f))
+                                ) {
+                                    AsyncImage(
+                                        model = proofUri,
+                                        contentDescription = "Attachment Preview",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    // Remove button
+                                    IconButton(
+                                        onClick = { 
+                                            proofUri = null
+                                            proofFileName = null
+                                        },
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .size(24.dp)
+                                            .padding(4.dp)
+                                            .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                    ) {
+                                        Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.White, modifier = Modifier.size(12.dp))
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = proofFileName ?: "attachment.jpg",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.Gray,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
                         } else {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.CloudUpload, contentDescription = null, tint = Color.Gray)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text("Upload Proof (Image)", color = Color.Gray, style = MaterialTheme.typography.labelSmall)
-                            }
+                            Text(
+                                "No attachment selected",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray,
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
