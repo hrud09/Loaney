@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,6 +45,7 @@ fun ManageLoansScreen(
     val uiState by viewModel.uiState.collectAsState()
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
     var selectedLoanIdForPayment by remember { mutableStateOf<Long?>(null) }
+    var loanToDelete by remember { mutableStateOf<LoanWithPayments?>(null) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -122,7 +125,8 @@ fun ManageLoansScreen(
                             item = item,
                             dateFormat = dateFormat,
                             onClick = { onNavigateToDetail(item.loan.id) },
-                            onSwipeLeft = { selectedLoanIdForPayment = item.loan.id }
+                            onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
+                            onSwipeRight = { loanToDelete = item }
                         )
                     }
                 }
@@ -140,6 +144,34 @@ fun ManageLoansScreen(
             }
         )
     }
+
+    if (loanToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { loanToDelete = null },
+            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = TertiaryRed) },
+            title = { Text("Delete Loan?") },
+            text = { Text("Are you sure you want to delete the loan for ${loanToDelete?.loan?.personName}? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        loanToDelete?.loan?.let { trackerViewModel.deleteLoan(it) }
+                        loanToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = TertiaryRed)
+                ) {
+                    Text("Delete", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { loanToDelete = null }) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = Color.White,
+            textContentColor = Color.Gray
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -148,35 +180,72 @@ fun SwipeableManageLoanCard(
     item: LoanWithPayments,
     dateFormat: SimpleDateFormat,
     onClick: () -> Unit,
-    onSwipeLeft: () -> Unit
+    onSwipeLeft: () -> Unit,
+    onSwipeRight: () -> Unit
 ) {
     val swipeState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
-            if (it == SwipeToDismissBoxValue.EndToStart) {
-                onSwipeLeft()
-                false
-            } else false
-        }
+            when (it) {
+                SwipeToDismissBoxValue.EndToStart -> {
+                    onSwipeLeft()
+                    false
+                }
+                SwipeToDismissBoxValue.StartToEnd -> {
+                    onSwipeRight()
+                    false
+                }
+                else -> false
+            }
+        },
+        positionalThreshold = { totalDistance -> totalDistance * 0.4f }
     )
 
     SwipeToDismissBox(
         state = swipeState,
-        enableDismissFromStartToEnd = false,
+        enableDismissFromStartToEnd = true,
         backgroundContent = {
+            val direction = swipeState.dismissDirection
+            val color = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> TertiaryRed
+                SwipeToDismissBoxValue.EndToStart -> PrimaryLime
+                else -> Color.Transparent
+            }
+            val alignment = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
+                else -> Alignment.Center
+            }
+            val icon = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Delete
+                SwipeToDismissBoxValue.EndToStart -> Icons.Default.Add
+                else -> Icons.Default.Add
+            }
+            val label = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> "Delete"
+                SwipeToDismissBoxValue.EndToStart -> "Add Payment"
+                else -> ""
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(24.dp))
-                    .background(PrimaryLime),
-                contentAlignment = Alignment.CenterEnd
+                    .background(color),
+                contentAlignment = alignment
             ) {
                 Row(
-                    modifier = Modifier.padding(end = 24.dp),
+                    modifier = Modifier.padding(horizontal = 24.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Add Payment", color = Color.Black, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black)
+                    if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                        Icon(icon, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(label, color = Color.White, fontWeight = FontWeight.Bold)
+                    } else if (direction == SwipeToDismissBoxValue.EndToStart) {
+                        Text(label, color = Color.Black, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(icon, contentDescription = null, tint = Color.Black)
+                    }
                 }
             }
         }
