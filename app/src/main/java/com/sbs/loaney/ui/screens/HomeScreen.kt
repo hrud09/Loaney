@@ -64,7 +64,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header
             Row(
@@ -118,12 +118,31 @@ fun HomeScreen(
                 )
             }
 
+            // Add Loan Button - Extended Long Button (Home Screen Only)
+            Button(
+                onClick = onNavigateToAddLoan,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrimaryLime,
+                    contentColor = Color.Black
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Add New Loan", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+
             // Section: Recent Activity / Loans
             Text(
                 text = "Recent Activity",
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.White,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp)
             )
 
             if (uiState.lentLoans.isEmpty() && uiState.borrowedLoans.isEmpty()) {
@@ -140,23 +159,24 @@ fun HomeScreen(
                 // Combine and show a few
                 val allLoans = (uiState.lentLoans + uiState.borrowedLoans).sortedByDescending { it.loan.loanDate }
                 
-                allLoans.take(5).forEachIndexed { index, item ->
-                    // Alternate card colors for visual interest like the Dribbble shot
-                    val cardColor = when (index % 3) {
-                        0 -> PrimaryLime
-                        1 -> SecondaryOrange
-                        else -> TertiaryRed
-                    }
-                    val textColor = Color.Black // Dark text on pastel cards
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    allLoans.take(5).forEachIndexed { index, item ->
+                        val cardColor = when (index % 3) {
+                            0 -> PrimaryLime
+                            1 -> SecondaryOrange
+                            else -> TertiaryRed
+                        }
+                        val textColor = Color.Black
 
-                    SwipeableLoanItem(
-                        item = item,
-                        backgroundColor = cardColor,
-                        contentColor = textColor,
-                        onClick = { onNavigateToDetail(item.loan.id) },
-                        onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
-                        onSwipeRight = { loanToDelete = item }
-                    )
+                        SwipeableLoanItem(
+                            item = item,
+                            backgroundColor = cardColor,
+                            contentColor = textColor,
+                            onClick = { onNavigateToDetail(item.loan.id) },
+                            onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
+                            onSwipeRight = { loanToDelete = item }
+                        )
+                    }
                 }
             }
 

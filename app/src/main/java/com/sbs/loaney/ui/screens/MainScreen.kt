@@ -33,6 +33,7 @@ fun MainScreen() {
     
     val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route)
     val isTopLevel = currentDestination?.route in topLevelRoutes
+    val isHome = currentDestination?.route == Screen.Home.route
 
     val items = listOf(
         NavigationItem("Home", Screen.Home.route, Icons.Default.Home),
@@ -82,20 +83,22 @@ fun MainScreen() {
                              }
                          }
 
-                         // Add Loan FAB inside the bar
-                         Spacer(modifier = Modifier.width(8.dp))
-                         IconButton(
-                             onClick = { navController.navigate(Screen.AddLoan.route) },
-                             modifier = Modifier
-                                 .clip(CircleShape)
-                                 .background(MaterialTheme.colorScheme.secondary) // Orange/Yellow accent
-                                 .size(48.dp)
-                         ) {
-                             Icon(
-                                 Icons.Default.Add,
-                                 contentDescription = "Add Loan",
-                                 tint = Color.Black
-                             )
+                         // Add Loan FAB inside the bar - only shown when NOT on Home
+                         if (!isHome) {
+                             Spacer(modifier = Modifier.width(8.dp))
+                             IconButton(
+                                 onClick = { navController.navigate(Screen.AddLoan.route) },
+                                 modifier = Modifier
+                                     .clip(CircleShape)
+                                     .background(MaterialTheme.colorScheme.secondary)
+                                     .size(48.dp)
+                             ) {
+                                 Icon(
+                                     Icons.Default.Add,
+                                     contentDescription = "Add Loan",
+                                     tint = Color.Black
+                                 )
+                             }
                          }
                      }
                  }
