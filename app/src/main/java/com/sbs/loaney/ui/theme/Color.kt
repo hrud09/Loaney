@@ -2,29 +2,28 @@ package com.sbs.loaney.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val PrimaryBlue = Color(0xFF0066CC)
-val SecondaryGreen = Color(0xFF34C759)
-val TertiaryOrange = Color(0xFFFF9500)
-val SurfaceWhite = Color(0xFFFFFFFF)
-val ErrorRed = Color(0xFFFF3B30)
+// === Dark Finance Palette (Screenshot Match) ===
 
-// Dribbble-inspired Palette
-val BlackBG = Color(0xFF18181A)
-val ChipGrey = Color(0xFF2C2C2E)
-val PrimaryLime = Color(0xFFD6E89E)
-val SecondaryOrange = Color(0xFFFFD075)
-val TertiaryRed = Color(0xFFFF6B6B)
-val LightGreyCard = Color(0xFFF2F2F2)
-val AccentYellow = Color(0xFFFFD740)
+// Backgrounds
+val DeepCharcoal    = Color(0xFF12141A)   // Main background
+val SurfaceDark     = Color(0xFF1E2028)   // Card / bottom bar
+val SurfaceElevated = Color(0xFF252830)   // Elevated card / input bg
+val SurfaceBorder   = Color(0xFF2E3140)   // Subtle card border
 
-val PrimaryDark = PrimaryLime
-val SecondaryDark = SecondaryOrange
-val TertiaryDark = TertiaryRed
-val BackgroundDark = BlackBG
-val SurfaceDark = ChipGrey
+// Accents
+val NeonLime        = Color(0xFFC6FF00)   // Primary — Lent, positive, CTA
+val SkyBlue         = Color(0xFF4DC9FF)   // Secondary — charts, active input
+val CoralRed        = Color(0xFFFF6B6B)   // Tertiary — Borrowed, negative, delete
+val AccentPurple    = Color(0xFF9B7FFF)   // Quaternary — misc chart, tags
+val AccentOrange    = Color(0xFFFF9F45)   // Quinary — overdue, warn
 
-val PrimaryLight = PrimaryLime
-val SecondaryLight = SecondaryOrange
-val TertiaryLight = TertiaryRed
-val BackgroundLight = Color(0xFFFFFFFF)
-val SurfaceLight = Color(0xFFF2F2F2)
+// Semantic aliases
+val PrimaryLime     = NeonLime
+val SecondaryBlue   = SkyBlue
+val TertiaryRed     = CoralRed
+val BlackBG         = DeepCharcoal
+val ChipGrey        = SurfaceDark
+
+// Legacy aliases kept so existing screens compile
+val SecondaryOrange = AccentOrange
+val AccentYellow    = NeonLime

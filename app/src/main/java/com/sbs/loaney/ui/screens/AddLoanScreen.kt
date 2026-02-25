@@ -37,9 +37,10 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.sbs.loaney.data.model.LoanType
-import com.sbs.loaney.ui.theme.PrimaryLime
-import com.sbs.loaney.ui.theme.SecondaryOrange
-import com.sbs.loaney.ui.theme.TertiaryRed
+import com.sbs.loaney.ui.theme.NeonLime
+import com.sbs.loaney.ui.theme.SkyBlue
+import com.sbs.loaney.ui.theme.SurfaceDark
+import com.sbs.loaney.ui.theme.SurfaceElevated
 import com.sbs.loaney.ui.viewmodel.ManageLoansViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -81,21 +82,40 @@ fun AddLoanScreen(
     val loanReasons = listOf("🍔 Food", "🚑 Emergency", "🛍️ Shopping", "🚌 Travel", "Bills", "Other")
     val relationships = listOf("Friend", "Family", "Colleague", "Neighbor", "Other")
 
+    val datePickerColors = DatePickerDefaults.colors(
+        containerColor = SurfaceDark,
+        titleContentColor = Color.White,
+        headlineContentColor = Color.White,
+        weekdayContentColor = Color.Gray,
+        subheadContentColor = Color.Gray,
+        navigationContentColor = Color.White,
+        yearContentColor = Color.White,
+        currentYearContentColor = NeonLime,
+        selectedYearContentColor = Color.Black,
+        selectedYearContainerColor = NeonLime,
+        dayContentColor = Color.White,
+        selectedDayContentColor = Color.Black,
+        selectedDayContainerColor = NeonLime,
+        todayContentColor = NeonLime,
+        todayDateBorderColor = NeonLime
+    )
+
     if (showLoanDatePicker) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = loanDate)
         DatePickerDialog(
             onDismissRequest = { showLoanDatePicker = false },
+            colors = DatePickerDefaults.colors(containerColor = SurfaceDark),
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { loanDate = it }
                     showLoanDatePicker = false
-                }) { Text("OK") }
+                }) { Text("OK", color = NeonLime) }
             },
             dismissButton = {
-                TextButton(onClick = { showLoanDatePicker = false }) { Text("Cancel") }
+                TextButton(onClick = { showLoanDatePicker = false }) { Text("Cancel", color = Color.Gray) }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(state = datePickerState, colors = datePickerColors)
         }
     }
 
@@ -103,17 +123,18 @@ fun AddLoanScreen(
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = returnDate)
         DatePickerDialog(
             onDismissRequest = { showReturnDatePicker = false },
+            colors = DatePickerDefaults.colors(containerColor = SurfaceDark),
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { returnDate = it }
                     showReturnDatePicker = false
-                }) { Text("OK") }
+                }) { Text("OK", color = NeonLime) }
             },
             dismissButton = {
-                TextButton(onClick = { showReturnDatePicker = false }) { Text("Cancel") }
+                TextButton(onClick = { showReturnDatePicker = false }) { Text("Cancel", color = Color.Gray) }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(state = datePickerState, colors = datePickerColors)
         }
     }
 
@@ -158,7 +179,7 @@ fun AddLoanScreen(
     }
 
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    val themeColor = if (selectedLoanType == LoanType.LEND) PrimaryLime else SecondaryOrange
+    val themeColor = if (selectedLoanType == LoanType.LEND) NeonLime else SkyBlue
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -193,14 +214,14 @@ fun AddLoanScreen(
         ) {
             // Segmented Control
             Surface(
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = SurfaceElevated,
                 shape = CircleShape,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(modifier = Modifier.padding(4.dp)) {
                     listOf(LoanType.LEND to "LEND", LoanType.BORROW to "BORROW").forEach { (loanType, text) ->
                         val selected = selectedLoanType == loanType
-                        val color = if (loanType == LoanType.LEND) PrimaryLime else SecondaryOrange
+                        val color = if (loanType == LoanType.LEND) NeonLime else SkyBlue
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -246,7 +267,7 @@ fun AddLoanScreen(
                                 expanded = true,
                                 onDismissRequest = { showSuggestions = false },
                                 properties = PopupProperties(focusable = false),
-                                modifier = Modifier.fillMaxWidth(0.8f).background(MaterialTheme.colorScheme.surface)
+                                modifier = Modifier.fillMaxWidth(0.8f).background(SurfaceElevated)
                             ) {
                                 nameSuggestions.forEach { suggestion ->
                                     DropdownMenuItem(
@@ -274,10 +295,10 @@ fun AddLoanScreen(
                             onClick = { expanded = true },
                             shape = CircleShape,
                             colors = CardDefaults.outlinedCardColors(
-                                containerColor = Color.Transparent,
+                                containerColor = SurfaceElevated,
                                 contentColor = Color.White
                             ),
-                            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(Color.Gray.copy(alpha = 0.5f)))
+                            border = CardDefaults.outlinedCardBorder().copy(brush = androidx.compose.ui.graphics.SolidColor(Color.Transparent))
                         ) {
                             Row(
                                 modifier = Modifier
@@ -286,7 +307,7 @@ fun AddLoanScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Icon(relationshipIcon, contentDescription = null, modifier = Modifier.size(20.dp), tint = PrimaryLime)
+                                Icon(relationshipIcon, contentDescription = null, modifier = Modifier.size(20.dp), tint = SkyBlue)
                                 Text(selectedRelationship, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
                                 Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.Gray)
                             }
@@ -295,7 +316,7 @@ fun AddLoanScreen(
                         DropdownMenu(
                             expanded = expanded,
                             onDismissRequest = { expanded = false },
-                            modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                            modifier = Modifier.background(SurfaceElevated)
                         ) {
                             relationships.forEach { rel ->
                                 DropdownMenuItem(
@@ -338,14 +359,14 @@ fun AddLoanScreen(
                                 onClick = { purpose = if (isSelected) "" else reason },
                                 label = { Text(reason) },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = Color.White.copy(alpha = 0.05f),
-                                    labelColor = Color.Gray,
-                                    selectedContainerColor = PrimaryLime,
-                                    selectedLabelColor = Color.Black
+                                    containerColor = SurfaceElevated,
+                                    labelColor = Color.LightGray,
+                                    selectedContainerColor = SkyBlue.copy(alpha = 0.1f),
+                                    selectedLabelColor = SkyBlue
                                 ),
                                 border = FilterChipDefaults.filterChipBorder(
-                                    borderColor = Color.Gray.copy(alpha = 0.3f),
-                                    selectedBorderColor = PrimaryLime,
+                                    borderColor = Color.Transparent,
+                                    selectedBorderColor = SkyBlue,
                                     enabled = true,
                                     selected = isSelected
                                 ),
@@ -429,11 +450,13 @@ fun AddLoanScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = CircleShape,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryLime,
-                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                        focusedBorderColor = SkyBlue,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedContainerColor = SurfaceElevated.copy(alpha = 0.5f),
+                        unfocusedContainerColor = SurfaceElevated,
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        cursorColor = PrimaryLime
+                        cursorColor = SkyBlue
                     ),
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium
@@ -454,11 +477,11 @@ fun AddLoanScreen(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color.White.copy(alpha = 0.05f))
+                            .background(SurfaceElevated)
                             .clickable { imageLauncher.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Attachment", tint = Color.Gray)
+                        Icon(Icons.Default.Add, contentDescription = "Add Attachment", tint = Color.LightGray)
                     }
 
                     // Preview Section
@@ -566,16 +589,18 @@ fun CustomTextField(
         modifier = modifier.fillMaxWidth(),
         shape = CircleShape,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = PrimaryLime,
-            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-            focusedLabelColor = PrimaryLime,
-            unfocusedLabelColor = Color.Gray,
+            focusedBorderColor = SkyBlue,
+            unfocusedBorderColor = Color.Transparent,
+            focusedContainerColor = SurfaceElevated.copy(alpha = 0.5f),
+            unfocusedContainerColor = SurfaceElevated,
+            focusedLabelColor = SkyBlue,
+            unfocusedLabelColor = Color.LightGray,
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.White,
-            cursorColor = PrimaryLime
+            cursorColor = SkyBlue
         ),
         leadingIcon = leadingIcon?.let {
-            { Icon(it, contentDescription = null, tint = if (value.isNotEmpty()) PrimaryLime else Color.Gray) }
+            { Icon(it, contentDescription = null, tint = if (value.isNotEmpty()) SkyBlue else Color.Gray) }
         },
         trailingIcon = if (trailingIcon != null) {
             {

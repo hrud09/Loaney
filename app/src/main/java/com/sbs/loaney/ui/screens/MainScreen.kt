@@ -1,26 +1,16 @@
 package com.sbs.loaney.ui.screens
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -30,6 +20,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sbs.loaney.ui.navigation.Screen
+import com.sbs.loaney.ui.theme.NeonLime
+import com.sbs.loaney.ui.theme.SurfaceDark
 
 @Composable
 fun MainScreen() {
@@ -51,8 +43,8 @@ fun MainScreen() {
         bottomBar = {
             if (isTopLevel) {
                 NavigationBar(
-                    containerColor = Color(0xFF1C2024), // Surface color
-                    contentColor = Color(0xFFC3FF4D) // Primary color
+                    containerColor = SurfaceDark,
+                    contentColor = NeonLime
                 ) {
                     items.forEach { item ->
                         val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
@@ -69,8 +61,8 @@ fun MainScreen() {
                             label = { Text(item.label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.Black,
-                                selectedTextColor = Color(0xFFC3FF4D),
-                                indicatorColor = Color(0xFFC3FF4D),
+                                selectedTextColor = NeonLime,
+                                indicatorColor = NeonLime,
                                 unselectedIconColor = Color.Gray,
                                 unselectedTextColor = Color.Gray
                             )
