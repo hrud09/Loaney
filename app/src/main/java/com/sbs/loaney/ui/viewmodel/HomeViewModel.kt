@@ -7,10 +7,12 @@ import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.data.repository.LoanRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.sbs.loaney.data.local.entity.BankAccountEntity
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
 import javax.inject.Inject
@@ -23,7 +25,8 @@ data class HomeUiState(
     val overdueCount: Int = 0,
     val dueSoonCount: Int = 0,
     val lentLoans: List<LoanWithPayments> = emptyList(),
-    val borrowedLoans: List<LoanWithPayments> = emptyList()
+    val borrowedLoans: List<LoanWithPayments> = emptyList(),
+    val bankAccounts: List<BankAccountEntity> = emptyList()
 )
 
 @HiltViewModel
@@ -31,10 +34,13 @@ class HomeViewModel @Inject constructor(
     private val repository: LoanRepository
 ) : ViewModel() {
 
-    val uiState: StateFlow<HomeUiState> = repository.getAllLoans()
-        .map { loansWithPayments ->
-            calculateSummary(loansWithPayments)
-        }.stateIn(
+    val uiState: StateFlow<HomeUiState> = combine(
+        repository.getAllLoans(),
+        repository.getAllBankAccounts()
+    ) { loansWithPayments, accounts ->
+        val summary = calculateSummary(loansWithPayments)
+        summary.copy(bankAccounts = accounts)
+    }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = HomeUiState()
@@ -87,5 +93,32 @@ class HomeViewModel @Inject constructor(
             lentLoans = loans.filter { it.loan.type == LoanType.LEND && it.loan.status != LoanStatus.FULLY_PAID },
             borrowedLoans = loans.filter { it.loan.type == LoanType.BORROW && it.loan.status != LoanStatus.FULLY_PAID }
         )
+    }
+
+    fun addBankAccount(
+        accountName: String,
+        accountNumber: String,
+        bankName: String,
+        branchName: String?,
+        swiftCode: String?,
+        coverImageUri: String?
+    ) {
+        viewModelScope.launch {
+            val account = BankAccountEntity(
+                accountName = accountName,
+                accountNumber = accountNumber,
+                bankName = bankName,
+                branchName = branchName,
+                swiftCode = swiftCode,
+                coverImageUri = coverImageUri
+            )
+            repository.insertBankAccount(account)
+        }
+    }
+
+    fun deleteBankAccount(account: BankAccountEntity) {
+        viewModelScope.launch {
+            repository.deleteBankAccount(account)
+        }
     }
 }

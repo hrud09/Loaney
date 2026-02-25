@@ -9,11 +9,14 @@ import com.sbs.loaney.data.local.dao.LoanDao
 import com.sbs.loaney.data.local.entity.LoanEntity
 import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
+import com.sbs.loaney.data.local.entity.BankAccountEntity
+import com.sbs.loaney.data.local.dao.BankAccountDao
 
-@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class], version = 2, exportSchema = false)
+@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class, BankAccountEntity::class], version = 3, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun loanDao(): LoanDao
+    abstract fun bankAccountDao(): BankAccountDao
 
     companion object {
         @Volatile

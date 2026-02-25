@@ -23,6 +23,6 @@ object AppModule {
     @Provides
     @Singleton
     fun provideLoanRepository(db: AppDatabase): LoanRepository {
-        return LoanRepository(db.loanDao())
+        return LoanRepository(db.loanDao(), db.bankAccountDao())
     }
 }
