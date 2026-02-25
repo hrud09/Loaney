@@ -150,7 +150,7 @@ fun MainScreen() {
             composable(Screen.AddLoan.route) {
                 AddLoanScreen(onNavigateBack = { navController.popBackStack() })
             }
-            composable("profile_screen") { Text("Profile Screen") } // Placeholder
+            composable("profile_screen") { ProfileScreen() }
             composable(
                 route = Screen.LoanDetail.route,
                 arguments = listOf(navArgument("loanId") { type = NavType.LongType })
