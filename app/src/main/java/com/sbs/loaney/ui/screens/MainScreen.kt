@@ -20,8 +20,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sbs.loaney.ui.navigation.Screen
-import com.sbs.loaney.ui.theme.NeonLime
-import com.sbs.loaney.ui.theme.SurfaceDark
 
 @Composable
 fun MainScreen() {
@@ -29,13 +27,12 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     
-    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route, "profile_screen")
+    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route)
     val isTopLevel = currentDestination?.route in topLevelRoutes
 
     val items = listOf(
         NavigationItem("Home", Screen.Home.route, Icons.Default.Home),
-        NavigationItem("Manage", Screen.ManageLoans.route, Icons.AutoMirrored.Filled.List),
-        NavigationItem("Profile", "profile_screen", Icons.Default.Person) 
+        NavigationItem("History", Screen.ManageLoans.route, Icons.AutoMirrored.Filled.List)
     )
 
     Scaffold(
@@ -43,8 +40,8 @@ fun MainScreen() {
         bottomBar = {
             if (isTopLevel) {
                 NavigationBar(
-                    containerColor = SurfaceDark,
-                    contentColor = NeonLime
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary
                 ) {
                     items.forEach { item ->
                         val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
@@ -61,8 +58,8 @@ fun MainScreen() {
                             label = { Text(item.label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.Black,
-                                selectedTextColor = NeonLime,
-                                indicatorColor = NeonLime,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                indicatorColor = MaterialTheme.colorScheme.primary,
                                 unselectedIconColor = Color.Gray,
                                 unselectedTextColor = Color.Gray
                             )
@@ -79,11 +76,11 @@ fun MainScreen() {
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
-                    onNavigateToManage = { navController.navigate(Screen.ManageLoans.route) },
                     onNavigateToAddLoan = { navController.navigate(Screen.AddLoan.route) },
                     onNavigateToDetail = { loanId ->
                         navController.navigate(Screen.LoanDetail.createRoute(loanId))
-                    }
+                    },
+                    onNavigateToHistory = { navController.navigate(Screen.ManageLoans.route) }
                 )
             }
             composable(Screen.ManageLoans.route) {
@@ -97,7 +94,6 @@ fun MainScreen() {
             composable(Screen.AddLoan.route) {
                 AddLoanScreen(onNavigateBack = { navController.popBackStack() })
             }
-            composable("profile_screen") { ProfileScreen() }
             composable(
                 route = Screen.LoanDetail.route,
                 arguments = listOf(navArgument("loanId") { type = NavType.LongType })

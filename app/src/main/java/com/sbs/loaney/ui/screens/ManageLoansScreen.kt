@@ -28,11 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
-import com.sbs.loaney.ui.theme.CoralRed
-import com.sbs.loaney.ui.theme.NeonLime
-import com.sbs.loaney.ui.theme.SkyBlue
-import com.sbs.loaney.ui.theme.SurfaceDark
-import com.sbs.loaney.ui.theme.SurfaceElevated
+import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
 import com.sbs.loaney.ui.viewmodel.ManageLoansViewModel
 import java.text.SimpleDateFormat
@@ -57,7 +53,7 @@ fun ManageLoansScreen(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "Manage", 
+                        "Transactions", 
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
@@ -65,7 +61,7 @@ fun ManageLoansScreen(
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = Color.White
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
@@ -89,17 +85,18 @@ fun ManageLoansScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .background(SurfaceElevated, CircleShape)
+                    .background(Color(0xFFE5E5EA), CircleShape)
                     .padding(4.dp)
             ) {
                 listOf(LoanType.LEND to "LENT", LoanType.BORROW to "BORROWED").forEach { (type, text) ->
                     val selected = uiState.selectedType == type
-                    val activeColor = if (type == LoanType.LEND) NeonLime else SkyBlue
+                    // Using NeonLime for both active states looks cleaner in Light Mode, or White with dark text
+                    val activeColor = if (selected) Color.White else Color.Transparent
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(CircleShape)
-                            .background(if (selected) activeColor else Color.Transparent)
+                            .background(activeColor)
                             .clickable { viewModel.setLoanType(type) }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
@@ -122,7 +119,8 @@ fun ManageLoansScreen(
                     Box(
                         modifier = Modifier
                             .size(100.dp)
-                            .background(SurfaceElevated, CircleShape),
+                            .background(Color.White, CircleShape)
+                            .border(1.dp, SubtleBorder, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -134,9 +132,9 @@ fun ManageLoansScreen(
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        "No loans... yet!",
+                        "No transactions... yet!",
                         style = MaterialTheme.typography.titleLarge,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -155,7 +153,7 @@ fun ManageLoansScreen(
                 ) {
                     items(uiState.loans, key = { it.loan.id }) { item ->
                         SwipeableManageLoanCard(
-                            modifier = Modifier.animateItemPlacement(), // Add smooth animations
+                            modifier = Modifier.animateItem(),
                             item = item,
                             dateFormat = dateFormat,
                             onClick = { onNavigateToDetail(item.loan.id) },
@@ -201,8 +199,8 @@ fun ManageLoansScreen(
                     Text("Cancel", color = Color.Gray)
                 }
             },
-            containerColor = SurfaceDark,
-            titleContentColor = Color.White,
+            containerColor = Color.White,
+            titleContentColor = MaterialTheme.colorScheme.onBackground,
             textContentColor = Color.Gray
         )
     }
@@ -314,11 +312,11 @@ fun ManageLoanCard(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = Color.White.copy(alpha = 0.05f),
+                color = SubtleBorder,
                 shape = RoundedCornerShape(24.dp)
             ),
         shape = RoundedCornerShape(24.dp),
-        color = SurfaceDark,
+        color = Color.White,
     ) {
         Column(
             modifier = Modifier
@@ -335,7 +333,7 @@ fun ManageLoanCard(
                         text = loan.personName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -347,7 +345,7 @@ fun ManageLoanCard(
                 Text(
                     text = "৳${String.format(Locale.getDefault(), "%,.0f", totalLoan)}",
                     style = MaterialTheme.typography.titleLarge,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
 
@@ -359,10 +357,10 @@ fun ManageLoanCard(
                     progress = { progress },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(8.dp) // Thick progress indicator
-                        .clip(RoundedCornerShape(4.dp)), // Rounded
+                        .height(8.dp) 
+                        .clip(RoundedCornerShape(4.dp)), 
                     color = accentColor,
-                    trackColor = SurfaceElevated
+                    trackColor = Color(0xFFF0F0F0)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -393,16 +391,16 @@ fun ManageLoanCard(
             
             val tonalButtonColors = when (loan.status) {
                 LoanStatus.OVERDUE -> ButtonDefaults.filledTonalButtonColors(
-                    containerColor = CoralRed.copy(alpha = 0.15f),
+                    containerColor = CoralRed.copy(alpha = 0.1f),
                     contentColor = CoralRed
                 )
                 LoanStatus.FULLY_PAID -> ButtonDefaults.filledTonalButtonColors(
-                    containerColor = accentColor.copy(alpha = 0.15f),
+                    containerColor = accentColor.copy(alpha = 0.1f),
                     contentColor = accentColor
                 )
                 else -> ButtonDefaults.filledTonalButtonColors( // Active
-                    containerColor = SurfaceElevated,
-                    contentColor = Color.White.copy(alpha = 0.8f)
+                    containerColor = DashboardBg,
+                    contentColor = Color.Black
                 )
             }
 
