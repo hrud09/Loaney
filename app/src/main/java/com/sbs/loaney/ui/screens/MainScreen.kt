@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,19 +36,20 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     
-    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route)
+    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route, "profile_screen")
     val isTopLevel = currentDestination?.route in topLevelRoutes
 
     val items = listOf(
         NavigationItem("Home", Screen.Home.route, Icons.Default.Home),
-        NavigationItem("Manage", Screen.ManageLoans.route, Icons.AutoMirrored.Filled.List)
+        NavigationItem("Manage", Screen.ManageLoans.route, Icons.AutoMirrored.Filled.List),
+        NavigationItem("Profile", "profile_screen", Icons.Default.Person) 
     )
 
     Scaffold(
-        bottomBar = {}, // We will overlay the custom bottom bar in the content using Box
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        bottomBar = {},
         floatingActionButton = {
             if (isTopLevel) {
-                 // Custom Floating Bottom Navigation with Glassmorphism
                  Box(
                      modifier = Modifier
                          .padding(bottom = 16.dp)
@@ -66,7 +68,6 @@ fun MainScreen() {
                          items.forEach { item ->
                              val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
                              
-                             // Selected state animation: 10% size increase
                              val scale by animateFloatAsState(
                                  targetValue = if (selected) 1.1f else 1.0f,
                                  label = "iconScale"
@@ -95,7 +96,6 @@ fun MainScreen() {
                                          .graphicsLayer(scaleX = scale, scaleY = scale)
                                  )
                                  
-                                 // Glowing indicator dot below the selected icon
                                  AnimatedVisibility(
                                      visible = selected,
                                      enter = fadeIn() + expandVertically(),
@@ -105,13 +105,11 @@ fun MainScreen() {
                                          contentAlignment = Alignment.Center,
                                          modifier = Modifier.padding(top = 4.dp)
                                      ) {
-                                         // Outer Glow
                                          Box(
                                              modifier = Modifier
                                                  .size(8.dp)
                                                  .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), CircleShape)
                                          )
-                                         // Inner Dot
                                          Box(
                                              modifier = Modifier
                                                  .size(4.dp)
@@ -130,7 +128,7 @@ fun MainScreen() {
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
@@ -143,7 +141,6 @@ fun MainScreen() {
             }
             composable(Screen.ManageLoans.route) {
                 ManageLoansScreen(
-                    onNavigateBack = { navController.popBackStack() },
                     onNavigateToAddLoan = { navController.navigate(Screen.AddLoan.route) },
                     onNavigateToDetail = { loanId ->
                         navController.navigate(Screen.LoanDetail.createRoute(loanId))
@@ -153,6 +150,7 @@ fun MainScreen() {
             composable(Screen.AddLoan.route) {
                 AddLoanScreen(onNavigateBack = { navController.popBackStack() })
             }
+            composable("profile_screen") { Text("Profile Screen") } // Placeholder
             composable(
                 route = Screen.LoanDetail.route,
                 arguments = listOf(navArgument("loanId") { type = NavType.LongType })
