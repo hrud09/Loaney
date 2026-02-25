@@ -1,7 +1,9 @@
 package com.sbs.loaney.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,10 +12,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,20 +24,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.ui.theme.PrimaryLime
-import com.sbs.loaney.ui.theme.SecondaryOrange
 import com.sbs.loaney.ui.theme.TertiaryRed
 import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
 import com.sbs.loaney.ui.viewmodel.ManageLoansViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ManageLoansScreen(
     onNavigateToAddLoan: () -> Unit,
@@ -50,7 +49,7 @@ fun ManageLoansScreen(
     var loanToDelete by remember { mutableStateOf<LoanWithPayments?>(null) }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color(0xFF0B0E11),
         topBar = {
             CenterAlignedTopAppBar(
                 title = { 
@@ -62,20 +61,20 @@ fun ManageLoansScreen(
                     ) 
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
+                    containerColor = Color.Transparent,
                     titleContentColor = Color.White
                 )
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = onNavigateToAddLoan,
-                containerColor = PrimaryLime,
+                containerColor = Color(0xFFC3FF4D),
                 contentColor = Color.Black,
+                text = { Text("New Loan", fontWeight = FontWeight.Bold) },
+                icon = { Icon(Icons.Default.Add, contentDescription = "Add New Loan") },
                 shape = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Loan")
-            }
+            )
         }
     ) { padding ->
         Column(modifier = Modifier
@@ -87,16 +86,16 @@ fun ManageLoansScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .background(MaterialTheme.colorScheme.surface, CircleShape)
+                    .background(Color(0xFF1C2024), CircleShape)
                     .padding(4.dp)
             ) {
-                listOf(LoanType.LEND to "LEND", LoanType.BORROW to "BORROW").forEach { (type, text) ->
+                listOf(LoanType.LEND to "LENT", LoanType.BORROW to "BORROWED").forEach { (type, text) ->
                     val selected = uiState.selectedType == type
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(CircleShape)
-                            .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .background(if (selected) Color(0xFFC3FF4D) else Color.Transparent)
                             .clickable { viewModel.setLoanType(type) }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
@@ -111,30 +110,46 @@ fun ManageLoansScreen(
             }
 
             if (uiState.loans.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.HourglassEmpty, // A more visually engaging icon
+                        contentDescription = "No loans",
+                        modifier = Modifier.size(64.dp),
+                        tint = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "No loans found.", 
-                        style = MaterialTheme.typography.bodyLarge, 
-                        color = Color.Gray
+                        "No loans... yet!",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Tap the '+' button to add a new loan.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
                     )
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 100.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(uiState.loans, key = { it.loan.id }) { item ->
                         SwipeableManageLoanCard(
+                            modifier = Modifier.animateItemPlacement(), // Add smooth animations
                             item = item,
                             dateFormat = dateFormat,
                             onClick = { onNavigateToDetail(item.loan.id) },
                             onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
                             onSwipeRight = { loanToDelete = item },
-                            onSettle = {
-                                trackerViewModel.selectLoan(item.loan.id)
-                                trackerViewModel.markAsSettled()
-                            }
                         )
                     }
                 }
@@ -175,7 +190,7 @@ fun ManageLoansScreen(
                     Text("Cancel", color = Color.Gray)
                 }
             },
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = Color(0xFF1C2024),
             titleContentColor = Color.White,
             textContentColor = Color.Gray
         )
@@ -185,12 +200,12 @@ fun ManageLoansScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwipeableManageLoanCard(
+    modifier: Modifier = Modifier,
     item: LoanWithPayments,
     dateFormat: SimpleDateFormat,
     onClick: () -> Unit,
     onSwipeLeft: () -> Unit,
-    onSwipeRight: () -> Unit,
-    onSettle: () -> Unit
+    onSwipeRight: () -> Unit
 ) {
     val swipeState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
@@ -211,6 +226,7 @@ fun SwipeableManageLoanCard(
 
     SwipeToDismissBox(
         state = swipeState,
+        modifier = modifier,
         enableDismissFromStartToEnd = true,
         backgroundContent = {
             val direction = swipeState.dismissDirection
@@ -262,8 +278,7 @@ fun SwipeableManageLoanCard(
         ManageLoanCard(
             item = item,
             dateFormat = dateFormat,
-            onClick = onClick,
-            onSettle = onSettle
+            onClick = onClick
         )
     }
 }
@@ -273,185 +288,124 @@ fun SwipeableManageLoanCard(
 fun ManageLoanCard(
     item: LoanWithPayments,
     dateFormat: SimpleDateFormat,
-    onClick: () -> Unit,
-    onSettle: () -> Unit
+    onClick: () -> Unit
 ) {
     val loan = item.loan
     val paid = item.payments.sumOf { it.amount }
     val totalLoan = loan.amount + item.loanItems.sumOf { it.amount }
-    val initialProgress = if (totalLoan > 0) (paid / totalLoan).toFloat() else 0f
-    
-    var sliderValue by remember(item) { mutableFloatStateOf(initialProgress) }
-    var showSuccessOverlay by remember { mutableStateOf(false) }
-    
-    val cardColor = when (loan.status) {
-        LoanStatus.OVERDUE -> TertiaryRed
-        LoanStatus.FULLY_PAID -> PrimaryLime
-        else -> SecondaryOrange
-    }
-    
-    val textColor = Color.Black
+    val progress = if (totalLoan > 0) (paid / totalLoan).toFloat() else 0f
 
-    Card(
-        onClick = if (showSuccessOverlay) ({}) else onClick,
-        modifier = Modifier.fillMaxWidth(),
+    val primaryColor = Color(0xFFC3FF4D)
+    val surfaceColor = Color(0xFF1C2024)
+
+    Surface(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(24.dp)
+            ),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor)
+        color = surfaceColor.copy(alpha = 0.8f), // Glassmorphism style
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = loan.personName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = textColor
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                             Icon(Icons.Default.DateRange, contentDescription = null, tint = textColor.copy(alpha = 0.6f), modifier = Modifier.size(12.dp))
-                             Spacer(modifier = Modifier.width(4.dp))
-                             Text(
-                                text = dateFormat.format(loan.promisedReturnDate),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = textColor.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
-                    val formattedAmount = String.format(Locale.getDefault(), "%.0f", totalLoan)
+        Column(
+            modifier = Modifier
+                .padding(16.dp) // Airy layout
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "৳$formattedAmount",
-                        style = MaterialTheme.typography.titleLarge,
+                        text = loan.personName,
+                        style = MaterialTheme.typography.titleMedium, // High-quality typography
                         fontWeight = FontWeight.Bold,
-                        color = textColor
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Due by: ${dateFormat.format(loan.promisedReturnDate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.7f)
                     )
                 }
+                Text(
+                    text = "৳${String.format(Locale.getDefault(), "%,.0f", totalLoan)}",
+                    style = MaterialTheme.typography.headlineSmall, // High-quality typography
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
 
-                Spacer(modifier = Modifier.height(10.dp))
-                
-                // Interactive Slider
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(), 
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = if (sliderValue >= 1f) "Settle Loan" else "Progress", 
-                            style = MaterialTheme.typography.labelSmall, 
-                            fontWeight = if (sliderValue >= 1f) FontWeight.ExtraBold else FontWeight.Normal,
-                            color = textColor.copy(alpha = 0.7f)
-                        )
-                        Text("${(sliderValue * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = textColor)
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    if (loan.status != LoanStatus.FULLY_PAID) {
-                        Slider(
-                            value = sliderValue,
-                            onValueChange = { 
-                                sliderValue = it
-                                if (it >= 1f) {
-                                    showSuccessOverlay = true
-                                }
-                            },
-                            onValueChangeFinished = {
-                                if (sliderValue >= 1f) {
-                                    onSettle()
-                                } else {
-                                    // Snap back to actual progress if not reached 100%
-                                    sliderValue = initialProgress
-                                }
-                            },
-                            colors = SliderDefaults.colors(
-                                thumbColor = Color.Black,
-                                activeTrackColor = Color.Black,
-                                inactiveTrackColor = Color.Black.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.height(24.dp)
-                        )
-                    } else {
-                        LinearProgressIndicator(
-                            progress = { 1f },
-                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
-                            color = Color.Black,
-                            trackColor = Color.Black.copy(alpha = 0.1f),
-                        )
-                    }
-                }
+            Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(10.dp))
-                
-                // Footer
+            // Progress Section
+            Column {
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp) // Thick progress indicator
+                        .clip(RoundedCornerShape(4.dp)), // Rounded
+                    color = primaryColor,
+                    trackColor = Color.White.copy(alpha = 0.1f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Surface(
-                        color = Color.Black.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(50),
-                        modifier = Modifier.height(28.dp)
-                    ) {
-                         Box(
-                             contentAlignment = Alignment.Center,
-                             modifier = Modifier.padding(horizontal = 10.dp)
-                         ) {
-                             Text(
-                                text = loan.status.name,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = textColor
-                             )
-                         }
-                    }
-                    
-                     Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .background(Color.White.copy(alpha = 0.5f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = loan.personName.take(1), 
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold, 
-                            color = textColor
-                        )
-                    }
+                    Text(
+                        text = "Paid: ৳${String.format(Locale.getDefault(), "%,.0f", paid)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = "${(progress * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = primaryColor
+                    )
                 }
             }
 
-            // Success Overlay
-            androidx.compose.animation.AnimatedVisibility(
-                visible = showSuccessOverlay,
-                enter = fadeIn() + scaleIn(initialScale = 0.8f),
-                exit = fadeOut() + scaleOut()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val statusText = when {
+                loan.status == LoanStatus.FULLY_PAID -> "Paid"
+                loan.status == LoanStatus.OVERDUE -> "Overdue"
+                else -> "Active"
+            }
+            
+            val tonalButtonColors = when (loan.status) {
+                LoanStatus.OVERDUE -> ButtonDefaults.filledTonalButtonColors(
+                    containerColor = Color(0xFFB00020).copy(alpha = 0.3f),
+                    contentColor = Color(0xFFFFB8B8)
+                )
+                LoanStatus.FULLY_PAID -> ButtonDefaults.filledTonalButtonColors(
+                    containerColor = primaryColor.copy(alpha = 0.2f),
+                    contentColor = primaryColor
+                )
+                else -> ButtonDefaults.filledTonalButtonColors( // Active
+                    containerColor = Color.White.copy(alpha = 0.1f),
+                    contentColor = Color.White.copy(alpha = 0.8f)
+                )
+            }
+
+            Button(
+                onClick = { /* Non-interactive */ },
+                shape = CircleShape,
+                colors = tonalButtonColors,
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.height(36.dp),
+                enabled = false
             ) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(24.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            Icons.Default.Check, 
-                            contentDescription = "Settled", 
-                            tint = PrimaryLime,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Text(
-                            "LOAN SETTLED", 
-                            color = PrimaryLime, 
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
+                 Text(text = statusText, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             }
         }
     }

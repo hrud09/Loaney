@@ -287,6 +287,7 @@ fun AddLoanScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Icon(relationshipIcon, contentDescription = null, modifier = Modifier.size(20.dp), tint = PrimaryLime)
+                                Text(selectedRelationship, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
                                 Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.Gray)
                             }
                         }

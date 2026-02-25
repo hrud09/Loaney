@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -47,88 +48,42 @@ fun MainScreen() {
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {},
-        floatingActionButton = {
+        bottomBar = {
             if (isTopLevel) {
-                 Box(
-                     modifier = Modifier
-                         .padding(bottom = 16.dp)
-                         .height(64.dp)
-                         .wrapContentWidth()
-                         .clip(CircleShape)
-                         .background(Color.Black.copy(alpha = 0.8f))
-                         .border(1.dp, Color.White.copy(alpha = 0.1f), CircleShape),
-                     contentAlignment = Alignment.Center
-                 ) {
-                     Row(
-                         modifier = Modifier.padding(horizontal = 24.dp),
-                         verticalAlignment = Alignment.CenterVertically,
-                         horizontalArrangement = Arrangement.spacedBy(32.dp)
-                     ) {
-                         items.forEach { item ->
-                             val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-                             
-                             val scale by animateFloatAsState(
-                                 targetValue = if (selected) 1.1f else 1.0f,
-                                 label = "iconScale"
-                             )
-                             
-                             Column(
-                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                 modifier = Modifier
-                                     .clickable(
-                                         interactionSource = remember { MutableInteractionSource() },
-                                         indication = null
-                                     ) {
-                                         navController.navigate(item.route) {
-                                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                             launchSingleTop = true
-                                             restoreState = true
-                                         }
-                                     }
-                             ) {
-                                 Icon(
-                                     imageVector = item.icon,
-                                     contentDescription = item.label,
-                                     tint = if (selected) MaterialTheme.colorScheme.primary else Color.Gray,
-                                     modifier = Modifier
-                                         .size(24.dp)
-                                         .graphicsLayer(scaleX = scale, scaleY = scale)
-                                 )
-                                 
-                                 AnimatedVisibility(
-                                     visible = selected,
-                                     enter = fadeIn() + expandVertically(),
-                                     exit = fadeOut() + shrinkVertically()
-                                 ) {
-                                     Box(
-                                         contentAlignment = Alignment.Center,
-                                         modifier = Modifier.padding(top = 4.dp)
-                                     ) {
-                                         Box(
-                                             modifier = Modifier
-                                                 .size(8.dp)
-                                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), CircleShape)
-                                         )
-                                         Box(
-                                             modifier = Modifier
-                                                 .size(4.dp)
-                                                 .background(MaterialTheme.colorScheme.primary, CircleShape)
-                                         )
-                                     }
-                                 }
-                             }
-                         }
-                     }
-                 }
+                NavigationBar(
+                    containerColor = Color(0xFF1C2024), // Surface color
+                    contentColor = Color(0xFFC3FF4D) // Primary color
+                ) {
+                    items.forEach { item ->
+                        val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            icon = { Icon(item.icon, contentDescription = item.label) },
+                            label = { Text(item.label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Color.Black,
+                                selectedTextColor = Color(0xFFC3FF4D),
+                                indicatorColor = Color(0xFFC3FF4D),
+                                unselectedIconColor = Color.Gray,
+                                unselectedTextColor = Color.Gray
+                            )
+                        )
+                    }
+                }
             }
-        },
-        floatingActionButtonPosition = FabPosition.Center
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+            modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
