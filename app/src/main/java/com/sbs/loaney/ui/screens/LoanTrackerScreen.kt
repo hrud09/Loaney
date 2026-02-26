@@ -194,9 +194,7 @@ fun LoanTrackerScreen(
         }
     ) { padding ->
         if (uiState.selectedLoan == null) {
-             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                 CircularProgressIndicator(color = NeonLime)
-             }
+             com.sbs.loaney.ui.components.AnimatedLoadingScreen(modifier = Modifier.padding(padding))
         } else {
             val loanWithPayments = uiState.selectedLoan!!
             val loan = loanWithPayments.loan

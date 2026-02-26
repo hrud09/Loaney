@@ -33,6 +33,7 @@ import com.sbs.loaney.ui.viewmodel.SettingsViewModel
 import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +49,8 @@ fun SettingsScreen(
     var showThemeSheet by remember { mutableStateOf(false) }
     var showCurrencySheet by remember { mutableStateOf(false) }
     var showLanguageSheet by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -67,12 +70,15 @@ fun SettingsScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+        if (isLoading) {
+            com.sbs.loaney.ui.components.AnimatedLoadingScreen(modifier = Modifier.padding(paddingValues))
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // -- GROUP 1: PROFILE --
@@ -124,6 +130,7 @@ fun SettingsScreen(
                     onToggle = { viewModel.setNotificationsEnabled(it) }
                 )
             }
+        }
         }
     }
 
@@ -192,14 +199,28 @@ fun SettingsScreen(
             Column(modifier = Modifier.padding(16.dp).padding(bottom = 32.dp)) {
                 Text(stringResource(id = R.string.app_language), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
                 ThemeOption(stringResource(id = R.string.english), uiState.appLanguage == "en") {
-                    viewModel.setAppLanguage("en")
-                    setAppLocale(context, "en")
                     showLanguageSheet = false 
+                    if (uiState.appLanguage != "en") {
+                        coroutineScope.launch {
+                            isLoading = true
+                            kotlinx.coroutines.delay(800)
+                            viewModel.setAppLanguage("en")
+                            setAppLocale(context, "en")
+                            isLoading = false
+                        }
+                    }
                 }
                 ThemeOption(stringResource(id = R.string.bangla), uiState.appLanguage == "bn") {
-                    viewModel.setAppLanguage("bn")
-                    setAppLocale(context, "bn")
                     showLanguageSheet = false 
+                    if (uiState.appLanguage != "bn") {
+                        coroutineScope.launch {
+                            isLoading = true
+                            kotlinx.coroutines.delay(800)
+                            viewModel.setAppLanguage("bn")
+                            setAppLocale(context, "bn")
+                            isLoading = false
+                        }
+                    }
                 }
             }
         }

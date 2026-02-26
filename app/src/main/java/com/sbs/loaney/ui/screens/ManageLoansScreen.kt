@@ -78,9 +78,12 @@ fun ManageLoansScreen(
             )
         }
     ) { padding ->
-        Column(modifier = Modifier
-            .padding(padding)
-            .fillMaxSize()) {
+        if (uiState.isLoading) {
+            com.sbs.loaney.ui.components.AnimatedLoadingScreen(modifier = Modifier.padding(padding))
+        } else {
+            Column(modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()) {
             
             // Segmented Toggle
             Row(
@@ -166,6 +169,7 @@ fun ManageLoansScreen(
                     }
                 }
             }
+        }
         }
     }
 

@@ -19,6 +19,7 @@ import java.util.Date
 import javax.inject.Inject
 
 data class HomeUiState(
+    val isLoading: Boolean = true,
     val totalLent: Double = 0.0,
     val totalBorrowed: Double = 0.0,
     val pendingAmount: Double = 0.0,
@@ -94,6 +95,7 @@ class HomeViewModel @Inject constructor(
         }
 
         return HomeUiState(
+            isLoading = false,
             totalLent = totalLentBalance,
             totalBorrowed = totalBorrowedBalance,
             pendingAmount = pendingNet,

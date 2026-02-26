@@ -58,6 +58,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showAddBankSheet by remember { mutableStateOf(false) }
+    var showNotificationsSheet by remember { mutableStateOf(false) }
 
     val balance = uiState.totalLent - uiState.totalBorrowed
     val bankAccounts = uiState.bankAccounts
@@ -68,6 +69,9 @@ fun HomeScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
+        if (uiState.isLoading) {
+             com.sbs.loaney.ui.components.AnimatedLoadingScreen(modifier = Modifier.padding(padding))
+        } else {
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -126,7 +130,8 @@ fun HomeScreen(
                         modifier = Modifier
                             .size(40.dp)
                             .background(MaterialTheme.colorScheme.surface, CircleShape)
-                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                            .clickable { showNotificationsSheet = true },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
@@ -362,6 +367,7 @@ fun HomeScreen(
             }
             Spacer(modifier = Modifier.height(100.dp))
         }
+        }
     }
 
     if (showAddBankSheet) {
@@ -379,6 +385,69 @@ fun HomeScreen(
                 showAddBankSheet = false
             }
         )
+    }
+
+    if (showNotificationsSheet) {
+        NotificationsBottomSheet(
+            onDismiss = { showNotificationsSheet = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NotificationsBottomSheet(onDismiss: () -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.background,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 48.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Notifications",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Mark all read",
+                    style = MaterialTheme.typography.labelMedium.copy(color = SkyBlue, fontWeight = FontWeight.SemiBold),
+                    modifier = Modifier.clickable { onDismiss() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+            Icon(
+                Icons.Outlined.Notifications,
+                contentDescription = null,
+                tint = Color.Gray.copy(alpha = 0.5f),
+                modifier = Modifier.size(64.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                "No new notifications",
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                "You're all caught up!",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+        }
     }
 }
 
@@ -414,7 +483,7 @@ fun BankAccountCard(
 ) {
     val clipboardManager = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val cardWidth = screenWidth * 0.8f
+    val cardWidth = screenWidth * 0.85f
 
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -525,9 +594,9 @@ fun BankAccountCard(
                             clipboardManager.setPrimaryClip(ClipData.newPlainText("Account Number", account.accountNumber))
                             Toast.makeText(context, "Account No. Copied!", Toast.LENGTH_SHORT).show()
                         },
-                        modifier = Modifier.size(28.dp).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape) // 36.dp * 0.8
+                        modifier = Modifier.size(20.dp) // 24.dp * 0.8
                     ) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = SkyBlue, modifier = Modifier.size(12.dp)) // 16.dp * 0.8
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(11.dp)) // 14.dp * 0.8
                     }
                 }
 
