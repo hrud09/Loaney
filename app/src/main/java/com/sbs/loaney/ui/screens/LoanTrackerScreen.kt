@@ -148,22 +148,22 @@ fun LoanTrackerScreen(
             if (uiState.selectedLoan != null && uiState.selectedLoan?.loan?.status != LoanStatus.FULLY_PAID) {
                 Surface(
                     color = Color.White,
-                    tonalElevation = 8.dp,
-                    shadowElevation = 8.dp
+                    tonalElevation = 6.dp, // 8.dp * 0.75
+                    shadowElevation = 6.dp // 8.dp * 0.75
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
-                            .padding(bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            .padding(12.dp) // 16.dp * 0.75
+                            .padding(bottom = 12.dp), // 16.dp * 0.75
+                        horizontalArrangement = Arrangement.spacedBy(12.dp) // 16.dp * 0.75
                     ) {
                          Button(
                              onClick = { showAddPaymentSheet = true },
                              modifier = Modifier
                                  .weight(1f)
-                                 .height(56.dp),
-                             shape = RoundedCornerShape(16.dp),
+                                 .height(42.dp), // 56.dp * 0.75
+                             shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                              colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = Color.Black)
                          ) {
                              Text(stringResource(id = R.string.pay), fontWeight = FontWeight.Bold)
@@ -173,17 +173,17 @@ fun LoanTrackerScreen(
                              onClick = { showAddLoanSheet = true },
                              modifier = Modifier
                                  .weight(1f)
-                                 .height(56.dp),
-                             shape = RoundedCornerShape(16.dp),
+                                 .height(42.dp), // 56.dp * 0.75
+                             shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                              colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onBackground, contentColor = Color.White)
                          ) {
                              Text(stringResource(id = R.string.add_more), fontWeight = FontWeight.Bold)
                          }
-                         
+
                          FilledIconButton(
                              onClick = { showSettleConfirmation = true },
-                             modifier = Modifier.size(56.dp),
-                             shape = RoundedCornerShape(16.dp),
+                             modifier = Modifier.size(42.dp), // 56.dp * 0.75
+                             shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                              colors = IconButtonDefaults.filledIconButtonColors(containerColor = DashboardBg)
                          ) {
                              Icon(Icons.Default.CheckCircle, contentDescription = "Settle", tint = NeonLime)
@@ -202,7 +202,7 @@ fun LoanTrackerScreen(
             val loan = loanItem.loan
             val payments = loanItem.payments
             val loanItems = loanItem.loanItems
-            
+
             val totalLoan = loan.amount + loanItems.sumOf { it.amount }
             val paid = payments.sumOf { it.amount }
             val remaining = (totalLoan - paid).coerceAtLeast(0.0)
@@ -220,18 +220,18 @@ fun LoanTrackerScreen(
                     .padding(padding)
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .padding(15.dp), // 20.dp * 0.75
+                verticalArrangement = Arrangement.spacedBy(15.dp) // 20.dp * 0.75
             ) {
                 // Header Card - Clean White Card
                 Card(
-                    modifier = Modifier.fillMaxWidth().border(1.dp, SubtleBorder, RoundedCornerShape(24.dp)),
-                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.fillMaxWidth().border(1.dp, SubtleBorder, RoundedCornerShape(18.dp)), // 24.dp * 0.75
+                    shape = RoundedCornerShape(18.dp), // 24.dp * 0.75
                     colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Row(
                         modifier = Modifier
-                            .padding(20.dp)
+                            .padding(15.dp) // 20.dp * 0.75
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -243,14 +243,14 @@ fun LoanTrackerScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(3.dp)) // 4.dp * 0.75
                             Text(
                                 text = stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray
                             )
                         }
-                        
+
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
                                 text = "${uiState.currencySymbol}${String.format("%.0f", remaining)}",
@@ -258,18 +258,18 @@ fun LoanTrackerScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Spacer(modifier = Modifier.height(6.dp)) // 8.dp * 0.75
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 8.dp * 0.75
                                 if (!loan.email.isNullOrBlank()) {
                                     FilledIconButton(
                                         onClick = {
                                              val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:${loan.email}"))
                                              context.startActivity(intent)
                                         },
-                                        modifier = Modifier.size(36.dp),
+                                        modifier = Modifier.size(27.dp), // 36.dp * 0.75
                                         colors = IconButtonDefaults.filledIconButtonColors(containerColor = DashboardBg)
                                     ) {
-                                        Icon(Icons.Default.Email, contentDescription = "Email", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.Email, contentDescription = "Email", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(14.dp)) // 18.dp * 0.75
                                     }
                                 }
                                 FilledIconButton(
@@ -277,10 +277,10 @@ fun LoanTrackerScreen(
                                         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${loan.phoneNumber}"))
                                         context.startActivity(intent)
                                     },
-                                    modifier = Modifier.size(36.dp),
+                                    modifier = Modifier.size(27.dp), // 36.dp * 0.75
                                     colors = IconButtonDefaults.filledIconButtonColors(containerColor = DashboardBg)
                                 ) {
-                                    Icon(Icons.Default.Call, contentDescription = "Call", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Call, contentDescription = "Call", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(14.dp)) // 18.dp * 0.75
                                 }
                             }
                         }
@@ -288,48 +288,48 @@ fun LoanTrackerScreen(
                 }
 
                 // Info Grid
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) { // 12.dp * 0.75
                     InfoTile(
-                        title = stringResource(id = R.string.total_amount), 
-                        value = "${uiState.currencySymbol}${String.format("%.0f", totalLoan)}", 
+                        title = stringResource(id = R.string.total_amount),
+                        value = "${uiState.currencySymbol}${String.format("%.0f", totalLoan)}",
                         modifier = Modifier.weight(1f)
                     )
                     InfoTile(
-                        title = stringResource(id = R.string.loan_type), 
-                        value = if (loan.type.name == "LEND") stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed), 
+                        title = stringResource(id = R.string.loan_type),
+                        value = if (loan.type.name == "LEND") stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed),
                         modifier = Modifier.weight(1f)
                     )
                 }
-                
+
                 // Detailed Information
                 Card(
-                    modifier = Modifier.fillMaxWidth().border(1.dp, SubtleBorder, RoundedCornerShape(24.dp)),
-                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.fillMaxWidth().border(1.dp, SubtleBorder, RoundedCornerShape(18.dp)), // 24.dp * 0.75
+                    shape = RoundedCornerShape(18.dp), // 24.dp * 0.75
                     colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.purpose), value = loan.purpose ?: stringResource(id = R.string.not_specified))
-                        DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.address), value = loan.address ?: stringResource(id = R.string.not_specified))
-                        DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.notes), value = loan.notes ?: stringResource(id = R.string.no_notes))
-                        
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) { // 16.dp * 0.75, 12.dp * 0.75
+                        DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
+                        DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.location_optional), value = loan.address ?: stringResource(id = R.string.not_specified))
+                        DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes ?: stringResource(id = R.string.no_notes))
+
                         val statusColor = when (loan.status) {
                             LoanStatus.OVERDUE -> CoralRed
-                            LoanStatus.FULLY_PAID -> NeonLime // Text on white would be hard to read if just neon lime, we use dark text with accent
+                            LoanStatus.FULLY_PAID -> NeonLime 
                             else -> MaterialTheme.colorScheme.onBackground
                         }
-                        DetailRow(icon = Icons.Default.CheckCircle, label = "Status", value = loan.status.name, highlightColor = statusColor)
+                        DetailRow(icon = Icons.Default.CheckCircle, label = stringResource(id = R.string.status), value = loan.status.name, highlightColor = statusColor)
                     }
                 }
 
                 // Timeline / History
                 Text(
-                    text = stringResource(id = R.string.history_title),
+                    text = stringResource(id = R.string.loan_history),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
 
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { // 16.dp * 0.75
                     if (historyEvents.isEmpty()) {
                         Text(stringResource(id = R.string.no_history), color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                     }
@@ -343,12 +343,12 @@ fun LoanTrackerScreen(
                         )
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(100.dp))
+
+                Spacer(modifier = Modifier.height(75.dp)) // 100.dp * 0.75
             }
         }
     }
-    
+
     if (showAddPaymentSheet) {
         AddPaymentBottomSheet(
             onDismiss = { showAddPaymentSheet = false },
@@ -376,13 +376,13 @@ fun DetailRow(icon: ImageVector, label: String, value: String, highlightColor: C
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.width(12.dp))
+        Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(15.dp)) // 20.dp * 0.75
+        Spacer(modifier = Modifier.width(9.dp)) // 12.dp * 0.75
         Column {
             Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
             Text(
-                value, 
-                style = MaterialTheme.typography.bodyMedium, 
+                value,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = highlightColor ?: MaterialTheme.colorScheme.onBackground
             )
@@ -401,16 +401,16 @@ data class HistoryEvent(
 @Composable
 fun InfoTile(title: String, value: String, highlight: Boolean = false, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.border(1.dp, SubtleBorder, RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
+        modifier = modifier.border(1.dp, SubtleBorder, RoundedCornerShape(15.dp)), // 20.dp * 0.75
+        shape = RoundedCornerShape(15.dp), // 20.dp * 0.75
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) { // 16.dp * 0.75
             Text(title, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp)) // 8.dp * 0.75
             Text(
-                value, 
-                style = MaterialTheme.typography.titleMedium, 
+                value,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (highlight) NeonLime else MaterialTheme.colorScheme.onBackground
             )
@@ -421,7 +421,7 @@ fun InfoTile(title: String, value: String, highlight: Boolean = false, modifier:
 @Composable
 fun TimelineItem(date: String, title: String, subtitle: String, isLoan: Boolean = false, amount: String? = null) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(60.dp)) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(45.dp)) { // 60.dp * 0.75
             Text(
                 text = date.substringBefore(" "), // Day
                 style = MaterialTheme.typography.titleLarge,
@@ -434,24 +434,24 @@ fun TimelineItem(date: String, title: String, subtitle: String, isLoan: Boolean 
                 color = Color.Gray
             )
         }
-        
-        Spacer(modifier = Modifier.width(16.dp))
-        
+
+        Spacer(modifier = Modifier.width(12.dp)) // 16.dp * 0.75
+
         Card(
-            modifier = Modifier.weight(1f).border(1.dp, SubtleBorder, RoundedCornerShape(16.dp)),
-            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.weight(1f).border(1.dp, SubtleBorder, RoundedCornerShape(12.dp)), // 16.dp * 0.75
+            shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(12.dp), // 16.dp * 0.75
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(10.dp)
+                        .size(8.dp) // 10.dp * 0.75
                         .background(if (isLoan) CoralRed else NeonLime, CircleShape)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(9.dp)) // 12.dp * 0.75
                 Column(modifier = Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                     if (subtitle.isNotBlank()) {
@@ -474,13 +474,13 @@ fun AddPaymentBottomSheet(
 ) {
     var amount by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
-    var method by remember { mutableStateOf("Cash") } 
+    var method by remember { mutableStateOf("Cash") }
     var proofUri by remember { mutableStateOf<Uri?>(null) }
-    
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? -> proofUri = uri }
-    
+
     val methods = listOf("Cash", "Bank", "bKash", "Nagad", "Rocket")
 
     ModalBottomSheet(
@@ -490,20 +490,20 @@ fun AddPaymentBottomSheet(
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 48.dp) 
+                .padding(horizontal = 18.dp) // 24.dp * 0.75
+                .padding(bottom = 36.dp) // 48.dp * 0.75
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(15.dp) // 20.dp * 0.75
         ) {
             Text(stringResource(id = R.string.add_payment), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            
+
             OutlinedTextField(
                 value = amount,
                 onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) amount = it },
                 label = { Text(stringResource(id = R.string.amount), color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
@@ -512,11 +512,11 @@ fun AddPaymentBottomSheet(
                     cursorColor = NeonLime
                 )
             )
-            
+
             Column {
                 Text(stringResource(id = R.string.payment_method), style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(modifier = Modifier.height(6.dp)) // 8.dp * 0.75
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 8.dp * 0.75
                     methods.take(3).forEach { m ->
                         val selected = method == m
                         FilterChip(
@@ -539,7 +539,7 @@ fun AddPaymentBottomSheet(
                         )
                     }
                 }
-                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 8.dp * 0.75
                     methods.drop(3).forEach { m ->
                         val selected = method == m
                         FilterChip(
@@ -569,7 +569,7 @@ fun AddPaymentBottomSheet(
                 onValueChange = { note = it },
                 label = { Text(stringResource(id = R.string.note_optional), color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
@@ -577,19 +577,19 @@ fun AddPaymentBottomSheet(
                     unfocusedBorderColor = SubtleBorder
                 )
             )
-            
+
             Button(
                 onClick = {
                     amount.toDoubleOrNull()?.let {
                         onAddPayment(it, method, note.ifBlank { null }, proofUri?.toString())
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(42.dp), // 56.dp * 0.75
+                shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                 colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = Color.Black),
                 enabled = amount.isNotBlank()
             ) {
-                Text(stringResource(id = R.string.confirm_payment), fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.save_payment), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -604,7 +604,7 @@ fun AddMoreLoanBottomSheet(
     var amount by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var proofUri by remember { mutableStateOf<Uri?>(null) }
-    
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? -> proofUri = uri }
@@ -616,20 +616,20 @@ fun AddMoreLoanBottomSheet(
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 48.dp)
+                .padding(horizontal = 18.dp) // 24.dp * 0.75
+                .padding(bottom = 36.dp) // 48.dp * 0.75
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(15.dp) // 20.dp * 0.75
         ) {
             Text(stringResource(id = R.string.add_more_loan), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            
+
             OutlinedTextField(
                 value = amount,
                 onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) amount = it },
                 label = { Text(stringResource(id = R.string.amount), color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
@@ -644,7 +644,7 @@ fun AddMoreLoanBottomSheet(
                 onValueChange = { note = it },
                 label = { Text(stringResource(id = R.string.note_optional), color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onBackground,
                     unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
@@ -652,19 +652,19 @@ fun AddMoreLoanBottomSheet(
                     unfocusedBorderColor = SubtleBorder
                 )
             )
-            
+
             Button(
                 onClick = {
                     amount.toDoubleOrNull()?.let {
                         onAddLoan(it, note.ifBlank { null }, proofUri?.toString())
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(42.dp), // 56.dp * 0.75
+                shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onBackground, contentColor = Color.White),
                 enabled = amount.isNotBlank()
             ) {
-                Text(stringResource(id = R.string.add_to_balance), fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.add_loan), fontWeight = FontWeight.Bold)
             }
         }
     }

@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -61,7 +62,6 @@ fun HomeScreen(
     val balance = uiState.totalLent - uiState.totalBorrowed
     val bankAccounts = uiState.bankAccounts
     val allLoans = (uiState.lentLoans + uiState.borrowedLoans).sortedByDescending { it.loan.loanDate }
-    val uniqueRecipients = allLoans.distinctBy { it.loan.personName }.take(5)
     
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
@@ -171,62 +171,10 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.deposit)) { onNavigateToAddLoan() }
-                        ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.withdraw)) { onNavigateToAddLoan() }
+                        ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.lend)) { onNavigateToAddLoan() }
+                        ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.borrow)) { onNavigateToAddLoan() }
                         ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history)) { onNavigateToHistory() }
                         ActionButton(icon = Icons.Default.Menu, label = stringResource(id = R.string.details)) { onNavigateToHistory() }
-                    }
-                }
-            }
-
-            // --- LATEST RECIPIENT ---
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.latest_recipient),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 18.sp
-                        )
-                    )
-                    Icon(Icons.Default.ChevronRight, contentDescription = "More", tint = TextSubtextDark)
-                }
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    items(uniqueRecipients, key = { it.loan.id }) { item ->
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.outline),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = item.loan.personName.take(1).uppercase(),
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
-                    }
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .background(MaterialTheme.colorScheme.surface, CircleShape)
-                                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                                .clickable { onNavigateToAddLoan() },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = "Add Recipient", tint = MaterialTheme.colorScheme.onBackground)
-                        }
                     }
                 }
             }
@@ -333,7 +281,8 @@ fun HomeScreen(
                     )
                 } else {
                     LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(horizontal = 20.dp) // Ensures padding on the sides of the list
                     ) {
                         items(bankAccounts, key = { it.id }) { account ->
                             BankAccountCard(
@@ -478,12 +427,14 @@ fun BankAccountCard(
     onDelete: (BankAccountEntity) -> Unit
 ) {
     val clipboardManager = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager }
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val cardWidth = screenWidth * 0.9f
 
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        modifier = Modifier.width(320.dp)
+        modifier = Modifier.width(cardWidth)
     ) {
         Column {
             // Cover Image
