@@ -131,4 +131,6 @@
     <string name="tool_tracker_desc">Deep dive into the history and status of a specific loan.</string>
     <string name="tool_tracker_title">Single-Screen Loan Tracker</string>
     <string name="via_method">via %1$s</string>
+    <string name="status">Status</string>
+    <string name="add_loan">Add Loan</string>
 </resources>

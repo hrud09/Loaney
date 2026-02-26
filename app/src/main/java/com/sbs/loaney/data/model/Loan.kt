@@ -25,5 +25,7 @@ data class Loan(
     val purpose: String?,
     val notes: String?,
     val interest: Double?,
-    val status: LoanStatus = LoanStatus.ACTIVE
+    val status: LoanStatus = LoanStatus.ACTIVE,
+    val email: String? = null,
+    val address: String? = null
 )

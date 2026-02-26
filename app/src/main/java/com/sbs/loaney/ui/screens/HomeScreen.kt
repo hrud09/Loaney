@@ -141,29 +141,87 @@ fun HomeScreen(
                 }
             }
 
-            // --- BALANCE CARD ---
+            // --- BALANCE CARD WITH ACTIONS ---
             Surface(
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.your_balance),
-                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextLight)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "৳ ${String.format("%,.0f", balance)}",
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = NeonLime,
-                            fontSize = 36.sp
-                        )
-                    )
+                    // --- TWO CARDS (Previously below) ---
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Left Card (Dark) - Total Lent
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.colorScheme.background, // Changed to background to have contrast with surfaceVariant
+                            modifier = Modifier
+                                .weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.total_lent),
+                                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextDark, lineHeight = 18.sp)
+                                    )
+                                    Icon(Icons.Default.ArrowOutward, contentDescription = null, tint = NeonLime, modifier = Modifier.size(20.dp))
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "+${uiState.currencySymbol}${String.format("%,.0f", uiState.totalLent)}",
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                )
+                            }
+                        }
+
+                        // Right Card (Light) - Total Borrowed
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.colorScheme.surface,
+                            modifier = Modifier
+                                .weight(1f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.total_borrowed),
+                                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextDark, lineHeight = 18.sp)
+                                    )
+                                    Icon(Icons.Default.CallReceived, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "-${uiState.currencySymbol}${String.format("%,.0f", uiState.totalBorrowed)}",
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                )
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -175,78 +233,6 @@ fun HomeScreen(
                         ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.borrow)) { onNavigateToAddLoan() }
                         ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history)) { onNavigateToHistory() }
                         ActionButton(icon = Icons.Default.Menu, label = stringResource(id = R.string.details)) { onNavigateToHistory() }
-                    }
-                }
-            }
-
-            // --- TWO CARDS ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Left Card (Dark) - Total Lent
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(140.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.total_lent),
-                                style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextLight, lineHeight = 18.sp)
-                            )
-                            Icon(Icons.Default.Fastfood, contentDescription = null, tint = NeonLime, modifier = Modifier.size(20.dp))
-                        }
-                        Text(
-                            text = "+${uiState.currencySymbol}${String.format("%,.0f", uiState.totalLent)}",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        )
-                    }
-                }
-
-                // Right Card (Light) - Total Borrowed
-                Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(140.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.total_borrowed),
-                                style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextDark, lineHeight = 18.sp)
-                            )
-                            Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
-                        }
-                        Text(
-                            text = "-${uiState.currencySymbol}${String.format("%,.0f", uiState.totalBorrowed)}",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        )
                     }
                 }
             }
@@ -428,7 +414,7 @@ fun BankAccountCard(
 ) {
     val clipboardManager = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val cardWidth = screenWidth * 0.9f
+    val cardWidth = screenWidth * 0.8f
 
     Card(
         shape = RoundedCornerShape(24.dp),
@@ -441,7 +427,7 @@ fun BankAccountCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(90.dp)
+                    .height(72.dp) // 90.dp * 0.8
             ) {
                 if (!account.coverImageUri.isNullOrBlank()) {
                     AsyncImage(
@@ -469,8 +455,8 @@ fun BankAccountCard(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(12.dp)
-                        .size(36.dp)
+                        .padding(10.dp) // 12.dp * 0.8
+                        .size(28.dp) // 36.dp * 0.8
                         .background(Color.Black.copy(alpha = 0.4f), CircleShape)
                         .clickable {
                             val text = buildString {
@@ -490,8 +476,8 @@ fun BankAccountCard(
             }
 
             Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier.padding(16.dp), // 20.dp * 0.8
+                verticalArrangement = Arrangement.spacedBy(12.dp) // 16.dp * 0.8
             ) {
                 // Bank Name & Delete Button
                 Row(
@@ -510,9 +496,9 @@ fun BankAccountCard(
                     )
                     IconButton(
                         onClick = { onDelete(account) },
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(20.dp) // 24.dp * 0.8
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red, modifier = Modifier.size(16.dp)) // 20.dp * 0.8
                     }
                 }
 
@@ -539,9 +525,9 @@ fun BankAccountCard(
                             clipboardManager.setPrimaryClip(ClipData.newPlainText("Account Number", account.accountNumber))
                             Toast.makeText(context, "Account No. Copied!", Toast.LENGTH_SHORT).show()
                         },
-                        modifier = Modifier.size(36.dp).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                        modifier = Modifier.size(28.dp).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape) // 36.dp * 0.8
                     ) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = SkyBlue, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = SkyBlue, modifier = Modifier.size(12.dp)) // 16.dp * 0.8
                     }
                 }
 
@@ -554,7 +540,7 @@ fun BankAccountCard(
                 if (!account.branchName.isNullOrBlank() || !account.swiftCode.isNullOrBlank()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp) // 16.dp * 0.8
                     ) {
                         if (!account.branchName.isNullOrBlank()) {
                             Box(modifier = Modifier.weight(1f)) {
@@ -593,9 +579,9 @@ fun BankField(label: String, value: String, clipboardManager: ClipboardManager, 
                 clipboardManager.setPrimaryClip(ClipData.newPlainText(label, value))
                 Toast.makeText(context, "$label Copied!", Toast.LENGTH_SHORT).show()
             },
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(20.dp) // 24.dp * 0.8
         ) {
-            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(14.dp))
+            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(11.dp)) // 14.dp * 0.8
         }
     }
 }

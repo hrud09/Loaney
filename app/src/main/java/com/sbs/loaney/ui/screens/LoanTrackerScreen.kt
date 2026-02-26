@@ -198,10 +198,10 @@ fun LoanTrackerScreen(
                  CircularProgressIndicator(color = NeonLime)
              }
         } else {
-            val loanItem = uiState.selectedLoan!!
-            val loan = loanItem.loan
-            val payments = loanItem.payments
-            val loanItems = loanItem.loanItems
+            val loanWithPayments = uiState.selectedLoan!!
+            val loan = loanWithPayments.loan
+            val payments = loanWithPayments.payments
+            val loanItems = loanWithPayments.loanItems
 
             val totalLoan = loan.amount + loanItems.sumOf { it.amount }
             val paid = payments.sumOf { it.amount }
@@ -314,10 +314,10 @@ fun LoanTrackerScreen(
 
                         val statusColor = when (loan.status) {
                             LoanStatus.OVERDUE -> CoralRed
-                            LoanStatus.FULLY_PAID -> NeonLime 
+                            LoanStatus.FULLY_PAID -> NeonLime
                             else -> MaterialTheme.colorScheme.onBackground
                         }
-                        DetailRow(icon = Icons.Default.CheckCircle, label = stringResource(id = R.string.status), value = loan.status.name, highlightColor = statusColor)
+                        DetailRow(icon = Icons.Default.CheckCircle, label = stringResource(id = R.string.status), value = loan.status?.name ?: "", highlightColor = statusColor)
                     }
                 }
 

@@ -82,7 +82,13 @@ fun MainScreen() {
                     onNavigateToDetail = { loanId ->
                         navController.navigate(Screen.LoanDetail.createRoute(loanId))
                     },
-                    onNavigateToHistory = { navController.navigate(Screen.ManageLoans.route) },
+                    onNavigateToHistory = { 
+                        navController.navigate(Screen.ManageLoans.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
                 )
             }
