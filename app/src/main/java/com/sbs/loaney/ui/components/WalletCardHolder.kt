@@ -36,24 +36,35 @@ fun WalletCardHolder(
     // Take up to 3 accounts. If there's 3, we want them rendered: back, middle, front.
     val displayAccounts = accounts.take(3)
     val totalCards = displayAccounts.size
-
-    val cardHeight = 140.dp
-    val pocketHeight = 180.dp
+    
+    val cardHeight = 168.dp // 140 * 1.2
+    val pocketHeight = 132.dp // 110 * 1.2
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(pocketHeight + (totalCards * 40).dp), // Height accommodates the pocket and sticking out cards
-        contentAlignment = Alignment.BottomCenter
+            .height(pocketHeight + (totalCards * 48).dp), // Height accommodates the pocket and sticking out cards (scaled offset)
+        contentAlignment = Alignment.TopCenter
     ) {
+        // Wallet Background / Back cover (drawn first, behind all cards)
+        // Similar shape to the foreground pocket but larger
+        Surface(
+            shape = RoundedCornerShape(32.dp),
+            color = Color(0xFF1D3320).copy(alpha = 0.6f),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(0.96f) // Slightly wider than the foreground pocket (0.92f)
+                .height(pocketHeight + 36.dp) // Taller than the pocket so it peaks out behind the cards (scaled by 1.2)
+        ) {}
+
         // Stacked Cards (index 0 drawn first -> Back. index N drawn last -> Front)
         displayAccounts.forEachIndexed { index, account ->
             val cardColor = cardColors[index % cardColors.size]
             val isDarkText = cardColor == Color(0xFFF0F2F6) || cardColor == Color(0xFFA5E083)
 
-            // Front card (index == totalCards -1) sticks out least -> highest Y offset value (least negative)
-            // Back card (index == 0) sticks out most -> lowest Y offset value (most negative)
-            val stickOutOffset = -40 - ((totalCards - 1 - index) * 35)
+            // Front card (index == totalCards -1) sticks out least -> highest Y offset value (closest to the pocket)
+            // Back card (index == 0) sticks out most -> lowest Y offset value (furthest from pocket)
+            val stickOutOffset = ((totalCards - 1 - index) * 42) // 35 * 1.2
 
             // Width scales down slightly for cards in the back to give overlapping depth
             val widthFraction = 0.85f - ((totalCards - 1 - index) * 0.05f)
@@ -89,10 +100,12 @@ fun WalletCardHolder(
         }
 
         // Wallet Pocket / Cover (drawn last to cover the bottom of all cards)
+        // Ensure it aligns strictly to the bottom of the bounding Box
         Surface(
             shape = RoundedCornerShape(32.dp), // Very round pocket bottom
             color = Color(0xFF1D3320).copy(alpha = 0.6f), // 60% transparent dark green foreground
             modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth(0.92f)
                 .height(pocketHeight)
         ) {
@@ -115,7 +128,7 @@ fun WalletCardHolder(
                     fontSize = 14.sp
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Icon(
                     imageVector = Icons.Outlined.VisibilityOff,
                     contentDescription = "Hidden Wallet",
