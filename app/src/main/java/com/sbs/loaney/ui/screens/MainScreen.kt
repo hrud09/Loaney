@@ -20,6 +20,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sbs.loaney.ui.navigation.Screen
+import androidx.compose.ui.res.stringResource
+import com.sbs.loaney.R
 
 @Composable
 fun MainScreen() {
@@ -31,8 +33,8 @@ fun MainScreen() {
     val isTopLevel = currentDestination?.route in topLevelRoutes
 
     val items = listOf(
-        NavigationItem("Home", Screen.Home.route, Icons.Default.Home),
-        NavigationItem("History", Screen.ManageLoans.route, Icons.AutoMirrored.Filled.List)
+        NavigationItem(stringResource(id = R.string.nav_home), Screen.Home.route, Icons.Default.Home),
+        NavigationItem(stringResource(id = R.string.nav_history), Screen.ManageLoans.route, Icons.AutoMirrored.Filled.List)
     )
 
     Scaffold(
@@ -80,7 +82,8 @@ fun MainScreen() {
                     onNavigateToDetail = { loanId ->
                         navController.navigate(Screen.LoanDetail.createRoute(loanId))
                     },
-                    onNavigateToHistory = { navController.navigate(Screen.ManageLoans.route) }
+                    onNavigateToHistory = { navController.navigate(Screen.ManageLoans.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
                 )
             }
             composable(Screen.ManageLoans.route) {
@@ -93,6 +96,9 @@ fun MainScreen() {
             }
             composable(Screen.AddLoan.route) {
                 AddLoanScreen(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Screen.Settings.route) {
+                SettingsScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(
                 route = Screen.LoanDetail.route,

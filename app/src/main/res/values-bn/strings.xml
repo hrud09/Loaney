@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Loaney</string>
+    <!-- HomeScreen & MainScreen -->
+    <string name="nav_home">হোম</string>
+    <string name="nav_history">ইতিহাস</string>
+    <string name="greeting_hi">হ্যালো, %1$s</string>
+    <string name="greeting_morning">শুভ সকাল!</string>
+    <string name="your_balance">আপনার ব্যালেন্স</string>
+    <string name="deposit">জমা</string>
+    <string name="withdraw">উত্তোলন</string>
+    <string name="history">ইতিহাস</string>
+    <string name="details">বিস্তারিত</string>
+    <string name="latest_recipient">সর্বশেষ গ্রহীতা</string>
+    <string name="total_lent">মোট\nপ্রদান</string>
+    <string name="total_borrowed">মোট\nগ্রহণ</string>
+    <string name="bank_accounts">ব্যাংক একাউন্টস</string>
+    <string name="add">যোগ করুন</string>
+    <string name="no_bank_accounts">কোন ব্যাংক একাউন্ট সেভ করা নেই।</string>
+    <string name="transactions">লেনদেন</string>
+    <string name="see_all">সব দেখুন</string>
+    <string name="no_recent_transactions">সাম্প্রতিক কোনো লেনদেন নেই =(</string>
+    <string name="lent">প্রদত্ত</string>
+    <string name="borrowed">গৃহীত</string>
+    <string name="account_number">একাউন্ট নম্বর</string>
+    <string name="account_holder">একাউন্টের মালিক</string>
+    <string name="branch">ব্রাঞ্চ</string>
+    <string name="swift">সুইফট কোড</string>
+    <string name="add_bank_account">ব্যাংক একাউন্ট যুক্ত করুন</string>
+    <string name="tap_custom_cover">কাস্টম কভার যোগ করতে ট্যাপ করুন</string>
+    <string name="bank_name_hint">ব্যাংকের নাম (যেমন মিউচুয়াল ট্রাস্ট ব্যাংক)</string>
+    <string name="account_holder_name_hint">একাউন্ট মালিকের নাম</string>
+    <string name="account_number_hint">একাউন্ট নম্বর</string>
+    <string name="branch_optional">ব্রাঞ্চ (ঐচ্ছিক)</string>
+    <string name="swift_optional">সুইফট (ঐচ্ছিক)</string>
+    <string name="save_bank_account">ব্যাঙ্ক সেভ করুন</string>
+
+    <!-- ManageLoansScreen -->
+    <string name="new_loan">নতুন লোন</string>
+    <string name="no_transactions_yet">এখনও কোনো লেনদেন নেই!</string>
+    <string name="tap_to_start_tracking">ট্র্যাকিং শুরু করতে নিচে \'+\' বাটনে ট্যাপ করুন।</string>
+    <string name="delete_loan_title">লোন ডিলিট করবেন?</string>
+    <string name="delete_loan_msg">আপনি কি নিশ্চিত যে আপনি %1$s এর লোন রেকর্ড ডিলিট করতে চান? এই কাজ পরিবর্তনযোগ্য নয়।</string>
+    <string name="delete">মুছে ফেলুন</string>
+    <string name="cancel">বাতিল</string>
+    <string name="add_payment">পেমেন্ট যোগ করুন</string>
+    <string name="due_by">পরিশোধের সময়: %1$s</string>
+    <string name="paid_amount">প্রদত্ত: %1$s</string>
+    <string name="status_paid">পরিশোধিত</string>
+    <string name="status_overdue">মেয়াদোত্তীর্ণ</string>
+    <string name="status_active">সক্রিয়</string>
+
+    <!-- LoanTrackerScreen -->
+    <string name="settle_loan_title">লোন নিষ্পত্তি করবেন?</string>
+    <string name="settle_loan_msg">আপনি কি নিশ্চিত যে আপনি এই লোনটিকে পুরোপুরি পরিশোধিত হিসেবে চিহ্নিত করতে চান? এটি ব্যালেন্স শূন্য করে দেবে।</string>
+    <string name="settle">নিষ্পত্তি</string>
+    <string name="loan_details">লোনের বিস্তারিত</string>
+    <string name="pay">পরিশোধ</string>
+    <string name="add_more">আরও যোগ করুন</string>
+    <string name="due_date_format">মেয়াদ %1$s</string>
+    <string name="total_amount">মোট পরিমাণ</string>
+    <string name="loan_type">লোনের ধরণ</string>
+    <string name="purpose">উদ্দেশ্য</string>
+    <string name="not_specified">উল্লেখ নেই</string>
+    <string name="address">ঠিকানা</string>
+    <string name="notes">নোট</string>
+    <string name="no_notes">কোনো নোট নেই</string>
+    <string name="status">অবস্থা</string>
+    <string name="history_title">ইতিহাস</string>
+    <string name="no_history">এখনও কোনো ইতিহাস নেই।</string>
+    <string name="amount">পরিমাণ</string>
+    <string name="payment_method">পেমেন্ট মেথড</string>
+    <string name="note_optional">নোট (ঐচ্ছিক)</string>
+    <string name="confirm_payment">পেমেন্ট নিশ্চিত করুন</string>
+    <string name="add_more_loan">আরো লোন যোগ করুন</string>
+    <string name="add_to_balance">ব্যালেন্সে যোগ করুন</string>
+    <string name="initial_loan">প্রাথমিক লোন</string>
+    <string name="additional_loan">অতিরিক্ত লোন</string>
+    <string name="payment_received">পেমেন্ট পাওয়া গেছে</string>
+    <string name="via_method">%1$s এর মাধ্যমে</string>
+
+    <!-- AddLoanScreen -->
+    <string name="send_loan_title">লোন দিন</string>
+    <string name="request_loan_title">লোন অনুরোধ</string>
+    <string name="lend">প্রদান</string>
+    <string name="borrow">গ্রহণ</string>
+    <string name="recipient_name">গ্রহীতার নাম</string>
+    <string name="hide_extra_details">অতিরিক্ত বিবরণ লুকান</string>
+    <string name="add_extra_details">অতিরিক্ত বিবরণ যোগ করুন</string>
+    <string name="loan_date">লোনের তারিখ</string>
+    <string name="due_date">পরিশোধের তারিখ</string>
+    <string name="reason_for_loan">লোনের কারণ</string>
+    <string name="phone_optional">ফোন (ঐচ্ছিক)</string>
+    <string name="location_optional">অবস্থান (ঐচ্ছিক)</string>
+    <string name="witness_optional">সাক্ষী (ঐচ্ছিক)</string>
+    <string name="attachment">যুক্তি</string>
+    <string name="save_loan">লোন সেভ করুন</string>
+    <string name="ok">ঠিক আছে</string>
+
+    <!-- MessScreen -->
+    <string name="mess_title">মেস (টুলস হাব)</string>
+    <string name="available_tools">ফ্রি টুলস</string>
+    <string name="tool_tracker_title">সিঙ্গেল-স্ক্রিন লোন ট্র্যাকার</string>
+    <string name="tool_tracker_desc">একটি নির্দিষ্ট লোনের ইতিহাস এবং অবস্থা গভীরে দেখুন।</string>
+    <string name="tool_settings_title">সেটিংস</string>
+    <string name="tool_settings_desc">অ্যাপের পছন্দসমূহ কনফিগার করুন।</string>
+    <string name="tool_coming_soon_title">শীঘ্রই আসছে...</string>
+    <string name="tool_coming_soon_desc">আরও কিছু ফিন্যান্সিয়াল টুল তৈরি করা হচ্ছে।</string>
+
+    <!-- Graphs -->
+    <string name="net_balance">নিট ব্যালেন্স</string>
+    <string name="no_activity">অ্যাক্টিভিটি ডেটা নেই</string>
+
+    <!-- SettingsScreen -->
+    <string name="settings">সেটিংস</string>
+    <string name="profile">প্রোফাইল</string>
+    <string name="display_name">ডিসপ্লে নাম</string>
+    <string name="preferences">পছন্দ</string>
+    <string name="theme">থিম</string>
+    <string name="theme_light">লাইট</string>
+    <string name="theme_dark">ডার্ক</string>
+    <string name="theme_system">সিস্টেম ডিফল্ট</string>
+    <string name="currency">মুদ্রা</string>
+    <string name="language">ভাষা</string>
+    <string name="system_group">সিস্টেম</string>
+    <string name="push_notifications">পুশ নোটিফিকেশন</string>
+    <string name="edit_profile_name">প্রোফাইলের নাম এডিট করুন</string>
+    <string name="save">সেভ</string>
+    <string name="select_theme">থিম নির্বাচন করুন</string>
+    <string name="select_currency">মুদ্রা নির্বাচন করুন</string>
+    <string name="app_language">অ্যাপের ভাষা</string>
+    <string name="currency_bdt">বাংলাদেশী টাকা (৳)</string>
+    <string name="currency_usd">ইউএস ডলার ($)</string>
+    <string name="currency_eur">ইউরো (€)</string>
+    <string name="currency_gbp">ব্রিটিশ পাউন্ড (£)</string>
+    <string name="currency_inr">ভারতীয় রুপি (₹)</string>
+    <string name="bangla">বাংলা</string>
+    <string name="english">ইংরেজি</string>
+    <string name="back">পেছনে</string>
+    <string name="add_attachment">সংযুক্তি যোগ করুন</string>
+    <string name="preview">প্রিভিউ</string>
+</resources>

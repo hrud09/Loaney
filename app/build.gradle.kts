@@ -78,6 +78,12 @@ dependencies {
     // Image Loading
     implementation(libs.coil.compose)
 
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
+
+    // AppCompat (for per-app Locales)
+    implementation(libs.androidx.appcompat)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

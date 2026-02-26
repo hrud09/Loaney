@@ -3,6 +3,8 @@ package com.sbs.loaney.di
 import android.content.Context
 import com.sbs.loaney.data.local.AppDatabase
 import com.sbs.loaney.data.repository.LoanRepository
+import com.sbs.loaney.data.repository.SettingsRepository
+import com.sbs.loaney.data.repository.dataStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,5 +26,11 @@ object AppModule {
     @Singleton
     fun provideLoanRepository(db: AppDatabase): LoanRepository {
         return LoanRepository(db.loanDao(), db.bankAccountDao())
+    }
+
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(@ApplicationContext context: Context): SettingsRepository {
+        return SettingsRepository(context.dataStore)
     }
 }

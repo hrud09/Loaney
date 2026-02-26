@@ -13,15 +13,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -41,6 +41,8 @@ import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.sbs.loaney.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,8 +66,8 @@ fun LoanTrackerScreen(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = CoralRed) },
-            title = { Text("Delete Loan?") },
-            text = { Text("Are you sure you want to delete this loan record? This action cannot be undone.") },
+            title = { Text(stringResource(id = R.string.delete_loan_title)) },
+            text = { Text(stringResource(id = R.string.delete_loan_msg, uiState.selectedLoan?.loan?.personName ?: "")) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -77,12 +79,12 @@ fun LoanTrackerScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = CoralRed)
                 ) {
-                    Text("Delete", fontWeight = FontWeight.Bold)
+                    Text(stringResource(id = R.string.delete), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text("Cancel", color = Color.Gray)
+                    Text(stringResource(id = R.string.cancel), color = Color.Gray)
                 }
             },
             containerColor = Color.White,
@@ -95,8 +97,8 @@ fun LoanTrackerScreen(
         AlertDialog(
             onDismissRequest = { showSettleConfirmation = false },
             icon = { Icon(Icons.Default.CheckCircle, contentDescription = null, tint = NeonLime) },
-            title = { Text("Settle Loan?") },
-            text = { Text("Are you sure you want to mark this loan as fully paid? This will set the balance to zero.") },
+            title = { Text(stringResource(id = R.string.settle_loan_title)) },
+            text = { Text(stringResource(id = R.string.settle_loan_msg)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -105,12 +107,12 @@ fun LoanTrackerScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = NeonLime)
                 ) {
-                    Text("Settle", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(stringResource(id = R.string.settle), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSettleConfirmation = false }) {
-                    Text("Cancel", color = Color.Gray)
+                    Text(stringResource(id = R.string.cancel), color = Color.Gray)
                 }
             },
             containerColor = Color.White,
@@ -123,10 +125,10 @@ fun LoanTrackerScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Loan Details", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(id = R.string.loan_details), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 actions = {
@@ -164,7 +166,7 @@ fun LoanTrackerScreen(
                              shape = RoundedCornerShape(16.dp),
                              colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = Color.Black)
                          ) {
-                             Text("Pay", fontWeight = FontWeight.Bold)
+                             Text(stringResource(id = R.string.pay), fontWeight = FontWeight.Bold)
                          }
 
                          Button(
@@ -175,7 +177,7 @@ fun LoanTrackerScreen(
                              shape = RoundedCornerShape(16.dp),
                              colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onBackground, contentColor = Color.White)
                          ) {
-                             Text("Add More", fontWeight = FontWeight.Bold)
+                             Text(stringResource(id = R.string.add_more), fontWeight = FontWeight.Bold)
                          }
                          
                          FilledIconButton(
@@ -208,9 +210,9 @@ fun LoanTrackerScreen(
 
             // Combine all events for history
             val historyEvents = (
-                listOf(HistoryEvent(loan.loanDate, "Initial Loan", "৳${String.format("%.0f", loan.amount)}", true)) +
-                loanItems.map { HistoryEvent(it.date, "Additional Loan", "+৳${String.format("%.0f", it.amount)}", true) } +
-                payments.map { HistoryEvent(it.date, "Payment Received", "-৳${String.format("%.0f", it.amount)}", false, it.method) }
+                listOf(HistoryEvent(loan.loanDate, stringResource(id = R.string.initial_loan), "${uiState.currencySymbol}${String.format("%.0f", loan.amount)}", true)) +
+                loanItems.map { HistoryEvent(it.date, stringResource(id = R.string.additional_loan), "+${uiState.currencySymbol}${String.format("%.0f", it.amount)}", true) } +
+                payments.map { HistoryEvent(it.date, stringResource(id = R.string.payment_received), "-${uiState.currencySymbol}${String.format("%.0f", it.amount)}", false, it.method) }
             ).sortedByDescending { it.date }
 
             Column(
@@ -243,7 +245,7 @@ fun LoanTrackerScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Due ${dateFormat.format(loan.promisedReturnDate)}",
+                                text = stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray
                             )
@@ -251,7 +253,7 @@ fun LoanTrackerScreen(
                         
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = "৳${String.format("%.0f", remaining)}",
+                                text = "${uiState.currencySymbol}${String.format("%.0f", remaining)}",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -288,13 +290,13 @@ fun LoanTrackerScreen(
                 // Info Grid
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     InfoTile(
-                        title = "Total Amount", 
-                        value = "৳${String.format("%.0f", totalLoan)}", 
+                        title = stringResource(id = R.string.total_amount), 
+                        value = "${uiState.currencySymbol}${String.format("%.0f", totalLoan)}", 
                         modifier = Modifier.weight(1f)
                     )
                     InfoTile(
-                        title = "Loan Type", 
-                        value = loan.type.name, 
+                        title = stringResource(id = R.string.loan_type), 
+                        value = if (loan.type.name == "LEND") stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed), 
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -306,9 +308,9 @@ fun LoanTrackerScreen(
                     colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        DetailRow(icon = Icons.Default.Info, label = "Purpose", value = loan.purpose ?: "Not specified")
-                        DetailRow(icon = Icons.Default.LocationOn, label = "Address", value = loan.address ?: "Not specified")
-                        DetailRow(icon = Icons.Default.Notes, label = "Notes", value = loan.notes ?: "No notes")
+                        DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.purpose), value = loan.purpose ?: stringResource(id = R.string.not_specified))
+                        DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.address), value = loan.address ?: stringResource(id = R.string.not_specified))
+                        DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.notes), value = loan.notes ?: stringResource(id = R.string.no_notes))
                         
                         val statusColor = when (loan.status) {
                             LoanStatus.OVERDUE -> CoralRed
@@ -321,7 +323,7 @@ fun LoanTrackerScreen(
 
                 // Timeline / History
                 Text(
-                    text = "History",
+                    text = stringResource(id = R.string.history_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -329,13 +331,13 @@ fun LoanTrackerScreen(
 
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     if (historyEvents.isEmpty()) {
-                        Text("No history yet.", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(id = R.string.no_history), color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                     }
                     historyEvents.forEach { event ->
                         TimelineItem(
                             date = dateFormat.format(event.date),
                             title = event.title,
-                            subtitle = if (event.method != null) "via ${event.method}" else "",
+                            subtitle = if (event.method != null) stringResource(id = R.string.via_method, event.method) else "",
                             amount = event.amount,
                             isLoan = event.isLoan
                         )
@@ -493,12 +495,12 @@ fun AddPaymentBottomSheet(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text("Add Payment", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(id = R.string.add_payment), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
             
             OutlinedTextField(
                 value = amount,
                 onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) amount = it },
-                label = { Text("Amount", color = Color.Gray) },
+                label = { Text(stringResource(id = R.string.amount), color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(16.dp),
@@ -512,7 +514,7 @@ fun AddPaymentBottomSheet(
             )
             
             Column {
-                Text("Payment Method", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                Text(stringResource(id = R.string.payment_method), style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     methods.take(3).forEach { m ->
@@ -565,7 +567,7 @@ fun AddPaymentBottomSheet(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                label = { Text("Note (Optional)", color = Color.Gray) },
+                label = { Text(stringResource(id = R.string.note_optional), color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -587,7 +589,7 @@ fun AddPaymentBottomSheet(
                 colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = Color.Black),
                 enabled = amount.isNotBlank()
             ) {
-                Text("Confirm Payment", fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.confirm_payment), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -619,12 +621,12 @@ fun AddMoreLoanBottomSheet(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text("Add More Loan", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(id = R.string.add_more_loan), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
             
             OutlinedTextField(
                 value = amount,
                 onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) amount = it },
-                label = { Text("Amount", color = Color.Gray) },
+                label = { Text(stringResource(id = R.string.amount), color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 shape = RoundedCornerShape(16.dp),
@@ -640,7 +642,7 @@ fun AddMoreLoanBottomSheet(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                label = { Text("Note (Optional)", color = Color.Gray) },
+                label = { Text(stringResource(id = R.string.note_optional), color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -662,7 +664,7 @@ fun AddMoreLoanBottomSheet(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onBackground, contentColor = Color.White),
                 enabled = amount.isNotBlank()
             ) {
-                Text("Add to Balance", fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.add_to_balance), fontWeight = FontWeight.Bold)
             }
         }
     }

@@ -30,14 +30,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.data.model.LoanType
+import com.sbs.loaney.ui.components.CustomLightTextField
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.HomeViewModel
 import java.text.SimpleDateFormat
@@ -48,6 +51,7 @@ fun HomeScreen(
     onNavigateToAddLoan: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToHistory: () -> Unit, // Replaces Manage navigation
+    onNavigateToSettings: () -> Unit, // New
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -91,7 +95,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Hi, Sajibur",
+                            text = stringResource(id = R.string.greeting_hi, uiState.userName),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onBackground,
@@ -99,7 +103,7 @@ fun HomeScreen(
                             )
                         )
                         Text(
-                            text = "Good Morning!",
+                            text = stringResource(id = R.string.greeting_morning),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = TextSubtextDark
                             )
@@ -112,7 +116,8 @@ fun HomeScreen(
                         modifier = Modifier
                             .size(40.dp)
                             .background(MaterialTheme.colorScheme.surface, CircleShape)
-                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                            .clickable { onNavigateToSettings() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
@@ -147,7 +152,7 @@ fun HomeScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Your Balance",
+                        text = stringResource(id = R.string.your_balance),
                         style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextLight)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -166,10 +171,10 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        ActionButton(icon = Icons.Default.ArrowDownward, label = "Deposit") { onNavigateToAddLoan() }
-                        ActionButton(icon = Icons.Default.ArrowUpward, label = "Withdraw") { onNavigateToAddLoan() }
-                        ActionButton(icon = Icons.Default.History, label = "History") { onNavigateToHistory() }
-                        ActionButton(icon = Icons.Default.Menu, label = "Details") { onNavigateToHistory() }
+                        ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.deposit)) { onNavigateToAddLoan() }
+                        ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.withdraw)) { onNavigateToAddLoan() }
+                        ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history)) { onNavigateToHistory() }
+                        ActionButton(icon = Icons.Default.Menu, label = stringResource(id = R.string.details)) { onNavigateToHistory() }
                     }
                 }
             }
@@ -182,7 +187,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Latest Recipient",
+                        text = stringResource(id = R.string.latest_recipient),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground,
@@ -249,13 +254,13 @@ fun HomeScreen(
                             verticalAlignment = Alignment.Top
                         ) {
                             Text(
-                                text = "Total\nLent",
+                                text = stringResource(id = R.string.total_lent),
                                 style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextLight, lineHeight = 18.sp)
                             )
                             Icon(Icons.Default.Fastfood, contentDescription = null, tint = NeonLime, modifier = Modifier.size(20.dp))
                         }
                         Text(
-                            text = "+৳${String.format("%,.0f", uiState.totalLent)}",
+                            text = "+${uiState.currencySymbol}${String.format("%,.0f", uiState.totalLent)}",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -282,13 +287,13 @@ fun HomeScreen(
                             verticalAlignment = Alignment.Top
                         ) {
                             Text(
-                                text = "Total\nBorrowed",
+                                text = stringResource(id = R.string.total_borrowed),
                                 style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextDark, lineHeight = 18.sp)
                             )
                             Icon(Icons.Default.DirectionsCar, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
                         }
                         Text(
-                            text = "-৳${String.format("%,.0f", uiState.totalBorrowed)}",
+                            text = "-${uiState.currencySymbol}${String.format("%,.0f", uiState.totalBorrowed)}",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -306,7 +311,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Bank Accounts",
+                        text = stringResource(id = R.string.bank_accounts),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground,
@@ -314,7 +319,7 @@ fun HomeScreen(
                         )
                     )
                     Text(
-                        text = "Add",
+                        text = stringResource(id = R.string.add),
                         style = MaterialTheme.typography.labelLarge.copy(color = SkyBlue, fontWeight = FontWeight.Bold),
                         modifier = Modifier.clickable { showAddBankSheet = true }
                     )
@@ -322,7 +327,7 @@ fun HomeScreen(
 
                 if (bankAccounts.isEmpty()) {
                     Text(
-                        text = "No bank accounts saved yet.",
+                        text = stringResource(id = R.string.no_bank_accounts),
                         color = TextSubtextDark,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
@@ -349,7 +354,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Transactions",
+                        text = stringResource(id = R.string.transactions),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground,
@@ -357,7 +362,7 @@ fun HomeScreen(
                         )
                     )
                     Text(
-                        text = "See All",
+                        text = stringResource(id = R.string.see_all),
                         style = MaterialTheme.typography.labelLarge.copy(color = TextSubtextDark),
                         modifier = Modifier.clickable { onNavigateToHistory() }
                     )
@@ -365,7 +370,7 @@ fun HomeScreen(
 
                 // ... Rest logic remains exactly the same logic but colors are tied to Theme.
                 if (allLoans.isEmpty()) {
-                    Text("No recent transactions =(", color = TextSubtextDark, modifier = Modifier.padding(vertical = 16.dp))
+                    Text(stringResource(id = R.string.no_recent_transactions), color = TextSubtextDark, modifier = Modifier.padding(vertical = 16.dp))
                 } else {
                     allLoans.take(5).forEach { item ->
                         val isLent = item.loan.type == LoanType.LEND
@@ -399,13 +404,13 @@ fun HomeScreen(
                                     )
                                 )
                                 Text(
-                                    text = if (isLent) "Lent" else "Borrowed",
+                                    text = if (isLent) stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed),
                                     style = MaterialTheme.typography.bodySmall.copy(color = TextSubtextDark)
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = "${if (isLent) "+" else "-"}৳ ${String.format("%,.0f", item.loan.amount)}",
+                                    text = "${if (isLent) "+" else "-"}${uiState.currencySymbol} ${String.format("%,.0f", item.loan.amount)}",
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -556,7 +561,7 @@ fun BankAccountCard(
                         onClick = { onDelete(account) },
                         modifier = Modifier.size(24.dp)
                     ) {
-                        Icon(Icons.Default.DeleteOutline, contentDescription = "Delete", tint = CoralRed, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red, modifier = Modifier.size(20.dp))
                     }
                 }
 
@@ -567,7 +572,7 @@ fun BankAccountCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("ACCOUNT NUMBER", style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = TextSubtextDark)
+                        Text(stringResource(id = R.string.account_number), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = TextSubtextDark)
                         Text(
                             text = account.accountNumber,
                             style = MaterialTheme.typography.headlineSmall.copy(
@@ -592,7 +597,7 @@ fun BankAccountCard(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
 
                 // Holder Name
-                BankField("ACCOUNT HOLDER", account.accountName, clipboardManager, context)
+                BankField(stringResource(id = R.string.account_holder), account.accountName, clipboardManager, context)
 
                 // Branch & SWIFT Row
                 if (!account.branchName.isNullOrBlank() || !account.swiftCode.isNullOrBlank()) {
@@ -602,12 +607,12 @@ fun BankAccountCard(
                     ) {
                         if (!account.branchName.isNullOrBlank()) {
                             Box(modifier = Modifier.weight(1f)) {
-                                BankField("BRANCH", account.branchName, clipboardManager, context)
+                                BankField(stringResource(id = R.string.branch), account.branchName, clipboardManager, context)
                             }
                         }
                         if (!account.swiftCode.isNullOrBlank()) {
                             Box(modifier = Modifier.weight(1f)) {
-                                BankField("SWIFT", account.swiftCode, clipboardManager, context)
+                                BankField(stringResource(id = R.string.swift), account.swiftCode, clipboardManager, context)
                             }
                         }
                     }
@@ -684,7 +689,7 @@ fun AddBankAccountBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                "Add Bank Account", 
+                stringResource(id = R.string.add_bank_account), 
                 style = MaterialTheme.typography.headlineSmall, 
                 fontWeight = FontWeight.Bold, 
                 color = MaterialTheme.colorScheme.onBackground
@@ -696,8 +701,8 @@ fun AddBankAccountBottomSheet(
                     .fillMaxWidth()
                     .height(140.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .border(2.dp, SubtleBorder, RoundedCornerShape(16.dp))
-                    .background(DashboardBg)
+                    .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface)
                     .clickable { launcher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
@@ -712,7 +717,7 @@ fun AddBankAccountBottomSheet(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Image, contentDescription = null, tint = SkyBlue, modifier = Modifier.size(48.dp))
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Tap to add a Custom Cover", color = Color.Gray, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(id = R.string.tap_custom_cover), color = Color.Gray, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -720,22 +725,22 @@ fun AddBankAccountBottomSheet(
             CustomLightTextField(
                 value = bankName,
                 onValueChange = { bankName = it },
-                label = "Bank Name (e.g. Mutual Trust Bank)",
+                label = stringResource(id = R.string.bank_name_hint),
                 leadingIcon = Icons.Default.AccountBalance
             )
 
             CustomLightTextField(
                 value = accountName,
                 onValueChange = { accountName = it },
-                label = "Account Holder Name",
+                label = stringResource(id = R.string.account_holder_name_hint),
                 leadingIcon = Icons.Default.Person
             )
 
             CustomLightTextField(
                 value = accountNumber,
                 onValueChange = { accountNumber = it },
-                label = "Account Number",
-                leadingIcon = Icons.Default.Numbers,
+                label = stringResource(id = R.string.account_number_hint),
+                leadingIcon = Icons.Default.DateRange,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
@@ -743,16 +748,16 @@ fun AddBankAccountBottomSheet(
                 CustomLightTextField(
                     value = branchName,
                     onValueChange = { branchName = it },
-                    label = "Branch (Optional)",
-                    leadingIcon = Icons.Default.Map,
+                    label = stringResource(id = R.string.branch_optional),
+                    leadingIcon = Icons.Default.LocationOn,
                     modifier = Modifier.weight(1f)
                 )
 
                 CustomLightTextField(
                     value = swiftCode,
                     onValueChange = { swiftCode = it },
-                    label = "SWIFT (Optional)",
-                    leadingIcon = Icons.Default.Public,
+                    label = stringResource(id = R.string.swift_optional),
+                    leadingIcon = Icons.Default.Info,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -773,7 +778,7 @@ fun AddBankAccountBottomSheet(
                 colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = Color.Black),
                 enabled = accountName.isNotBlank() && accountNumber.isNotBlank() && bankName.isNotBlank()
             ) {
-                Text("Save Bank Account", fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.save_bank_account), fontWeight = FontWeight.Bold)
             }
         }
     }

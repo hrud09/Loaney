@@ -29,6 +29,8 @@ import com.sbs.loaney.ui.theme.CoralRed
 import com.sbs.loaney.ui.theme.NeonLime
 import com.sbs.loaney.ui.theme.SkyBlue
 import com.sbs.loaney.ui.theme.SurfaceElevated
+import androidx.compose.ui.res.stringResource
+import com.sbs.loaney.R
 
 @Composable
 fun DonutChart(
@@ -98,7 +100,7 @@ fun DonutChart(
         // Center Text
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Net Balance",
+                text = stringResource(id = R.string.net_balance),
                 style = MaterialTheme.typography.labelMedium,
                 color = Color.White.copy(alpha = 0.6f)
             )
@@ -127,7 +129,7 @@ fun LineChart(
                 .background(SurfaceElevated, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Text("No activity data", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(id = R.string.no_activity), color = Color.Gray, style = MaterialTheme.typography.bodySmall)
         }
         return
     }

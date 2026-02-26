@@ -16,7 +16,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sbs.loaney.ui.theme.PrimaryLime
+import androidx.compose.ui.unit.dp
+import com.sbs.loaney.ui.theme.PrimaryLime
 import com.sbs.loaney.ui.theme.SecondaryOrange
+import androidx.compose.ui.res.stringResource
+import com.sbs.loaney.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,7 +31,7 @@ fun MessScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Mess (Tools Hub)", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(id = R.string.mess_title), fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = Color.White
@@ -43,31 +47,31 @@ fun MessScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Available Tools",
+                text = stringResource(id = R.string.available_tools),
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )
 
             ToolCard(
-                title = "Single-Screen Loan Tracker",
-                description = "Deep dive into a single loan's history and status.",
+                title = stringResource(id = R.string.tool_tracker_title),
+                description = stringResource(id = R.string.tool_tracker_desc),
                 icon = Icons.Default.Info,
                 backgroundColor = PrimaryLime,
                 onClick = onNavigateToTracker
             )
             
             ToolCard(
-                title = "Settings",
-                description = "Configure app preferences.",
+                title = stringResource(id = R.string.tool_settings_title),
+                description = stringResource(id = R.string.tool_settings_desc),
                 icon = Icons.Default.Settings,
                 backgroundColor = SecondaryOrange,
                 onClick = {}
             )
 
             ToolCard(
-                title = "Coming Soon...",
-                description = "More financial tools are under development.",
+                title = stringResource(id = R.string.tool_coming_soon_title),
+                description = stringResource(id = R.string.tool_coming_soon_desc),
                 icon = Icons.Default.Construction,
                 backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
                 onClick = {}

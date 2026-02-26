@@ -30,8 +30,23 @@ private val LightColorScheme = lightColorScheme(
     onError = Color.White
 )
 
-// Force light mode aesthetic
-private val DarkColorScheme = LightColorScheme
+private val DarkColorScheme = darkColorScheme(
+    primary = NeonLime,
+    onPrimary = Color.Black,
+    secondary = SkyBlue,
+    onSecondary = Color.Black,
+    tertiary = CoralRed,
+    onTertiary = Color.White,
+    background = Color(0xFF1E1E22), // Deep dark background
+    onBackground = Color.White,
+    surface = Color(0xFF2C2C2E), // Elevated dark cards
+    onSurface = Color.White,
+    surfaceVariant = Color(0xFF38383A), // Even lighter dark surfaces
+    onSurfaceVariant = Color.LightGray,
+    outline = Color.DarkGray,
+    error = CoralRed,
+    onError = Color.White
+)
 
 @Composable
 fun LoaneyTheme(
@@ -44,6 +59,7 @@ fun LoaneyTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+        darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 

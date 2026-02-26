@@ -8,6 +8,7 @@ import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.repository.LoanRepository
+import com.sbs.loaney.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -16,22 +17,28 @@ import javax.inject.Inject
 
 data class LoanTrackerUiState(
     val selectedLoan: LoanWithPayments? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val currencySymbol: String = "৳"
 )
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class LoanTrackerViewModel @Inject constructor(
-    private val repository: LoanRepository
+    private val repository: LoanRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _selectedLoanId = MutableStateFlow<Long?>(null)
 
-    val uiState: StateFlow<LoanTrackerUiState> = _selectedLoanId
-        .filterNotNull()
-        .flatMapLatest { id -> repository.getLoanById(id) }
-        .map { loan ->
-            LoanTrackerUiState(selectedLoan = loan)
-        }.stateIn(
+    val uiState: StateFlow<LoanTrackerUiState> = combine(
+        _selectedLoanId.filterNotNull().flatMapLatest { id -> repository.getLoanById(id) },
+        settingsRepository.currencySymbolFlow
+    ) { loan, currency ->
+        LoanTrackerUiState(
+            selectedLoan = loan,
+            currencySymbol = currency
+        )
+    }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = LoanTrackerUiState()

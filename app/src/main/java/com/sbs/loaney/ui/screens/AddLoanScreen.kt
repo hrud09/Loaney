@@ -46,6 +46,8 @@ import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.ManageLoansViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.sbs.loaney.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,10 +115,10 @@ fun AddLoanScreen(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { loanDate = it }
                     showLoanDatePicker = false
-                }) { Text("OK", color = Color.Black, fontWeight = FontWeight.Bold) }
+                }) { Text(stringResource(id = R.string.ok), color = Color.Black, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { showLoanDatePicker = false }) { Text("Cancel", color = Color.Gray) }
+                TextButton(onClick = { showLoanDatePicker = false }) { Text(stringResource(id = R.string.cancel), color = Color.Gray) }
             }
         ) {
             DatePicker(state = datePickerState, colors = datePickerColors)
@@ -132,10 +134,10 @@ fun AddLoanScreen(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { returnDate = it }
                     showReturnDatePicker = false
-                }) { Text("OK", color = Color.Black, fontWeight = FontWeight.Bold) }
+                }) { Text(stringResource(id = R.string.ok), color = Color.Black, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { showReturnDatePicker = false }) { Text("Cancel", color = Color.Gray) }
+                TextButton(onClick = { showReturnDatePicker = false }) { Text(stringResource(id = R.string.cancel), color = Color.Gray) }
             }
         ) {
             DatePicker(state = datePickerState, colors = datePickerColors)
@@ -190,14 +192,14 @@ fun AddLoanScreen(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        if (selectedLoanType == LoanType.LEND) "Send Loan" else "Request Loan", 
+                        if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title), 
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     ) 
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back), tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -223,34 +225,41 @@ fun AddLoanScreen(
                 modifier = Modifier.fillMaxWidth(0.8f)
             ) {
                 Row(modifier = Modifier.padding(4.dp)) {
-                    listOf(LoanType.LEND to "Lend", LoanType.BORROW to "Borrow").forEach { (loanType, text) ->
-                        val selected = selectedLoanType == loanType
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(CircleShape)
-                                .background(if (selected) Color.White else Color.Transparent)
-                                .clickable { selectedLoanType = loanType }
-                                .padding(vertical = 12.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = text,
-                                color = if (selected) Color.Black else Color.Gray,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                    val lendColor = if (selectedLoanType == LoanType.LEND) NeonLime else Color.Transparent
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(lendColor)
+                            .clickable { selectedLoanType = LoanType.LEND }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(stringResource(id = R.string.lend), color = if (selectedLoanType == LoanType.LEND) Color.Black else TextSubtextDark, fontWeight = FontWeight.Bold)
+                    }
+
+                    val borrowColor = if (selectedLoanType == LoanType.BORROW) CoralRed else Color.Transparent
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(borrowColor)
+                            .clickable { selectedLoanType = LoanType.BORROW }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(stringResource(id = R.string.borrow), color = if (selectedLoanType == LoanType.BORROW) Color.White else TextSubtextDark, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
             // Big Amount Input
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "Amount", color = TextSubtextDark, style = MaterialTheme.typography.bodyLarge)
+                Text(text = stringResource(id = R.string.amount), color = TextSubtextDark, style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "৳ ",
+                        text = "${uiState.currencySymbol} ",
                         style = MaterialTheme.typography.displayMedium,
                         color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold
@@ -311,7 +320,7 @@ fun AddLoanScreen(
                                 name = it
                                 showSuggestions = true 
                             },
-                            label = "Recipient Name",
+                            label = stringResource(id = R.string.recipient_name),
                             leadingIcon = Icons.Default.Person,
                             trailingIcon = Icons.Default.ContactPhone,
                             onTrailingIconClick = { 
@@ -349,7 +358,7 @@ fun AddLoanScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (showExtraDetails) "Hide Extra Details" else "Add Extra Details",
+                            text = if (showExtraDetails) stringResource(id = R.string.hide_extra_details) else stringResource(id = R.string.add_extra_details),
                             style = MaterialTheme.typography.labelLarge.copy(color = SkyBlue, fontWeight = FontWeight.Bold)
                         )
                         Icon(
@@ -367,7 +376,7 @@ fun AddLoanScreen(
                                 CustomLightTextField(
                                     value = dateFormat.format(Date(loanDate)),
                                     onValueChange = {},
-                                    label = "Loan Date",
+                                    label = stringResource(id = R.string.loan_date),
                                     readOnly = true,
                                     leadingIcon = Icons.Default.CalendarToday,
                                     modifier = Modifier.weight(1f).clickable { showLoanDatePicker = true }
@@ -375,7 +384,7 @@ fun AddLoanScreen(
                                 CustomLightTextField(
                                     value = dateFormat.format(Date(returnDate)),
                                     onValueChange = {},
-                                    label = "Due Date",
+                                    label = stringResource(id = R.string.due_date),
                                     readOnly = true,
                                     leadingIcon = Icons.Default.Event,
                                     modifier = Modifier.weight(1f).clickable { showReturnDatePicker = true }
@@ -384,7 +393,7 @@ fun AddLoanScreen(
 
                             // Reason for Loan
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Reason for Loan", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                                Text(stringResource(id = R.string.reason_for_loan), style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     items(loanReasons) { r ->
                                         val isSelected = purpose == r
@@ -413,7 +422,7 @@ fun AddLoanScreen(
                             CustomLightTextField(
                                 value = phone,
                                 onValueChange = { phone = it },
-                                label = "Phone (Optional)",
+                                label = stringResource(id = R.string.phone_optional),
                                 leadingIcon = Icons.Default.Phone,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                             )
@@ -421,20 +430,20 @@ fun AddLoanScreen(
                             CustomLightTextField(
                                 value = address,
                                 onValueChange = { address = it },
-                                label = "Location (Optional)",
+                                label = stringResource(id = R.string.location_optional),
                                 leadingIcon = Icons.Default.LocationOn
                             )
 
                             CustomLightTextField(
                                 value = witness,
                                 onValueChange = { witness = it },
-                                label = "Witness (Optional)",
+                                label = stringResource(id = R.string.witness_optional),
                                 leadingIcon = Icons.Default.Group
                             )
 
                             // Attachments
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Attachment", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                                Text(stringResource(id = R.string.attachment), style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -449,7 +458,7 @@ fun AddLoanScreen(
                                             .clickable { imageLauncher.launch("image/*") },
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(Icons.Default.Add, contentDescription = "Add Attachment", tint = Color.Gray)
+                                        Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.add_attachment), tint = Color.Gray)
                                     }
 
                                     // Preview Section
@@ -466,7 +475,7 @@ fun AddLoanScreen(
                                             ) {
                                                 AsyncImage(
                                                     model = proofUri,
-                                                    contentDescription = "Preview",
+                                                    contentDescription = stringResource(id = R.string.preview),
                                                     modifier = Modifier.fillMaxSize(),
                                                     contentScale = ContentScale.Crop
                                                 )

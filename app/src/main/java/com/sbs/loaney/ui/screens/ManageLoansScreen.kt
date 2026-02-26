@@ -33,6 +33,8 @@ import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
 import com.sbs.loaney.ui.viewmodel.ManageLoansViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.sbs.loaney.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -53,7 +55,7 @@ fun ManageLoansScreen(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "Transactions", 
+                        stringResource(id = R.string.transactions), 
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
@@ -70,7 +72,7 @@ fun ManageLoansScreen(
                 onClick = onNavigateToAddLoan,
                 containerColor = NeonLime,
                 contentColor = Color.Black,
-                text = { Text("New Loan", fontWeight = FontWeight.Bold) },
+                text = { Text(stringResource(id = R.string.new_loan), fontWeight = FontWeight.Bold) },
                 icon = { Icon(Icons.Default.Add, contentDescription = "Add New Loan") },
                 shape = CircleShape
             )
@@ -88,7 +90,7 @@ fun ManageLoansScreen(
                     .background(Color(0xFFE5E5EA), CircleShape)
                     .padding(4.dp)
             ) {
-                listOf(LoanType.LEND to "LENT", LoanType.BORROW to "BORROWED").forEach { (type, text) ->
+                listOf(LoanType.LEND to stringResource(id = R.string.lent), LoanType.BORROW to stringResource(id = R.string.borrowed)).forEach { (type, text) ->
                     val selected = uiState.selectedType == type
                     // Using NeonLime for both active states looks cleaner in Light Mode, or White with dark text
                     val activeColor = if (selected) Color.White else Color.Transparent
@@ -132,13 +134,13 @@ fun ManageLoansScreen(
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        "No transactions... yet!",
+                        stringResource(id = R.string.no_transactions_yet),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Tap the '+' button down below\nto start tracking.",
+                        stringResource(id = R.string.tap_to_start_tracking),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray,
                         textAlign = TextAlign.Center,
@@ -156,6 +158,7 @@ fun ManageLoansScreen(
                             modifier = Modifier.animateItem(),
                             item = item,
                             dateFormat = dateFormat,
+                            currencySymbol = uiState.currencySymbol,
                             onClick = { onNavigateToDetail(item.loan.id) },
                             onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
                             onSwipeRight = { loanToDelete = item },
@@ -181,8 +184,8 @@ fun ManageLoansScreen(
         AlertDialog(
             onDismissRequest = { loanToDelete = null },
             icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = CoralRed) },
-            title = { Text("Delete Loan?") },
-            text = { Text("Are you sure you want to delete the loan for ${loanToDelete?.loan?.personName}? This action cannot be undone.") },
+            title = { Text(stringResource(id = R.string.delete_loan_title)) },
+            text = { Text(stringResource(id = R.string.delete_loan_msg, loanToDelete?.loan?.personName ?: "")) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -191,12 +194,12 @@ fun ManageLoansScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = CoralRed)
                 ) {
-                    Text("Delete", fontWeight = FontWeight.Bold)
+                    Text(stringResource(id = R.string.delete), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { loanToDelete = null }) {
-                    Text("Cancel", color = Color.Gray)
+                    Text(stringResource(id = R.string.cancel), color = Color.Gray)
                 }
             },
             containerColor = Color.White,
@@ -212,6 +215,7 @@ fun SwipeableManageLoanCard(
     modifier: Modifier = Modifier,
     item: LoanWithPayments,
     dateFormat: SimpleDateFormat,
+    currencySymbol: String,
     onClick: () -> Unit,
     onSwipeLeft: () -> Unit,
     onSwipeRight: () -> Unit
@@ -255,8 +259,8 @@ fun SwipeableManageLoanCard(
                 else -> Icons.Default.Add
             }
             val label = when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> "Delete"
-                SwipeToDismissBoxValue.EndToStart -> "Add Payment"
+                SwipeToDismissBoxValue.StartToEnd -> stringResource(id = R.string.delete)
+                SwipeToDismissBoxValue.EndToStart -> stringResource(id = R.string.add_payment)
                 else -> ""
             }
 
@@ -287,6 +291,7 @@ fun SwipeableManageLoanCard(
         ManageLoanCard(
             item = item,
             dateFormat = dateFormat,
+            currencySymbol = currencySymbol,
             onClick = onClick
         )
     }
@@ -297,6 +302,7 @@ fun SwipeableManageLoanCard(
 fun ManageLoanCard(
     item: LoanWithPayments,
     dateFormat: SimpleDateFormat,
+    currencySymbol: String,
     onClick: () -> Unit
 ) {
     val loan = item.loan
@@ -337,13 +343,13 @@ fun ManageLoanCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Due by: ${dateFormat.format(loan.promisedReturnDate)}",
+                        text = stringResource(id = R.string.due_by, dateFormat.format(loan.promisedReturnDate)),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
                 }
                 Text(
-                    text = "৳${String.format(Locale.getDefault(), "%,.0f", totalLoan)}",
+                    text = "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", totalLoan)}",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -368,7 +374,7 @@ fun ManageLoanCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Paid: ৳${String.format(Locale.getDefault(), "%,.0f", paid)}",
+                        text = stringResource(id = R.string.paid_amount, "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", paid)}"),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
@@ -384,9 +390,9 @@ fun ManageLoanCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             val statusText = when {
-                loan.status == LoanStatus.FULLY_PAID -> "Paid"
-                loan.status == LoanStatus.OVERDUE -> "Overdue"
-                else -> "Active"
+                loan.status == LoanStatus.FULLY_PAID -> stringResource(id = R.string.status_paid)
+                loan.status == LoanStatus.OVERDUE -> stringResource(id = R.string.status_overdue)
+                else -> stringResource(id = R.string.status_active)
             }
             
             val tonalButtonColors = when (loan.status) {

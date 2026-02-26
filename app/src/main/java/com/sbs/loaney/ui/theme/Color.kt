@@ -2,32 +2,26 @@ package com.sbs.loaney.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// === Unified Consumer-Ready Palette (Light Dashboard Style) ===
+val Purple80 = Color(0xFFD0BCFF)
+val PurpleGrey80 = Color(0xFFCCC2DC)
+val Pink80 = Color(0xFFEFB8C8)
 
-// Backgrounds
-val DashboardBg     = Color(0xFFF7F7F7)   // Clean light grey background
-val DarkCardBg      = Color(0xFF1E1E22)   // Premium sleek dark card
-val SurfaceElevated = Color(0xFFFFFFFF)   // White cards / popups
-val SubtleBorder    = Color(0xFFE5E5EA)   // Light subtle borders
+val Purple40 = Color(0xFF6650a4)
+val PurpleGrey40 = Color(0xFF625b71)
+val Pink40 = Color(0xFF7D5260)
 
-// Accents
-val NeonLime        = Color(0xFFC6FF00)   // Primary — Action items (Deposit/Send/Pay)
-val SkyBlue         = Color(0xFF4DC9FF)   // Secondary — active input, links
-val CoralRed        = Color(0xFFFF6B6B)   // Tertiary — Destructive, withdraw
-val AccentPurple    = Color(0xFF9B7FFF)   // Misc chart accents
-val AccentOrange    = Color(0xFFFF9F45)   // Warning, overdue
+val TextSubtextDark = Color(0xFF8A8A8E)
+val TextSubtextLight = Color(0xFFE5E5EA)
+val NeonLime = Color(0xFF32D74B)
+val SkyBlue = Color(0xFF5AC8FA)
+val CoralRed = Color(0xFFFF453A)
+val DashboardBg = Color(0xFFF2F2F7)
+val SubtleBorder = Color(0xFFE5E5EA)
 
-// Text Colors
-val TextMainDark    = Color(0xFF1C1C1E)   // Headers on light background
-val TextSubtextDark = Color(0xFF8E8E93)   // Subtext on light background
-val TextMainLight   = Color(0xFFFFFFFF)   // Text on dark cards
-val TextSubtextLight= Color(0xFFA0A0A5)   // Subtext on dark cards
-
-// Semantic aliases (For legacy mapping)
-val PrimaryLime     = NeonLime
-val SecondaryBlue   = SkyBlue
-val TertiaryRed     = CoralRed
-val BlackBG         = DarkCardBg
-val ChipGrey        = Color(0xFFE5E5EA)
-val SecondaryOrange = AccentOrange
-val AccentYellow    = NeonLime
+// Added for resolution of Unresolved references
+val SurfaceElevated = Color(0xFF2C2C2E)
+val PrimaryLime = Color(0xFF32D74B)
+val SecondaryOrange = Color(0xFFFF9F0A)
+val TextMainDark = Color(0xFF1C1C1E)
+val TextMainLight = Color(0xFFF2F2F7)
+val DarkCardBg = Color(0xFF1C1C1E)

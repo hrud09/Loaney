@@ -6,6 +6,7 @@ import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.data.repository.LoanRepository
+import com.sbs.loaney.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import kotlinx.coroutines.flow.combine
@@ -26,20 +27,29 @@ data class HomeUiState(
     val dueSoonCount: Int = 0,
     val lentLoans: List<LoanWithPayments> = emptyList(),
     val borrowedLoans: List<LoanWithPayments> = emptyList(),
-    val bankAccounts: List<BankAccountEntity> = emptyList()
+    val bankAccounts: List<BankAccountEntity> = emptyList(),
+    val userName: String = "Sajibur",
+    val currencySymbol: String = "৳"
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: LoanRepository
+    private val repository: LoanRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = combine(
         repository.getAllLoans(),
-        repository.getAllBankAccounts()
-    ) { loansWithPayments, accounts ->
+        repository.getAllBankAccounts(),
+        settingsRepository.userNameFlow,
+        settingsRepository.currencySymbolFlow
+    ) { loansWithPayments, accounts, name, currency ->
         val summary = calculateSummary(loansWithPayments)
-        summary.copy(bankAccounts = accounts)
+        summary.copy(
+            bankAccounts = accounts,
+            userName = name,
+            currencySymbol = currency
+        )
     }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

@@ -8,6 +8,7 @@ import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.data.repository.LoanRepository
+import com.sbs.loaney.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,12 +18,14 @@ import javax.inject.Inject
 data class ManageLoansUiState(
     val loans: List<LoanWithPayments> = emptyList(),
     val selectedType: LoanType = LoanType.LEND,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val currencySymbol: String = "৳"
 )
 
 @HiltViewModel
 class ManageLoansViewModel @Inject constructor(
-    private val repository: LoanRepository
+    private val repository: LoanRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _selectedType = MutableStateFlow(LoanType.LEND)
@@ -30,11 +33,13 @@ class ManageLoansViewModel @Inject constructor(
 
     val uiState: StateFlow<ManageLoansUiState> = combine(
         repository.getAllLoans(),
-        _selectedType
-    ) { allLoans, type ->
+        _selectedType,
+        settingsRepository.currencySymbolFlow
+    ) { allLoans, type, currency ->
         ManageLoansUiState(
             loans = allLoans.filter { it.loan.type == type },
-            selectedType = type
+            selectedType = type,
+            currencySymbol = currency
         )
     }.stateIn(
         scope = viewModelScope,
