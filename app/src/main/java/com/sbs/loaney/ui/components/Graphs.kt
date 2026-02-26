@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.sbs.loaney.ui.theme.CoralRed
 import com.sbs.loaney.ui.theme.NeonLime
 import com.sbs.loaney.ui.theme.SkyBlue
+import kotlin.math.max
 import com.sbs.loaney.ui.theme.SurfaceElevated
 import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
@@ -44,9 +45,10 @@ fun DonutChart(
     val sweepAngle = remember { Animatable(0f) }
     
     LaunchedEffect(totalLent, totalBorrowed) {
+        val targetSweep = 360f // The total sweep angle for the animation
         sweepAngle.animateTo(
-            targetValue = 360f,
-            animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+            targetValue = max(targetSweep, 5f),
+            animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
         )
     }
 
@@ -144,7 +146,7 @@ fun LineChart(
         animationProgress.snapTo(0f)
         animationProgress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 1500, easing = FastOutSlowInEasing)
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing)
         )
     }
 

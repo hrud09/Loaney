@@ -74,11 +74,47 @@ fun MainScreen() {
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = androidx.compose.animation.core.spring(
+                        dampingRatio = 0.6f, // Heavy elastic
+                        stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                    )
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = androidx.compose.animation.core.spring(
+                        dampingRatio = 0.6f,
+                        stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                    )
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = androidx.compose.animation.core.spring(
+                        dampingRatio = 0.6f,
+                        stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                    )
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = androidx.compose.animation.core.spring(
+                        dampingRatio = 0.6f,
+                        stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+                    )
+                )
+            }
         ) {
             composable(Screen.Home.route) {
                 HomeScreen(
-                    onNavigateToAddLoan = { navController.navigate(Screen.AddLoan.route) },
+                    onNavigateToAddLoan = { type -> navController.navigate(Screen.AddLoan.createRoute(type)) },
                     onNavigateToDetail = { loanId ->
                         navController.navigate(Screen.LoanDetail.createRoute(loanId))
                     },
@@ -94,14 +130,30 @@ fun MainScreen() {
             }
             composable(Screen.ManageLoans.route) {
                 ManageLoansScreen(
-                    onNavigateToAddLoan = { navController.navigate(Screen.AddLoan.route) },
+                    onNavigateToAddLoan = { type -> navController.navigate(Screen.AddLoan.createRoute(type)) },
                     onNavigateToDetail = { loanId ->
                         navController.navigate(Screen.LoanDetail.createRoute(loanId))
                     }
                 )
             }
-            composable(Screen.AddLoan.route) {
-                AddLoanScreen(onNavigateBack = { navController.popBackStack() })
+            composable(
+                route = Screen.AddLoan.route,
+                arguments = listOf(navArgument("type") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = "LEND"
+                })
+            ) { backStackEntry ->
+                val typeStr = backStackEntry.arguments?.getString("type") ?: "LEND"
+                val initialType = try {
+                    com.sbs.loaney.data.model.LoanType.valueOf(typeStr)
+                } catch (e: Exception) {
+                    com.sbs.loaney.data.model.LoanType.LEND
+                }
+                AddLoanScreen(
+                    initialType = initialType,
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
             composable(Screen.Settings.route) {
                 SettingsScreen(onNavigateBack = { navController.popBackStack() })

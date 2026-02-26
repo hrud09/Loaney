@@ -42,6 +42,8 @@ import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.ui.components.CustomLightTextField
+import com.sbs.loaney.ui.components.WalletCardHolder
+import com.sbs.loaney.ui.components.bounceClick
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.HomeViewModel
 import java.text.SimpleDateFormat
@@ -49,7 +51,7 @@ import java.util.*
 
 @Composable
 fun HomeScreen(
-    onNavigateToAddLoan: () -> Unit,
+    onNavigateToAddLoan: (String) -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToHistory: () -> Unit, // Replaces Manage navigation
     onNavigateToSettings: () -> Unit, // New
@@ -121,7 +123,7 @@ fun HomeScreen(
                             .size(40.dp)
                             .background(MaterialTheme.colorScheme.surface, CircleShape)
                             .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                            .clickable { onNavigateToSettings() },
+                            .bounceClick { onNavigateToSettings() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
@@ -131,7 +133,7 @@ fun HomeScreen(
                             .size(40.dp)
                             .background(MaterialTheme.colorScheme.surface, CircleShape)
                             .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                            .clickable { showNotificationsSheet = true },
+                            .bounceClick { showNotificationsSheet = true },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
@@ -234,8 +236,8 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.lend)) { onNavigateToAddLoan() }
-                        ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.borrow)) { onNavigateToAddLoan() }
+                        ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.lend)) { onNavigateToAddLoan("LEND") }
+                        ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.borrow)) { onNavigateToAddLoan("BORROW") }
                         ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history)) { onNavigateToHistory() }
                         ActionButton(icon = Icons.Default.Menu, label = stringResource(id = R.string.details)) { onNavigateToHistory() }
                     }
@@ -271,18 +273,12 @@ fun HomeScreen(
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 } else {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(horizontal = 20.dp) // Ensures padding on the sides of the list
-                    ) {
-                        items(bankAccounts, key = { it.id }) { account ->
-                            BankAccountCard(
-                                account = account,
-                                context = context,
-                                onDelete = { viewModel.deleteBankAccount(it) }
-                            )
-                        }
-                    }
+                    WalletCardHolder(
+                        accounts = bankAccounts,
+                        totalBalance = uiState.totalLent - uiState.totalBorrowed,
+                        currencySymbol = uiState.currencySymbol,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
                 }
             }
 
@@ -317,7 +313,7 @@ fun HomeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onNavigateToDetail(item.loan.id) }
+                                .bounceClick { onNavigateToDetail(item.loan.id) }
                                 .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -455,7 +451,7 @@ fun NotificationsBottomSheet(onDismiss: () -> Unit) {
 fun ActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
+        modifier = Modifier.bounceClick(onClick)
     ) {
         Box(
             modifier = Modifier

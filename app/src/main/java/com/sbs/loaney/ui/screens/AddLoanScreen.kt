@@ -52,13 +52,14 @@ import com.sbs.loaney.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddLoanScreen(
+    initialType: LoanType = LoanType.LEND,
     onNavigateBack: () -> Unit,
     viewModel: ManageLoansViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     
-    var selectedLoanType by remember { mutableStateOf(LoanType.LEND) }
+    var selectedLoanType by remember { mutableStateOf(initialType) }
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
@@ -369,7 +370,11 @@ fun AddLoanScreen(
                     }
 
                     // PROGRESSIVE DISCLOSURE: Extra Details Form
-                    AnimatedVisibility(visible = showExtraDetails) {
+                    AnimatedVisibility(
+                        visible = showExtraDetails,
+                        enter = androidx.compose.animation.expandVertically(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)),
+                        exit = androidx.compose.animation.shrinkVertically(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300))
+                    ) {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

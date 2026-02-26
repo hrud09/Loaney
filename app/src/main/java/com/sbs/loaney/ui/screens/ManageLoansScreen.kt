@@ -28,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
+import com.sbs.loaney.ui.components.bounceClick
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
 import com.sbs.loaney.ui.viewmodel.ManageLoansViewModel
@@ -39,7 +40,7 @@ import com.sbs.loaney.R
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ManageLoansScreen(
-    onNavigateToAddLoan: () -> Unit,
+    onNavigateToAddLoan: (String) -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     viewModel: ManageLoansViewModel = hiltViewModel(),
     trackerViewModel: LoanTrackerViewModel = hiltViewModel()
@@ -68,14 +69,14 @@ fun ManageLoansScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNavigateToAddLoan,
-                containerColor = NeonLime,
+            FloatingActionButton(
+                onClick = { onNavigateToAddLoan(uiState.selectedType.name) },
+                containerColor = if (uiState.selectedType == LoanType.LEND) NeonLime else SkyBlue,
                 contentColor = Color.Black,
-                text = { Text(stringResource(id = R.string.new_loan), fontWeight = FontWeight.Bold) },
-                icon = { Icon(Icons.Default.Add, contentDescription = "Add New Loan") },
                 shape = CircleShape
-            )
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add New Loan")
+            }
         }
     ) { padding ->
         if (uiState.isLoading) {
@@ -102,7 +103,7 @@ fun ManageLoansScreen(
                             .weight(1f)
                             .clip(CircleShape)
                             .background(activeColor)
-                            .clickable { viewModel.setLoanType(type) }
+                            .bounceClick { viewModel.setLoanType(type) }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -158,7 +159,11 @@ fun ManageLoansScreen(
                 ) {
                     items(uiState.loans, key = { it.loan.id }) { item ->
                         SwipeableManageLoanCard(
-                            modifier = Modifier.animateItem(),
+                            modifier = Modifier.animateItem(
+                                fadeInSpec = null, 
+                                placementSpec = androidx.compose.animation.core.tween(durationMillis = 300, easing = androidx.compose.animation.core.FastOutSlowInEasing), 
+                                fadeOutSpec = null
+                            ),
                             item = item,
                             dateFormat = dateFormat,
                             currencySymbol = uiState.currencySymbol,
@@ -317,8 +322,8 @@ fun ManageLoanCard(
     val accentColor = if (loan.type == LoanType.LEND) NeonLime else SkyBlue
 
     Surface(
-        onClick = onClick,
         modifier = Modifier
+            .bounceClick(onClick)
             .fillMaxWidth()
             .border(
                 width = 1.dp,
