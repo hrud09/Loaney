@@ -273,12 +273,18 @@ fun HomeScreen(
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 } else {
-                    WalletCardHolder(
-                        accounts = bankAccounts,
-                        totalBalance = uiState.totalLent - uiState.totalBorrowed,
-                        currencySymbol = uiState.currencySymbol,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(bankAccounts, key = { it.id }) { account ->
+                            BankAccountCard(
+                                account = account,
+                                context = context,
+                                onDelete = { viewModel.deleteBankAccount(it) }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -559,11 +565,25 @@ fun BankAccountCard(
                         maxLines = 1,
                         modifier = Modifier.weight(1f)
                     )
-                    IconButton(
-                        onClick = { onDelete(account) },
-                        modifier = Modifier.size(20.dp) // 24.dp * 0.8
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red, modifier = Modifier.size(16.dp)) // 20.dp * 0.8
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setPrimaryClip(ClipData.newPlainText("Bank Name", account.bankName))
+                                Toast.makeText(context, "Bank Name Copied!", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(20.dp)
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(11.dp))
+                        }
+                        IconButton(
+                            onClick = { onDelete(account) },
+                            modifier = Modifier.size(20.dp)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red, modifier = Modifier.size(16.dp))
+                        }
                     }
                 }
 
