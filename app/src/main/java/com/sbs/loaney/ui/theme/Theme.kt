@@ -63,83 +63,83 @@ data class ColorfulAccent(
 )
 
 val colorfulAccents = listOf(
-    ColorfulAccent( // 0: Purple Neon
+    ColorfulAccent( // 0: Purple Glass
         name = "Purple",
-        primary = Color(0xFF9B72FF),
-        secondary = Color(0xFFFF6B9D),
-        background = Color(0xFF1A1428),
-        surface = Color(0xFF241E36),
-        surfaceVariant = Color(0xFF2E2644),
-        outline = Color(0xFF4A3D6B),
-        onSurface = Color(0xFFE8DFFF),
-        onSurfaceVariant = Color(0xFFBBAADD),
-        primaryContainer = Color(0xFF352A5C),
-        onPrimaryContainer = Color(0xFFD4C4FF)
+        primary = Color(0xFFB08DFF),
+        secondary = Color(0xFFFF8EC4),
+        background = Color(0xFF1C1830),
+        surface = Color(0xFF2D2650),         // frosted violet glass panel
+        surfaceVariant = Color(0xFF382F5E),   // slightly lighter glass layer
+        outline = Color(0xFF6B5CA0),          // fine glass edge
+        onSurface = Color(0xFFF0EAFF),
+        onSurfaceVariant = Color(0xFFC8B8F0),
+        primaryContainer = Color(0xFF3D3470),
+        onPrimaryContainer = Color(0xFFDDD0FF)
     ),
-    ColorfulAccent( // 1: Teal Neon
+    ColorfulAccent( // 1: Teal Glass
         name = "Teal",
-        primary = Color(0xFF4DD9E8),
-        secondary = Color(0xFF80FFDB),
-        background = Color(0xFF0E1B20),
-        surface = Color(0xFF162429),
-        surfaceVariant = Color(0xFF1E2F35),
-        outline = Color(0xFF2E5058),
-        onSurface = Color(0xFFD0F5F0),
-        onSurfaceVariant = Color(0xFF99C9C0),
-        primaryContainer = Color(0xFF1A3A42),
-        onPrimaryContainer = Color(0xFFB8F0EA)
+        primary = Color(0xFF5CE6D6),
+        secondary = Color(0xFF8AF5E8),
+        background = Color(0xFF101E22),
+        surface = Color(0xFF1A3840),         // frosted teal glass panel
+        surfaceVariant = Color(0xFF22434C),   // lighter glass layer
+        outline = Color(0xFF4A8090),          // fine glass edge
+        onSurface = Color(0xFFE4FDF8),
+        onSurfaceVariant = Color(0xFFA0D8CC),
+        primaryContainer = Color(0xFF1E4A55),
+        onPrimaryContainer = Color(0xFFC0F5EC)
     ),
-    ColorfulAccent( // 2: Rose Neon
+    ColorfulAccent( // 2: Rose Glass
         name = "Rose",
-        primary = Color(0xFFFF6B9D),
-        secondary = Color(0xFFFFB3D0),
-        background = Color(0xFF1E1218),
-        surface = Color(0xFF2A1A22),
-        surfaceVariant = Color(0xFF36222C),
-        outline = Color(0xFF5A3848),
-        onSurface = Color(0xFFFFE0EA),
-        onSurfaceVariant = Color(0xFFCCA0B0),
-        primaryContainer = Color(0xFF4A2035),
-        onPrimaryContainer = Color(0xFFFFB3CC)
+        primary = Color(0xFFFF7EAE),
+        secondary = Color(0xFFFFC0DA),
+        background = Color(0xFF221420),
+        surface = Color(0xFF3C2238),         // frosted rose glass panel
+        surfaceVariant = Color(0xFF482C44),   // lighter glass layer
+        outline = Color(0xFF885070),          // fine glass edge
+        onSurface = Color(0xFFFFE8F2),
+        onSurfaceVariant = Color(0xFFDDA8C0),
+        primaryContainer = Color(0xFF502A48),
+        onPrimaryContainer = Color(0xFFFFCCE0)
     ),
-    ColorfulAccent( // 3: Amber Neon
+    ColorfulAccent( // 3: Amber Glass
         name = "Amber",
-        primary = Color(0xFFFFB74D),
-        secondary = Color(0xFFFFD993),
-        background = Color(0xFF1C1610),
-        surface = Color(0xFF281F15),
-        surfaceVariant = Color(0xFF34291C),
-        outline = Color(0xFF5C4830),
-        onSurface = Color(0xFFFFF0D6),
-        onSurfaceVariant = Color(0xFFCCB48A),
-        primaryContainer = Color(0xFF4A3520),
-        onPrimaryContainer = Color(0xFFFFDDA6)
+        primary = Color(0xFFFFC46B),
+        secondary = Color(0xFFFFE0A0),
+        background = Color(0xFF201810),
+        surface = Color(0xFF3A2E1C),         // frosted amber glass panel
+        surfaceVariant = Color(0xFF463824),   // lighter glass layer
+        outline = Color(0xFF8A6838),          // fine glass edge
+        onSurface = Color(0xFFFFF4E0),
+        onSurfaceVariant = Color(0xFFDDC490),
+        primaryContainer = Color(0xFF504020),
+        onPrimaryContainer = Color(0xFFFFE8B8)
     ),
-    ColorfulAccent( // 4: Lime Neon
+    ColorfulAccent( // 4: Lime Glass
         name = "Lime",
-        primary = Color(0xFF8AFF65),
-        secondary = Color(0xFFB8FF99),
-        background = Color(0xFF121A0E),
-        surface = Color(0xFF1A2416),
-        surfaceVariant = Color(0xFF222E1E),
-        outline = Color(0xFF3A5030),
-        onSurface = Color(0xFFDCFFD0),
-        onSurfaceVariant = Color(0xFFA0CC8A),
-        primaryContainer = Color(0xFF254020),
-        onPrimaryContainer = Color(0xFFC0FFB0)
+        primary = Color(0xFF9EFF7E),
+        secondary = Color(0xFFC4FFB0),
+        background = Color(0xFF141E10),
+        surface = Color(0xFF223818),         // frosted lime glass panel
+        surfaceVariant = Color(0xFF2C4422),   // lighter glass layer
+        outline = Color(0xFF508040),          // fine glass edge
+        onSurface = Color(0xFFE8FFE0),
+        onSurfaceVariant = Color(0xFFACDD98),
+        primaryContainer = Color(0xFF2C4C1C),
+        onPrimaryContainer = Color(0xFFD0FFC0)
     ),
-    ColorfulAccent( // 5: Blue Neon
+    ColorfulAccent( // 5: Blue Glass
         name = "Blue",
-        primary = Color(0xFF5B9BFF),
-        secondary = Color(0xFF99C8FF),
-        background = Color(0xFF0E141E),
-        surface = Color(0xFF151D2A),
-        surfaceVariant = Color(0xFF1E2836),
-        outline = Color(0xFF304060),
-        onSurface = Color(0xFFD4E4FF),
-        onSurfaceVariant = Color(0xFF8AAACC),
-        primaryContainer = Color(0xFF1C3050),
-        onPrimaryContainer = Color(0xFFB8D6FF)
+        primary = Color(0xFF70AAFF),
+        secondary = Color(0xFFA8CCFF),
+        background = Color(0xFF101824),
+        surface = Color(0xFF1C2E48),         // frosted blue glass panel
+        surfaceVariant = Color(0xFF243854),   // lighter glass layer
+        outline = Color(0xFF4870A0),          // fine glass edge
+        onSurface = Color(0xFFE0EEFF),
+        onSurfaceVariant = Color(0xFF98B8DD),
+        primaryContainer = Color(0xFF284060),
+        onPrimaryContainer = Color(0xFFC0DDFF)
     )
 )
 
