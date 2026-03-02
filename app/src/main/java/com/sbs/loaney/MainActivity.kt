@@ -34,11 +34,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val themeMode by settingsRepository.themeModeFlow.collectAsState(initial = 1)
+            val accentColor by settingsRepository.accentColorFlow.collectAsState(initial = 0)
             val isDarkTheme = when (themeMode) {
                 1 -> false // Force Light
                 2 -> true // Force Dark
+                3 -> false // Colorful (handled separately)
                 else -> isSystemInDarkTheme() // System default
             }
+            val isColorful = themeMode == 3
             
             val onboardingCompleted by settingsRepository.onboardingCompletedFlow.collectAsState(initial = null)
 
@@ -50,7 +53,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            LoaneyTheme(darkTheme = isDarkTheme) {
+            LoaneyTheme(darkTheme = isDarkTheme, colorfulTheme = isColorful, colorfulAccent = accentColor) {
                 if (onboardingCompleted != null) {
                     val startDest = if (onboardingCompleted == true) {
                         com.sbs.loaney.ui.navigation.Screen.Home.route

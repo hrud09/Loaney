@@ -12,6 +12,8 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
@@ -49,6 +51,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.BankAccountEntity
+import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.ui.components.CustomLightTextField
 import com.sbs.loaney.ui.components.FullScreenImageViewer
@@ -59,6 +62,7 @@ import com.sbs.loaney.ui.viewmodel.HomeViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     onNavigateToAddLoan: (String) -> Unit,
@@ -74,6 +78,8 @@ fun HomeScreen(
 
     var expandedImageUri by remember { mutableStateOf<String?>(null) }
     var isImageExpanded by remember { mutableStateOf(false) }
+    var showLentSummary by remember { mutableStateOf(false) }
+    var showBorrowedSummary by remember { mutableStateOf(false) }
 
     val balance = uiState.totalLent - uiState.totalBorrowed
     val bankAccounts = uiState.bankAccounts
@@ -181,11 +187,15 @@ fun HomeScreen(
                         // Left Card (Dark) - Total Lent
                         Surface(
                             shape = RoundedCornerShape(20.dp),
-                            color = MaterialTheme.colorScheme.background, // Changed to background to have contrast with surfaceVariant
+                            color = MaterialTheme.colorScheme.background,
                             shadowElevation = 4.dp,
                             modifier = Modifier
                                 .weight(1f)
                                 .bounceClick { onNavigateToHistory("LEND") }
+                                .combinedClickable(
+                                    onClick = { onNavigateToHistory("LEND") },
+                                    onLongClick = { showLentSummary = true }
+                                )
                         ) {
                             Column(
                                 modifier = Modifier.padding(14.dp),
@@ -221,6 +231,10 @@ fun HomeScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .bounceClick { onNavigateToHistory("BORROW") }
+                                .combinedClickable(
+                                    onClick = { onNavigateToHistory("BORROW") },
+                                    onLongClick = { showBorrowedSummary = true }
+                                )
                         ) {
                             Column(
                                 modifier = Modifier.padding(14.dp),
@@ -450,6 +464,27 @@ fun HomeScreen(
         imageUri = expandedImageUri,
         onDismiss = { isImageExpanded = false }
     )
+
+    // Long-Press Summary Dialogs
+    if (showLentSummary) {
+        LoanSummaryDialog(
+            title = stringResource(id = R.string.total_lent),
+            loans = uiState.lentLoans,
+            currencySymbol = uiState.currencySymbol,
+            accentColor = MaterialTheme.colorScheme.primary,
+            onDismiss = { showLentSummary = false }
+        )
+    }
+
+    if (showBorrowedSummary) {
+        LoanSummaryDialog(
+            title = stringResource(id = R.string.total_borrowed),
+            loans = uiState.borrowedLoans,
+            currencySymbol = uiState.currencySymbol,
+            accentColor = MaterialTheme.colorScheme.error,
+            onDismiss = { showBorrowedSummary = false }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -554,8 +589,8 @@ fun BankAccountCard(
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val cardWidth = screenWidth * 0.85f
 
-    // MFS Specific Colors
-    val cardBackgroundColor = if (account.isMfs) {
+    // MFS header color (only for the top section)
+    val mfsHeaderColor = if (account.isMfs) {
         when (account.mfsProvider?.lowercase()) {
             "bkash" -> Color(0xFFE2136E) // Pink
             "nagad" -> Color(0xFFED4D36) // Orange
@@ -564,21 +599,22 @@ fun BankAccountCard(
             else -> MaterialTheme.colorScheme.primary
         }
     } else {
-        MaterialTheme.colorScheme.surfaceVariant
+        Color.Unspecified
     }
 
-    val contentColor = if (account.isMfs) Color.White else MaterialTheme.colorScheme.onBackground
-    val labelColor = if (account.isMfs) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
-    val dividerColor = if (account.isMfs) Color.White.copy(alpha = 0.3f) else MaterialTheme.colorScheme.outlineVariant
+    // Content area always uses standard theme colors
+    val contentColor = MaterialTheme.colorScheme.onBackground
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val dividerColor = MaterialTheme.colorScheme.outlineVariant
 
     Card(
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         modifier = Modifier.width(cardWidth)
     ) {
         Column {
-            // Cover Image
+            // Cover Image / MFS Header
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -598,7 +634,7 @@ fun BankAccountCard(
                             .background(
                                 brush = androidx.compose.ui.graphics.Brush.linearGradient(
                                     colors = if (account.isMfs) {
-                                        listOf(cardBackgroundColor, cardBackgroundColor.copy(alpha = 0.8f))
+                                        listOf(mfsHeaderColor, mfsHeaderColor.copy(alpha = 0.8f))
                                     } else {
                                         listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background)
                                     }
@@ -607,7 +643,7 @@ fun BankAccountCard(
                         contentAlignment = Alignment.Center
                     ) {
                         val headerIcon = if (account.isMfs) Icons.Default.PhoneIphone else Icons.Default.AccountBalance
-                        val headerTint = if (account.isMfs) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        val headerTint = if (account.isMfs) Color.White.copy(alpha = 0.3f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         Icon(headerIcon, contentDescription = null, tint = headerTint, modifier = Modifier.size(48.dp))
                     }
                 }
@@ -725,7 +761,7 @@ fun BankAccountCard(
                             text = displayNum,
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 fontWeight = FontWeight.Black,
-                                color = if (account.isMfs) Color.White else MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.primary,
                                 letterSpacing = 1.5.sp
                             ),
                             maxLines = 1
@@ -1085,6 +1121,88 @@ fun AddBankAccountBottomSheet(
             }
         }
     }
+}
+
+@Composable
+fun LoanSummaryDialog(
+    title: String,
+    loans: List<LoanWithPayments>,
+    currencySymbol: String,
+    accentColor: Color,
+    onDismiss: () -> Unit
+) {
+    val sortedEntries = remember(loans) {
+        loans.map { item ->
+            val totalLoan = item.loan.amount + item.loanItems.sumOf { it.amount }
+            val paid = item.payments.sumOf { it.amount }
+            val remaining = (totalLoan - paid).coerceAtLeast(0.0)
+            item.loan.personName to remaining
+        }.sortedByDescending { it.second }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close", fontWeight = FontWeight.Bold)
+            }
+        },
+        title = {
+            Text(title, fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (sortedEntries.isEmpty()) {
+                    Text("No entries", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    sortedEntries.forEachIndexed { index, (name, amount) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = "${index + 1}.",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    modifier = Modifier.width(28.dp)
+                                )
+                                Text(
+                                    text = name,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    ),
+                                    maxLines = 1
+                                )
+                            }
+                            Text(
+                                text = "$currencySymbol${String.format("%,.0f", amount)}",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = accentColor
+                                )
+                            )
+                        }
+                        if (index < sortedEntries.lastIndex) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                        }
+                    }
+                }
+            }
+        }
+    )
 }
 
 class CardNumberVisualTransformation : VisualTransformation {

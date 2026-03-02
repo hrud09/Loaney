@@ -16,7 +16,8 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 
     // Define Keys
     private object PreferencesKeys {
-        val THEME_MODE = intPreferencesKey("theme_mode") // 0: System, 1: Light, 2: Dark
+        val THEME_MODE = intPreferencesKey("theme_mode") // 0: System, 1: Light, 2: Dark, 3: Colorful
+        val ACCENT_COLOR = intPreferencesKey("accent_color") // 0-5, index into colorful accent presets
         val CURRENCY_SYMBOL = stringPreferencesKey("currency_symbol")
         val APP_LANGUAGE = stringPreferencesKey("app_language")
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
@@ -30,7 +31,15 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             if (exception is IOException) emit(emptyPreferences()) else throw exception
         }
         .map { preferences ->
-            preferences[PreferencesKeys.THEME_MODE] ?: 1 // Default Light (1) as decided previously
+            preferences[PreferencesKeys.THEME_MODE] ?: 1
+        }
+
+    val accentColorFlow: Flow<Int> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.ACCENT_COLOR] ?: 0
         }
 
     val currencySymbolFlow: Flow<String> = dataStore.data
@@ -77,6 +86,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setThemeMode(mode: Int) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.THEME_MODE] = mode
+        }
+    }
+
+    suspend fun setAccentColor(index: Int) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ACCENT_COLOR] = index
         }
     }
 

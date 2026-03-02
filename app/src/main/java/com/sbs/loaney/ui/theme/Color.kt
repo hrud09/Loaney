@@ -28,3 +28,14 @@ val DarkCardBg = Color(0xFF1C1C1E)
 
 val ThemeGreen = Color(0xFF32D74B) // Primary Green
 val ThemeLightGreen = Color(0xFFE8F5E9) // Very Light Green for backgrounds/surfaces
+
+// Colorful Theme - Soft Neon Palette
+val SoftNeonPurple = Color(0xFF9B72FF)      // Primary - soft violet
+val SoftNeonPink = Color(0xFFFF6B9D)        // Secondary - soft rose
+val SoftNeonCyan = Color(0xFF4DD9E8)        // Tertiary - soft cyan
+val SoftNeonBg = Color(0xFF1A1428)          // Deep indigo background
+val SoftNeonSurface = Color(0xFF241E36)     // Elevated purple-tinted surface
+val SoftNeonSurfaceVar = Color(0xFF2E2644)  // Surface variant, slightly lighter
+val SoftNeonError = Color(0xFFFF6B6B)       // Soft coral error
+val SoftNeonOnSurface = Color(0xFFE8DFFF)   // Lavender-tinted text
+val SoftNeonOutline = Color(0xFF4A3D6B)     // Muted purple outline

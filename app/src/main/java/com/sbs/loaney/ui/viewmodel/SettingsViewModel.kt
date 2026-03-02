@@ -12,7 +12,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SettingsUiState(
-    val themeMode: Int = 1, // 0: System, 1: Light, 2: Dark
+    val themeMode: Int = 1, // 0: System, 1: Light, 2: Dark, 3: Colorful
+    val accentColor: Int = 0, // Index into colorful accent presets
     val currencySymbol: String = "৳",
     val appLanguage: String = "en",
     val notificationsEnabled: Boolean = true,
@@ -26,17 +27,19 @@ class SettingsViewModel @Inject constructor(
 
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.themeModeFlow,
+        settingsRepository.accentColorFlow,
         settingsRepository.currencySymbolFlow,
         settingsRepository.appLanguageFlow,
         settingsRepository.notificationsEnabledFlow,
         settingsRepository.userNameFlow
-    ) { theme, currency, language, notifs, name ->
+    ) { values ->
         SettingsUiState(
-            themeMode = theme,
-            currencySymbol = currency,
-            appLanguage = language,
-            notificationsEnabled = notifs,
-            userName = name
+            themeMode = values[0] as Int,
+            accentColor = values[1] as Int,
+            currencySymbol = values[2] as String,
+            appLanguage = values[3] as String,
+            notificationsEnabled = values[4] as Boolean,
+            userName = values[5] as String
         )
     }.stateIn(
         scope = viewModelScope,
@@ -47,6 +50,12 @@ class SettingsViewModel @Inject constructor(
     fun setThemeMode(mode: Int) {
         viewModelScope.launch {
             settingsRepository.setThemeMode(mode)
+        }
+    }
+
+    fun setAccentColor(index: Int) {
+        viewModelScope.launch {
+            settingsRepository.setAccentColor(index)
         }
     }
 

@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.LocaleList
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -97,6 +98,7 @@ fun SettingsScreen(
                     0 -> stringResource(id = R.string.theme_system)
                     1 -> stringResource(id = R.string.theme_light)
                     2 -> stringResource(id = R.string.theme_dark)
+                    3 -> "Colorful"
                     else -> stringResource(id = R.string.theme_system)
                 }
                 SettingsItem(
@@ -105,6 +107,51 @@ fun SettingsScreen(
                     subtitle = themeSubtitle,
                     onClick = { showThemeSheet = true }
                 )
+
+                // Accent color picker (only when Colorful is active)
+                if (uiState.themeMode == 3) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        Text(
+                            "Accent Color",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            colorfulAccents.forEachIndexed { index, accent ->
+                                val isSelected = uiState.accentColor == index
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .clip(CircleShape)
+                                        .background(accent.primary)
+                                        .then(
+                                            if (isSelected) Modifier.border(3.dp, Color.White, CircleShape)
+                                            else Modifier.border(1.dp, accent.primary.copy(alpha = 0.5f), CircleShape)
+                                        )
+                                        .clickable { viewModel.setAccentColor(index) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isSelected) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
                 SettingsItem(
                     icon = Icons.Default.AttachMoney,
@@ -169,6 +216,7 @@ fun SettingsScreen(
                 ThemeOption(stringResource(id = R.string.theme_system), uiState.themeMode == 0) { viewModel.setThemeMode(0); showThemeSheet = false }
                 ThemeOption(stringResource(id = R.string.theme_light), uiState.themeMode == 1) { viewModel.setThemeMode(1); showThemeSheet = false }
                 ThemeOption(stringResource(id = R.string.theme_dark), uiState.themeMode == 2) { viewModel.setThemeMode(2); showThemeSheet = false }
+                ThemeOption("Colorful", uiState.themeMode == 3) { viewModel.setThemeMode(3); showThemeSheet = false }
             }
         }
     }
