@@ -316,6 +316,7 @@ fun ManageLoanCard(
     val loan = item.loan
     val paid = item.payments.sumOf { it.amount }
     val totalLoan = loan.amount + item.loanItems.sumOf { it.amount }
+    val remainingBalance = (totalLoan - paid).coerceAtLeast(0.0)
     val progress = if (totalLoan > 0) (paid / totalLoan).toFloat() else 0f
 
     val accentColor = if (loan.type == LoanType.LEND) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
@@ -357,7 +358,7 @@ fun ManageLoanCard(
                     )
                 }
                 Text(
-                    text = "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", totalLoan)}",
+                    text = "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", remainingBalance)}",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )

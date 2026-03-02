@@ -106,11 +106,12 @@ class ManageLoansViewModel @Inject constructor(
 
     private suspend fun updateLoanStatus(loanId: Long) {
         val loanWithPayments = repository.getLoanById(loanId).firstOrNull() ?: return
+        val totalLoan = loanWithPayments.loan.amount + loanWithPayments.loanItems.sumOf { it.amount }
         val totalPaid = loanWithPayments.payments.sumOf { it.amount }
         val loan = loanWithPayments.loan
         
         val newStatus = when {
-            totalPaid >= loan.amount -> LoanStatus.FULLY_PAID
+            totalPaid >= totalLoan -> LoanStatus.FULLY_PAID
             totalPaid > 0 -> LoanStatus.PARTIALLY_PAID
             Date().after(loan.promisedReturnDate) -> LoanStatus.OVERDUE
             else -> LoanStatus.ACTIVE

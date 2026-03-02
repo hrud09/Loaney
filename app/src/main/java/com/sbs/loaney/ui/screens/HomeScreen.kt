@@ -316,6 +316,9 @@ fun HomeScreen(
                 } else {
                     allLoans.take(5).forEach { item ->
                         val isLent = item.loan.type == LoanType.LEND
+                        val totalLoan = item.loan.amount + item.loanItems.sumOf { it.amount }
+                        val paid = item.payments.sumOf { it.amount }
+                        val remainingBalance = (totalLoan - paid).coerceAtLeast(0.0)
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -352,7 +355,7 @@ fun HomeScreen(
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = "${if (isLent) "+" else "-"}${uiState.currencySymbol} ${String.format("%,.0f", item.loan.amount)}",
+                                    text = "${if (isLent) "+" else "-"}${uiState.currencySymbol} ${String.format("%,.0f", remainingBalance)}",
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -523,6 +526,19 @@ fun BankAccountCard(
                     }
                 }
                 
+                // Delete overlay
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(10.dp) // 12.dp * 0.8
+                        .size(28.dp) // 36.dp * 0.8
+                        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                        .clickable { onDelete(account) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White, modifier = Modifier.size(16.dp))
+                }
+
                 // Copy All overlay
                 Box(
                     modifier = Modifier
@@ -551,42 +567,16 @@ fun BankAccountCard(
                 modifier = Modifier.padding(16.dp), // 20.dp * 0.8
                 verticalArrangement = Arrangement.spacedBy(12.dp) // 16.dp * 0.8
             ) {
-                // Bank Name & Delete Button
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = account.bankName,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        ),
-                        maxLines = 1,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = {
-                                clipboardManager.setPrimaryClip(ClipData.newPlainText("Bank Name", account.bankName))
-                                Toast.makeText(context, "Bank Name Copied!", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(11.dp))
-                        }
-                        IconButton(
-                            onClick = { onDelete(account) },
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red, modifier = Modifier.size(16.dp))
-                        }
-                    }
-                }
+                // Bank Name
+                Text(
+                    text = account.bankName,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    ),
+                    maxLines = 1,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
                 // Main Account Number
                 Row(

@@ -73,8 +73,9 @@ class HomeViewModel @Inject constructor(
 
         loans.forEach { item ->
             val loan = item.loan
+            val totalLoan = loan.amount + item.loanItems.sumOf { it.amount }
             val paid = item.payments.sumOf { it.amount }
-            val balance = (loan.amount - paid).coerceAtLeast(0.0)
+            val balance = (totalLoan - paid).coerceAtLeast(0.0)
 
             if (loan.type == LoanType.LEND) {
                 totalLentBalance += balance
