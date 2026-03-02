@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 
+import androidx.compose.ui.text.input.VisualTransformation
+
 @Composable
 fun CustomLightTextField(
     value: String,
@@ -17,7 +19,8 @@ fun CustomLightTextField(
     label: String,
     leadingIcon: ImageVector,
     modifier: Modifier = Modifier,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     OutlinedTextField(
         value = value,
@@ -31,6 +34,7 @@ fun CustomLightTextField(
         },
         modifier = modifier.fillMaxWidth(),
         keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surface,
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,

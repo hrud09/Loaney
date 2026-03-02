@@ -12,5 +12,6 @@ data class BankAccountEntity(
     val bankName: String,
     val branchName: String?,
     val swiftCode: String?,
-    val coverImageUri: String? // URI string for the selected cover image
+    val coverImageUri: String?, // URI string for the selected cover image
+    val isCard: Boolean = false // Flag indicating if it's a card or a generic bank account
 )
