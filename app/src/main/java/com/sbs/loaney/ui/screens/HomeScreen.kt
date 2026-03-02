@@ -7,6 +7,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,7 +56,7 @@ import java.util.*
 fun HomeScreen(
     onNavigateToAddLoan: (String) -> Unit,
     onNavigateToDetail: (Long) -> Unit,
-    onNavigateToHistory: () -> Unit, // Replaces Manage navigation
+    onNavigateToHistory: (String?) -> Unit, // Replaces Manage navigation
     onNavigateToSettings: () -> Unit, // New
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -83,6 +84,7 @@ fun HomeScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .animateContentSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -157,6 +159,7 @@ fun HomeScreen(
             Surface(
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant,
+                shadowElevation = 8.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -172,8 +175,10 @@ fun HomeScreen(
                         Surface(
                             shape = RoundedCornerShape(20.dp),
                             color = MaterialTheme.colorScheme.background, // Changed to background to have contrast with surfaceVariant
+                            shadowElevation = 4.dp,
                             modifier = Modifier
                                 .weight(1f)
+                                .bounceClick { onNavigateToHistory("LEND") }
                         ) {
                             Column(
                                 modifier = Modifier.padding(14.dp),
@@ -205,8 +210,10 @@ fun HomeScreen(
                         Surface(
                             shape = RoundedCornerShape(20.dp),
                             color = MaterialTheme.colorScheme.surface,
+                            shadowElevation = 4.dp,
                             modifier = Modifier
                                 .weight(1f)
+                                .bounceClick { onNavigateToHistory("BORROW") }
                         ) {
                             Column(
                                 modifier = Modifier.padding(14.dp),
@@ -243,7 +250,7 @@ fun HomeScreen(
                     ) {
                         ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.lend), modifier = Modifier.weight(1f)) { onNavigateToAddLoan("LEND") }
                         ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.borrow), modifier = Modifier.weight(1f)) { onNavigateToAddLoan("BORROW") }
-                        ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history), modifier = Modifier.weight(1f)) { onNavigateToHistory() }
+                        ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history), modifier = Modifier.weight(1f)) { onNavigateToHistory(null) }
                     }
                 }
             }
@@ -310,7 +317,7 @@ fun HomeScreen(
                     Text(
                         text = stringResource(id = R.string.see_all),
                         style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                        modifier = Modifier.clickable { onNavigateToHistory() }
+                        modifier = Modifier.clickable { onNavigateToHistory(null) }
                     )
                 }
 

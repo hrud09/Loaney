@@ -43,6 +43,7 @@ import com.sbs.loaney.R
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ManageLoansScreen(
+    initialType: String? = null,
     onNavigateToAddLoan: (String) -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     viewModel: ManageLoansViewModel = hiltViewModel(),
@@ -55,6 +56,17 @@ fun ManageLoansScreen(
 
     var expandedImageUri by remember { mutableStateOf<String?>(null) }
     var isImageExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(initialType) {
+        if (initialType != null) {
+            try {
+                val parsedType = LoanType.valueOf(initialType)
+                viewModel.setLoanType(parsedType)
+            } catch (e: Exception) {
+                // Ignore parsing errors and keep current state
+            }
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -351,6 +363,7 @@ fun ManageLoanCard(
             ),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 8.dp
     ) {
         Column(
             modifier = Modifier

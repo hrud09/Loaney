@@ -34,7 +34,7 @@ fun Modifier.bounceClick(
         }
         .clickable(
             interactionSource = interactionSource,
-            indication = null, // Disable default static ripple in favor of physics push
+            indication = androidx.compose.foundation.LocalIndication.current, // Restore default material ripple alongside physics push
             onClick = onClick
         )
 }

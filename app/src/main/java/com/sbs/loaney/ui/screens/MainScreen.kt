@@ -118,8 +118,8 @@ fun MainScreen() {
                     onNavigateToDetail = { loanId ->
                         navController.navigate(Screen.LoanDetail.createRoute(loanId))
                     },
-                    onNavigateToHistory = { 
-                        navController.navigate(Screen.ManageLoans.route) {
+                    onNavigateToHistory = { type -> 
+                        navController.navigate(Screen.ManageLoans.createRoute(type)) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -128,8 +128,16 @@ fun MainScreen() {
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
                 )
             }
-            composable(Screen.ManageLoans.route) {
+            composable(
+                route = Screen.ManageLoans.route,
+                arguments = listOf(navArgument("type") {
+                    type = NavType.StringType
+                    nullable = true
+                })
+            ) { backStackEntry ->
+                val initialType = backStackEntry.arguments?.getString("type")
                 ManageLoansScreen(
+                    initialType = initialType,
                     onNavigateToAddLoan = { type -> navController.navigate(Screen.AddLoan.createRoute(type)) },
                     onNavigateToDetail = { loanId ->
                         navController.navigate(Screen.LoanDetail.createRoute(loanId))

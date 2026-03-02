@@ -231,7 +231,8 @@ fun LoanTrackerScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp)), // 24.dp * 0.75
                     shape = RoundedCornerShape(18.dp), // 24.dp * 0.75
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                      Row(
                         modifier = Modifier
@@ -349,7 +350,8 @@ fun LoanTrackerScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp)), // 24.dp * 0.75
                     shape = RoundedCornerShape(18.dp), // 24.dp * 0.75
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) { // 16.dp * 0.75, 12.dp * 0.75
                         DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
