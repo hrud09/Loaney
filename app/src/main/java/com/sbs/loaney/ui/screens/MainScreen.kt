@@ -59,11 +59,11 @@ fun MainScreen() {
                             icon = { Icon(item.icon, contentDescription = item.label) },
                             label = { Text(item.label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color.Black,
+                                selectedIconColor = MaterialTheme.colorScheme.onPrimary,
                                 selectedTextColor = MaterialTheme.colorScheme.primary,
                                 indicatorColor = MaterialTheme.colorScheme.primary,
-                                unselectedIconColor = Color.Gray,
-                                unselectedTextColor = Color.Gray
+                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }

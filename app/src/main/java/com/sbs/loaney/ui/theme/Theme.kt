@@ -13,18 +13,18 @@ import androidx.compose.ui.platform.LocalContext
 
 
 private val LightColorScheme = lightColorScheme(
-    primary = NeonLime,
-    onPrimary = Color.Black,
-    secondary = SkyBlue,
-    onSecondary = Color.Black,
-    tertiary = CoralRed,
+    primary = ThemeGreen,
+    onPrimary = Color.White,
+    secondary = ThemeGreen,
+    onSecondary = Color.White,
+    tertiary = ThemeGreen,
     onTertiary = Color.White,
-    background = DashboardBg,
-    onBackground = TextMainDark,
+    background = Color.White,
+    onBackground = Color.Black,
     surface = Color.White,
-    onSurface = TextMainDark,
-    surfaceVariant = DarkCardBg, // Used for dark cards on the light bg
-    onSurfaceVariant = TextMainLight,
+    onSurface = Color.Black,
+    surfaceVariant = ThemeLightGreen,
+    onSurfaceVariant = Color.Black,
     outline = SubtleBorder,
     error = CoralRed,
     onError = Color.White

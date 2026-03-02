@@ -93,10 +93,10 @@ fun HomeScreen(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
-                            .background(Color.LightGray),
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray)
+                        Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
@@ -111,7 +111,7 @@ fun HomeScreen(
                         Text(
                             text = stringResource(id = R.string.greeting_morning),
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = TextSubtextDark
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                             )
                         )
                     }
@@ -142,7 +142,7 @@ fun HomeScreen(
                                 .align(Alignment.TopEnd)
                                 .padding(8.dp)
                                 .size(8.dp)
-                                .background(NeonLime, CircleShape)
+                                .background(MaterialTheme.colorScheme.primary, CircleShape)
                         )
                     }
                 }
@@ -181,9 +181,9 @@ fun HomeScreen(
                                 ) {
                                     Text(
                                         text = stringResource(id = R.string.total_lent),
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextDark, lineHeight = 18.sp)
+                                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp)
                                     )
-                                    Icon(Icons.Default.ArrowOutward, contentDescription = null, tint = NeonLime, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.CallReceived, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
@@ -214,9 +214,9 @@ fun HomeScreen(
                                 ) {
                                     Text(
                                         text = stringResource(id = R.string.total_borrowed),
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextDark, lineHeight = 18.sp)
+                                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp)
                                     )
-                                    Icon(Icons.Default.CallReceived, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Default.ArrowOutward, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
@@ -236,8 +236,8 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.lend)) { onNavigateToAddLoan("LEND") }
-                        ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.borrow)) { onNavigateToAddLoan("BORROW") }
+                        ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.lend)) { onNavigateToAddLoan("LEND") }
+                        ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.borrow)) { onNavigateToAddLoan("BORROW") }
                         ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history)) { onNavigateToHistory() }
                         ActionButton(icon = Icons.Default.Menu, label = stringResource(id = R.string.details)) { onNavigateToHistory() }
                     }
@@ -261,7 +261,7 @@ fun HomeScreen(
                     )
                     Text(
                         text = stringResource(id = R.string.add),
-                        style = MaterialTheme.typography.labelLarge.copy(color = SkyBlue, fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold),
                         modifier = Modifier.clickable { showAddBankSheet = true }
                     )
                 }
@@ -269,7 +269,7 @@ fun HomeScreen(
                 if (bankAccounts.isEmpty()) {
                     Text(
                         text = stringResource(id = R.string.no_bank_accounts),
-                        color = TextSubtextDark,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 } else {
@@ -305,14 +305,14 @@ fun HomeScreen(
                     )
                     Text(
                         text = stringResource(id = R.string.see_all),
-                        style = MaterialTheme.typography.labelLarge.copy(color = TextSubtextDark),
+                        style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
                         modifier = Modifier.clickable { onNavigateToHistory() }
                     )
                 }
 
                 // ... Rest logic remains exactly the same logic but colors are tied to Theme.
                 if (allLoans.isEmpty()) {
-                    Text(stringResource(id = R.string.no_recent_transactions), color = TextSubtextDark, modifier = Modifier.padding(vertical = 16.dp))
+                    Text(stringResource(id = R.string.no_recent_transactions), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 16.dp))
                 } else {
                     allLoans.take(5).forEach { item ->
                         val isLent = item.loan.type == LoanType.LEND
@@ -347,7 +347,7 @@ fun HomeScreen(
                                 )
                                 Text(
                                     text = if (isLent) stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed),
-                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSubtextDark)
+                                    style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End) {
@@ -360,7 +360,7 @@ fun HomeScreen(
                                 )
                                 Text(
                                     text = dateFormat.format(item.loan.loanDate),
-                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSubtextDark)
+                                    style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 )
                             }
                         }
@@ -425,7 +425,7 @@ fun NotificationsBottomSheet(onDismiss: () -> Unit) {
                 )
                 Text(
                     text = "Mark all read",
-                    style = MaterialTheme.typography.labelMedium.copy(color = SkyBlue, fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.SemiBold),
                     modifier = Modifier.clickable { onDismiss() }
                 )
             }
@@ -434,7 +434,7 @@ fun NotificationsBottomSheet(onDismiss: () -> Unit) {
             Icon(
                 Icons.Outlined.Notifications,
                 contentDescription = null,
-                tint = Color.Gray.copy(alpha = 0.5f),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -446,7 +446,7 @@ fun NotificationsBottomSheet(onDismiss: () -> Unit) {
             Text(
                 "You're all caught up!",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -462,15 +462,16 @@ fun ActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: S
         Box(
             modifier = Modifier
                 .size(56.dp)
-                .background(Color(0xFF2C2C2E), CircleShape),
+                .background(MaterialTheme.colorScheme.surface, CircleShape)
+                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = label, tint = Color.White)
+            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium.copy(color = TextSubtextLight)
+            style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
         )
     }
 }
@@ -513,12 +514,12 @@ fun BankAccountCard(
                             .fillMaxSize()
                             .background(
                                 brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                                    colors = listOf(Color(0xFF1E1E22), Color(0xFF2E2E36))
+                                    colors = listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background)
                                 )
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.AccountBalance, contentDescription = null, tint = Color.Gray.copy(alpha = 0.3f), modifier = Modifier.size(48.dp))
+                        Icon(Icons.Default.AccountBalance, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(48.dp))
                     }
                 }
                 
@@ -576,7 +577,7 @@ fun BankAccountCard(
                             },
                             modifier = Modifier.size(20.dp)
                         ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(11.dp))
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(11.dp))
                         }
                         IconButton(
                             onClick = { onDelete(account) },
@@ -594,7 +595,7 @@ fun BankAccountCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(id = R.string.account_number), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = TextSubtextDark)
+                        Text(stringResource(id = R.string.account_number), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             text = account.accountNumber,
                             style = MaterialTheme.typography.headlineSmall.copy(
@@ -612,7 +613,7 @@ fun BankAccountCard(
                         },
                         modifier = Modifier.size(20.dp) // 24.dp * 0.8
                     ) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(11.dp)) // 14.dp * 0.8
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(11.dp)) // 14.dp * 0.8
                     }
                 }
 
@@ -652,7 +653,7 @@ fun BankField(label: String, value: String, clipboardManager: ClipboardManager, 
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.5.sp), color = TextSubtextDark)
+            Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.5.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 value,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground),
@@ -666,7 +667,7 @@ fun BankField(label: String, value: String, clipboardManager: ClipboardManager, 
             },
             modifier = Modifier.size(20.dp) // 24.dp * 0.8
         ) {
-            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.Gray, modifier = Modifier.size(11.dp)) // 14.dp * 0.8
+            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(11.dp)) // 14.dp * 0.8
         }
     }
 }
@@ -737,9 +738,9 @@ fun AddBankAccountBottomSheet(
                     )
                 } else {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Image, contentDescription = null, tint = SkyBlue, modifier = Modifier.size(48.dp))
+                        Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(48.dp))
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(stringResource(id = R.string.tap_custom_cover), color = Color.Gray, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(id = R.string.tap_custom_cover), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -797,7 +798,7 @@ fun AddBankAccountBottomSheet(
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(containerColor = NeonLime, contentColor = Color.Black),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 enabled = accountName.isNotBlank() && accountNumber.isNotBlank() && bankName.isNotBlank()
             ) {
                 Text(stringResource(id = R.string.save_bank_account), fontWeight = FontWeight.Bold)

@@ -243,7 +243,7 @@ fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column {
         Text(
             text = title.uppercase(Locale.getDefault()),
-            style = MaterialTheme.typography.labelMedium.copy(color = TextSubtextDark, letterSpacing = 1.sp),
+            style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 1.sp),
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
         Card(
@@ -278,10 +278,10 @@ fun SettingsItem(icon: ImageVector, title: String, subtitle: String? = null, onC
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground))
             if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium.copy(color = TextSubtextDark))
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
             }
         }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -307,7 +307,7 @@ fun SettingsToggleItem(icon: ImageVector, title: String, isChecked: Boolean, onT
         Switch(
             checked = isChecked,
             onCheckedChange = onToggle,
-            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = SkyBlue)
+            colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.surface, checkedTrackColor = MaterialTheme.colorScheme.primary)
         )
     }
 }
@@ -323,7 +323,7 @@ fun ThemeOption(title: String, isSelected: Boolean, onClick: () -> Unit) {
     ) {
         Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         if (isSelected) {
-            Icon(Icons.Default.Check, contentDescription = "Selected", tint = SkyBlue)
+            Icon(Icons.Default.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary)
         }
     }
 }

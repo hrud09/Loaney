@@ -71,8 +71,8 @@ fun ManageLoansScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { onNavigateToAddLoan(uiState.selectedType.name) },
-                containerColor = if (uiState.selectedType == LoanType.LEND) NeonLime else SkyBlue,
-                contentColor = Color.Black,
+                containerColor = if (uiState.selectedType == LoanType.LEND) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                contentColor = if (uiState.selectedType == LoanType.LEND) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary,
                 shape = CircleShape
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add New Loan")
@@ -91,13 +91,12 @@ fun ManageLoansScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .background(Color(0xFFE5E5EA), CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
                     .padding(4.dp)
             ) {
                 listOf(LoanType.LEND to stringResource(id = R.string.lent), LoanType.BORROW to stringResource(id = R.string.borrowed)).forEach { (type, text) ->
                     val selected = uiState.selectedType == type
-                    // Using NeonLime for both active states looks cleaner in Light Mode, or White with dark text
-                    val activeColor = if (selected) Color.White else Color.Transparent
+                    val activeColor = if (selected) MaterialTheme.colorScheme.surface else Color.Transparent
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -109,7 +108,7 @@ fun ManageLoansScreen(
                     ) {
                         Text(
                             text = text,
-                            color = if (selected) Color.Black else Color.Gray,
+                            color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -125,15 +124,15 @@ fun ManageLoansScreen(
                     Box(
                         modifier = Modifier
                             .size(100.dp)
-                            .background(Color.White, CircleShape)
-                            .border(1.dp, SubtleBorder, CircleShape),
+                            .background(MaterialTheme.colorScheme.surface, CircleShape)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.HourglassEmpty,
                             contentDescription = "No loans",
                             modifier = Modifier.size(48.dp),
-                            tint = Color.Gray
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Spacer(modifier = Modifier.height(24.dp))
@@ -146,7 +145,7 @@ fun ManageLoansScreen(
                     Text(
                         stringResource(id = R.string.tap_to_start_tracking),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 32.dp)
                     )
@@ -192,7 +191,7 @@ fun ManageLoansScreen(
     if (loanToDelete != null) {
         AlertDialog(
             onDismissRequest = { loanToDelete = null },
-            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = CoralRed) },
+            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
             title = { Text(stringResource(id = R.string.delete_loan_title)) },
             text = { Text(stringResource(id = R.string.delete_loan_msg, loanToDelete?.loan?.personName ?: "")) },
             confirmButton = {
@@ -201,19 +200,19 @@ fun ManageLoansScreen(
                         loanToDelete?.loan?.let { trackerViewModel.deleteLoan(it) }
                         loanToDelete = null
                     },
-                    colors = ButtonDefaults.textButtonColors(contentColor = CoralRed)
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
                     Text(stringResource(id = R.string.delete), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { loanToDelete = null }) {
-                    Text(stringResource(id = R.string.cancel), color = Color.Gray)
+                    Text(stringResource(id = R.string.cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onBackground,
-            textContentColor = Color.Gray
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -253,8 +252,8 @@ fun SwipeableManageLoanCard(
         backgroundContent = {
             val direction = swipeState.dismissDirection
             val color = when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> CoralRed
-                SwipeToDismissBoxValue.EndToStart -> NeonLime
+                SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.error
+                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.primary
                 else -> Color.Transparent
             }
             val alignment = when (direction) {
@@ -285,13 +284,13 @@ fun SwipeableManageLoanCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (direction == SwipeToDismissBoxValue.StartToEnd) {
-                        Icon(icon, contentDescription = null, tint = Color.White)
+                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onError)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(label, color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(label, color = MaterialTheme.colorScheme.onError, fontWeight = FontWeight.Bold)
                     } else if (direction == SwipeToDismissBoxValue.EndToStart) {
-                        Text(label, color = Color.Black, fontWeight = FontWeight.Bold)
+                        Text(label, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Icon(icon, contentDescription = null, tint = Color.Black)
+                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
@@ -319,7 +318,7 @@ fun ManageLoanCard(
     val totalLoan = loan.amount + item.loanItems.sumOf { it.amount }
     val progress = if (totalLoan > 0) (paid / totalLoan).toFloat() else 0f
 
-    val accentColor = if (loan.type == LoanType.LEND) NeonLime else SkyBlue
+    val accentColor = if (loan.type == LoanType.LEND) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
 
     Surface(
         modifier = Modifier
@@ -327,11 +326,11 @@ fun ManageLoanCard(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = SubtleBorder,
+                color = MaterialTheme.colorScheme.outlineVariant,
                 shape = RoundedCornerShape(24.dp)
             ),
         shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier
@@ -354,7 +353,7 @@ fun ManageLoanCard(
                     Text(
                         text = stringResource(id = R.string.due_by, dateFormat.format(loan.promisedReturnDate)),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Text(
@@ -375,7 +374,7 @@ fun ManageLoanCard(
                         .height(8.dp) 
                         .clip(RoundedCornerShape(4.dp)), 
                     color = accentColor,
-                    trackColor = Color(0xFFF0F0F0)
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -385,7 +384,7 @@ fun ManageLoanCard(
                     Text(
                         text = stringResource(id = R.string.paid_amount, "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", paid)}"),
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = "${(progress * 100).toInt()}%",
@@ -406,16 +405,16 @@ fun ManageLoanCard(
             
             val tonalButtonColors = when (loan.status) {
                 LoanStatus.OVERDUE -> ButtonDefaults.filledTonalButtonColors(
-                    containerColor = CoralRed.copy(alpha = 0.1f),
-                    contentColor = CoralRed
+                    containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                    contentColor = MaterialTheme.colorScheme.error
                 )
                 LoanStatus.FULLY_PAID -> ButtonDefaults.filledTonalButtonColors(
                     containerColor = accentColor.copy(alpha = 0.1f),
                     contentColor = accentColor
                 )
                 else -> ButtonDefaults.filledTonalButtonColors( // Active
-                    containerColor = DashboardBg,
-                    contentColor = Color.Black
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

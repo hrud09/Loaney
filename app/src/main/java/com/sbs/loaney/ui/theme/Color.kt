@@ -25,3 +25,6 @@ val SecondaryOrange = Color(0xFFFF9F0A)
 val TextMainDark = Color(0xFF1C1C1E)
 val TextMainLight = Color(0xFFF2F2F7)
 val DarkCardBg = Color(0xFF1C1C1E)
+
+val ThemeGreen = Color(0xFF32D74B) // Primary Green
+val ThemeLightGreen = Color(0xFFE8F5E9) // Very Light Green for backgrounds/surfaces

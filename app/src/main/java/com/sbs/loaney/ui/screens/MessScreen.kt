@@ -34,7 +34,7 @@ fun MessScreen(
                 title = { Text(stringResource(id = R.string.mess_title), fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = Color.White
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         }
@@ -49,7 +49,7 @@ fun MessScreen(
             Text(
                 text = stringResource(id = R.string.available_tools),
                 style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold
             )
 
