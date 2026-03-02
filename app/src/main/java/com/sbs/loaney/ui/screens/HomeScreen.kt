@@ -351,11 +351,18 @@ fun HomeScreen(
                                         contentScale = ContentScale.Crop
                                     )
                                 } else {
-                                    Text(
-                                        text = item.loan.personName.take(1).uppercase(),
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
+                                    val bgColor = if (isLent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
+                                    val textColor = if (isLent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
+                                    Box(
+                                        modifier = Modifier.fillMaxSize().background(bgColor, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = item.loan.personName.take(1).uppercase(),
+                                            fontWeight = FontWeight.Bold,
+                                            color = textColor
+                                        )
+                                    }
                                 }
                             }
                             Spacer(modifier = Modifier.width(16.dp))

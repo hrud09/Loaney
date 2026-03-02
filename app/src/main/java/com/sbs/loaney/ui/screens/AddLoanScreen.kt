@@ -1,5 +1,6 @@
 package com.sbs.loaney.ui.screens
 
+import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
 import android.provider.OpenableColumns
@@ -173,8 +174,14 @@ fun AddLoanScreen(
     }
 
     val imageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? -> 
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
         proofUri = uri
         uri?.let {
             context.contentResolver.query(it, null, null, null, null)?.use { cursor ->
@@ -187,8 +194,14 @@ fun AddLoanScreen(
     }
 
     val profilePhotoLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? -> 
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
         profilePhotoUri = uri
     }
 
@@ -333,7 +346,7 @@ fun AddLoanScreen(
                                 .size(80.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable { profilePhotoLauncher.launch("image/*") },
+                                .clickable { profilePhotoLauncher.launch(arrayOf("image/*")) },
                             contentAlignment = Alignment.Center
                         ) {
                             if (profilePhotoUri != null) {
@@ -495,7 +508,7 @@ fun AddLoanScreen(
                                             .size(60.dp)
                                             .clip(RoundedCornerShape(16.dp))
                                             .background(MaterialTheme.colorScheme.surfaceVariant)
-                                            .clickable { imageLauncher.launch("image/*") },
+                                            .clickable { imageLauncher.launch(arrayOf("image/*")) },
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.add_attachment), tint = MaterialTheme.colorScheme.onSurfaceVariant)
