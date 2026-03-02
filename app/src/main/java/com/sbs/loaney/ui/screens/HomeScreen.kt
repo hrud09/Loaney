@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.net.Uri
+import android.provider.ContactsContract
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -428,7 +429,10 @@ fun HomeScreen(
                     branchName = request.branchName,
                     swiftCode = request.swiftCode,
                     coverImageUri = request.coverImageUri,
-                    isCard = request.isCard
+                    isCard = request.isCard,
+                    isMfs = request.isMfs,
+                    mfsProvider = request.mfsProvider,
+                    qrCodeUri = request.qrCodeUri
                 )
                 showAddBankSheet = false
             }
@@ -550,20 +554,37 @@ fun BankAccountCard(
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val cardWidth = screenWidth * 0.85f
 
+    // MFS Specific Colors
+    val cardBackgroundColor = if (account.isMfs) {
+        when (account.mfsProvider?.lowercase()) {
+            "bkash" -> Color(0xFFE2136E) // Pink
+            "nagad" -> Color(0xFFED4D36) // Orange
+            "rocket" -> Color(0xFF8C158C) // Purple
+            "upay" -> Color(0xFF005BAC) // Blue
+            else -> MaterialTheme.colorScheme.primary
+        }
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val contentColor = if (account.isMfs) Color.White else MaterialTheme.colorScheme.onBackground
+    val labelColor = if (account.isMfs) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+    val dividerColor = if (account.isMfs) Color.White.copy(alpha = 0.3f) else MaterialTheme.colorScheme.outlineVariant
+
     Card(
-        shape = RoundedCornerShape(28.dp), // Matched to Balance Card
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), // Matched to Balance Card
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp), // Matched to Balance Card
-        modifier = Modifier.width(cardWidth) // Width restored to 0.85f for horizontal scroll
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        modifier = Modifier.width(cardWidth)
     ) {
         Column {
             // Cover Image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(72.dp) // 90.dp * 0.8
+                    .height(72.dp)
             ) {
-                if (!account.coverImageUri.isNullOrBlank()) {
+                if (!account.coverImageUri.isNullOrBlank() && !account.isMfs) {
                     AsyncImage(
                         model = account.coverImageUri,
                         contentDescription = "Cover Image",
@@ -576,12 +597,18 @@ fun BankAccountCard(
                             .fillMaxSize()
                             .background(
                                 brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                                    colors = listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background)
+                                    colors = if (account.isMfs) {
+                                        listOf(cardBackgroundColor, cardBackgroundColor.copy(alpha = 0.8f))
+                                    } else {
+                                        listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background)
+                                    }
                                 )
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.AccountBalance, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(48.dp))
+                        val headerIcon = if (account.isMfs) Icons.Default.PhoneIphone else Icons.Default.AccountBalance
+                        val headerTint = if (account.isMfs) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        Icon(headerIcon, contentDescription = null, tint = headerTint, modifier = Modifier.size(48.dp))
                     }
                 }
                 
@@ -589,8 +616,8 @@ fun BankAccountCard(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(10.dp) // 12.dp * 0.8
-                        .size(28.dp) // 36.dp * 0.8
+                        .padding(10.dp)
+                        .size(28.dp)
                         .background(Color.Black.copy(alpha = 0.4f), CircleShape)
                         .clickable { onDelete(account) },
                     contentAlignment = Alignment.Center
@@ -602,18 +629,18 @@ fun BankAccountCard(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(10.dp) // 12.dp * 0.8
-                        .size(28.dp) // 36.dp * 0.8
+                        .padding(10.dp)
+                        .size(28.dp)
                         .background(Color.Black.copy(alpha = 0.4f), CircleShape)
                         .clickable {
                             val text = buildString {
-                                append("Bank: ${account.bankName}\n")
-                                append("Account Name: ${account.accountName}\n")
-                                append("Account No.: ${account.accountNumber}\n")
+                                append("${if (account.isMfs) "Provider" else "Bank"}: ${account.bankName}\n")
+                                append("${if (account.isMfs) "Holder" else "Account Name"}: ${account.accountName}\n")
+                                append("${if (account.isMfs) "Mobile No" else "Account No"}.: ${account.accountNumber}\n")
                                 if (!account.branchName.isNullOrBlank()) append("Branch: ${account.branchName}\n")
                                 if (!account.swiftCode.isNullOrBlank()) append("SWIFT: ${account.swiftCode}\n")
                             }
-                            clipboardManager.setPrimaryClip(ClipData.newPlainText("Bank Account", text))
+                            clipboardManager.setPrimaryClip(ClipData.newPlainText(if (account.isMfs) "MFS Account" else "Bank Account", text))
                             Toast.makeText(context, "All Details Copied!", Toast.LENGTH_SHORT).show()
                         },
                     contentAlignment = Alignment.Center
@@ -623,25 +650,48 @@ fun BankAccountCard(
             }
 
             Column(
-                modifier = Modifier.padding(16.dp), // 20.dp * 0.8
-                verticalArrangement = Arrangement.spacedBy(12.dp) // 16.dp * 0.8
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Bank Name
-                Text(
-                    text = account.bankName,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    ),
-                    maxLines = 1,
-                    modifier = Modifier.fillMaxWidth().clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        clipboardManager.setPrimaryClip(ClipData.newPlainText("Bank Name", account.bankName))
-                        Toast.makeText(context, "Bank Name Copied!", Toast.LENGTH_SHORT).show()
+                // Bank / Provider Name & QR Code Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = account.bankName,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = contentColor
+                        ),
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f).clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            clipboardManager.setPrimaryClip(ClipData.newPlainText("Bank Name", account.bankName))
+                            Toast.makeText(context, "Name Copied!", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                    
+                    if (account.isMfs && !account.qrCodeUri.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White)
+                                .padding(2.dp)
+                        ) {
+                            AsyncImage(
+                                model = account.qrCodeUri,
+                                contentDescription = "QR Code",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
                     }
-                )
+                }
 
                 // Main Account Number
                 Row(
@@ -657,15 +707,25 @@ fun BankAccountCard(
                                 indication = null
                             ) {
                                 clipboardManager.setPrimaryClip(ClipData.newPlainText(if (account.isCard) "Card Number" else "Account Number", account.accountNumber))
-                                Toast.makeText(context, if (account.isCard) "Card No. Copied!" else "Account No. Copied!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
                             }
                     ) {
-                        Text(if (account.isCard) "CARD NUMBER" else stringResource(id = R.string.account_number), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        val numberLabel = when {
+                            account.isCard -> "CARD NUMBER"
+                            account.isMfs -> "MOBILE NUMBER"
+                            else -> stringResource(id = R.string.account_number)
+                        }
+                        Text(numberLabel, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = labelColor)
+                        
+                        val displayNum = when {
+                            account.isCard -> account.accountNumber.chunked(4).joinToString(" ")
+                            else -> account.accountNumber
+                        }
                         Text(
-                            text = if (account.isCard) account.accountNumber.chunked(4).joinToString(" ") else account.accountNumber,
+                            text = displayNum,
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = if (account.isMfs) Color.White else MaterialTheme.colorScheme.primary,
                                 letterSpacing = 1.5.sp
                             ),
                             maxLines = 1
@@ -673,25 +733,30 @@ fun BankAccountCard(
                     }
                 }
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                HorizontalDivider(color = dividerColor, thickness = 0.5.dp)
 
                 // Holder Name
-                BankField(if (account.isCard) "Cardholder Name" else stringResource(id = R.string.account_holder), account.accountName, clipboardManager, context)
+                val holderLabel = when {
+                    account.isCard -> "Cardholder Name"
+                    account.isMfs -> "Account Holder"
+                    else -> stringResource(id = R.string.account_holder)
+                }
+                BankField(holderLabel, account.accountName, clipboardManager, context, labelColor, contentColor)
 
-                // Branch & SWIFT Row
-                if (!account.branchName.isNullOrBlank() || !account.swiftCode.isNullOrBlank()) {
+                // Branch & SWIFT Row (Only for Banks)
+                if (!account.isMfs && (!account.branchName.isNullOrBlank() || !account.swiftCode.isNullOrBlank())) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp) // 16.dp * 0.8
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         if (!account.branchName.isNullOrBlank()) {
                             Box(modifier = Modifier.weight(1f)) {
-                                BankField(stringResource(id = R.string.branch), account.branchName, clipboardManager, context)
+                                BankField(stringResource(id = R.string.branch), account.branchName, clipboardManager, context, labelColor, contentColor)
                             }
                         }
                         if (!account.swiftCode.isNullOrBlank()) {
                             Box(modifier = Modifier.weight(1f)) {
-                                BankField(stringResource(id = R.string.swift), account.swiftCode, clipboardManager, context)
+                                BankField(stringResource(id = R.string.swift), account.swiftCode, clipboardManager, context, labelColor, contentColor)
                             }
                         }
                     }
@@ -702,7 +767,7 @@ fun BankAccountCard(
 }
 
 @Composable
-fun BankField(label: String, value: String, clipboardManager: ClipboardManager, context: Context) {
+fun BankField(label: String, value: String, clipboardManager: ClipboardManager, context: Context, labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant, contentColor: Color = MaterialTheme.colorScheme.onBackground) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -719,10 +784,10 @@ fun BankField(label: String, value: String, clipboardManager: ClipboardManager, 
                     Toast.makeText(context, "$label Copied!", Toast.LENGTH_SHORT).show()
                 }
         ) {
-            Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.5.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.5.sp), color = labelColor)
             Text(
                 value,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = contentColor),
                 maxLines = 1
             )
         }
@@ -736,7 +801,10 @@ data class AddBankAccountRequest(
     val branchName: String?,
     val swiftCode: String?,
     val coverImageUri: String?,
-    val isCard: Boolean
+    val isCard: Boolean,
+    val isMfs: Boolean,
+    val mfsProvider: String?,
+    val qrCodeUri: String?
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -751,11 +819,48 @@ fun AddBankAccountBottomSheet(
     var branchName by remember { mutableStateOf("") }
     var swiftCode by remember { mutableStateOf("") }
     var proofUri by remember { mutableStateOf<Uri?>(null) }
-    var isCard by remember { mutableStateOf(false) }
+    var selectedTab by remember { mutableIntStateOf(0) } // 0: Bank, 1: Card, 2: MFS
+    var mfsProvider by remember { mutableStateOf("bKash") }
+    var qrCodeUri by remember { mutableStateOf<Uri?>(null) }
     
+    val mfsProviders = listOf("bKash", "Nagad", "Rocket", "Upay")
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> proofUri = uri }
+    ) { uri: Uri? -> 
+        if (selectedTab == 2) {
+            qrCodeUri = uri
+        } else {
+            proofUri = uri 
+        }
+    }
+
+    val context = LocalContext.current
+    val contactLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                val projection = arrayOf(
+                    ContactsContract.CommonDataKinds.Phone.NUMBER,
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
+                )
+                context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                        val nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                        
+                        if (numberIndex >= 0) {
+                            accountNumber = cursor.getString(numberIndex)?.replace(Regex("[^0-9]"), "")?.take(15) ?: ""
+                        }
+                        if (nameIndex >= 0 && accountName.isBlank()) {
+                            accountName = cursor.getString(nameIndex) ?: ""
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -785,27 +890,48 @@ fun AddBankAccountBottomSheet(
                     .padding(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (!isCard) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .clickable { isCard = false }
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Bank Account", color = if (!isCard) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                listOf(0 to "Bank Account", 1 to "Card", 2 to "MFS").forEach { (index, title) ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (selectedTab == index) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .clickable { selectedTab = index }
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(title, color = if (selectedTab == index) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                    }
                 }
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isCard) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .clickable { isCard = true }
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Card", color = if (isCard) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+            }
+
+            // MFS Provider Chips
+            if (selectedTab == 2) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(mfsProviders) { provider ->
+                        val isSelected = mfsProvider == provider
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { 
+                                mfsProvider = provider 
+                                bankName = provider // Sync bank name to provider automatically
+                            },
+                            label = { Text(provider) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                borderColor = Color.Transparent,
+                                selectedBorderColor = MaterialTheme.colorScheme.primary,
+                                enabled = true,
+                                selected = isSelected
+                            ),
+                            shape = CircleShape
+                        )
+                    }
                 }
             }
 
@@ -820,52 +946,97 @@ fun AddBankAccountBottomSheet(
                     .clickable { launcher.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
-                if (proofUri != null) {
+                val imageUri = if (selectedTab == 2) qrCodeUri else proofUri
+                if (imageUri != null) {
                     AsyncImage(
-                        model = proofUri,
-                        contentDescription = "Cover Image",
+                        model = imageUri,
+                        contentDescription = "Upload",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 } else {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Image, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(48.dp))
+                        val icon = if (selectedTab == 2) Icons.Default.QrCode else Icons.Default.Image
+                        val textStr = if (selectedTab == 2) "Upload My QR Code" else stringResource(id = R.string.tap_custom_cover)
+                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(48.dp))
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(stringResource(id = R.string.tap_custom_cover), color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
+                        Text(textStr, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
             
-            CustomLightTextField(
-                value = bankName,
-                onValueChange = { bankName = it },
-                label = if (isCard) "Card Issuer (e.g. Visa, Mastercard)" else stringResource(id = R.string.bank_name_hint),
-                leadingIcon = if (isCard) Icons.Default.CreditCard else Icons.Default.AccountBalance
-            )
+            if (selectedTab != 2) {
+                CustomLightTextField(
+                    value = bankName,
+                    onValueChange = { bankName = it },
+                    label = if (selectedTab == 1) "Card Issuer (e.g. Visa, Mastercard)" else stringResource(id = R.string.bank_name_hint),
+                    leadingIcon = if (selectedTab == 1) Icons.Default.CreditCard else Icons.Default.AccountBalance
+                )
+            }
 
             CustomLightTextField(
                 value = accountName,
                 onValueChange = { accountName = it },
-                label = if (isCard) "Cardholder Name" else stringResource(id = R.string.account_holder_name_hint),
+                label = when (selectedTab) {
+                    1 -> "Cardholder Name"
+                    2 -> "Account Holder Name"
+                    else -> stringResource(id = R.string.account_holder_name_hint)
+                },
                 leadingIcon = Icons.Default.Person
             )
 
-            CustomLightTextField(
-                value = accountNumber,
-                onValueChange = {
-                    if (isCard) {
-                        accountNumber = it.take(16)
-                    } else {
-                        accountNumber = it
+            if (selectedTab == 2) {
+                // MFS Mobile Number with Contact Picker
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CustomLightTextField(
+                        value = accountNumber,
+                        onValueChange = {
+                            accountNumber = it.filter { char -> char.isDigit() }.take(15)
+                        },
+                        label = "Mobile Number",
+                        leadingIcon = Icons.Default.Phone,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilledIconButton(
+                        onClick = { 
+                            val intent = android.content.Intent(android.content.Intent.ACTION_PICK).apply {
+                                type = ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE
+                            }
+                            contactLauncher.launch(intent) 
+                        },
+                        modifier = Modifier.size(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    ) {
+                        Icon(Icons.Default.Contacts, contentDescription = "Pick from Contacts", modifier = Modifier.size(24.dp))
                     }
-                },
-                label = if (isCard) "Card Number" else stringResource(id = R.string.account_number_hint),
-                leadingIcon = Icons.Default.DateRange,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = if (isCard) CardNumberVisualTransformation() else VisualTransformation.None
-            )
+                }
+            } else {
+                CustomLightTextField(
+                    value = accountNumber,
+                    onValueChange = {
+                        if (selectedTab == 1) {
+                            accountNumber = it.take(16)
+                        } else {
+                            accountNumber = it
+                        }
+                    },
+                    label = if (selectedTab == 1) "Card Number" else stringResource(id = R.string.account_number_hint),
+                    leadingIcon = Icons.Default.DateRange,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = if (selectedTab == 1) CardNumberVisualTransformation() else VisualTransformation.None
+                )
+            }
 
-            if (!isCard) {
+            if (selectedTab == 0) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     CustomLightTextField(
                         value = branchName,
@@ -890,19 +1061,27 @@ fun AddBankAccountBottomSheet(
                     onAdd(AddBankAccountRequest(
                         accountName = accountName,
                         accountNumber = accountNumber,
-                        bankName = bankName,
-                        branchName = if (isCard) null else branchName.ifBlank { null },
-                        swiftCode = if (isCard) null else swiftCode.ifBlank { null },
-                        coverImageUri = proofUri?.toString(),
-                        isCard = isCard
+                        bankName = if (selectedTab == 2) mfsProvider else bankName,
+                        branchName = if (selectedTab == 0) branchName.ifBlank { null } else null,
+                        swiftCode = if (selectedTab == 0) swiftCode.ifBlank { null } else null,
+                        coverImageUri = if (selectedTab == 2) null else proofUri?.toString(),
+                        isCard = selectedTab == 1,
+                        isMfs = selectedTab == 2,
+                        mfsProvider = if (selectedTab == 2) mfsProvider else null,
+                        qrCodeUri = if (selectedTab == 2) qrCodeUri?.toString() else null
                     ))
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
-                enabled = accountName.isNotBlank() && accountNumber.isNotBlank() && bankName.isNotBlank()
+                enabled = accountName.isNotBlank() && accountNumber.isNotBlank() && (selectedTab == 2 || bankName.isNotBlank())
             ) {
-                Text(if (isCard) "Save Card" else stringResource(id = R.string.save_bank_account), fontWeight = FontWeight.Bold)
+                val actionLabel = when (selectedTab) {
+                    1 -> "Save Card"
+                    2 -> "Save MFS Account"
+                    else -> stringResource(id = R.string.save_bank_account)
+                }
+                Text(actionLabel, fontWeight = FontWeight.Bold)
             }
         }
     }

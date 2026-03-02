@@ -13,5 +13,8 @@ data class BankAccountEntity(
     val branchName: String?,
     val swiftCode: String?,
     val coverImageUri: String?, // URI string for the selected cover image
-    val isCard: Boolean = false // Flag indicating if it's a card or a generic bank account
+    val isCard: Boolean = false, // Flag indicating if it's a card or a generic bank account
+    val isMfs: Boolean = false, // Flag indicating if it's a mobile financial service (bKash, Nagad, etc.)
+    val mfsProvider: String? = null, // The provider name (e.g., "bKash", "Nagad", "Rocket")
+    val qrCodeUri: String? = null // URI string for the QR code image
 )

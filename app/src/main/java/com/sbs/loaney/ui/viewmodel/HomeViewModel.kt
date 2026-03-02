@@ -115,7 +115,10 @@ class HomeViewModel @Inject constructor(
         branchName: String?,
         swiftCode: String?,
         coverImageUri: String?,
-        isCard: Boolean = false
+        isCard: Boolean = false,
+        isMfs: Boolean = false,
+        mfsProvider: String? = null,
+        qrCodeUri: String? = null
     ) {
         viewModelScope.launch {
             val account = BankAccountEntity(
@@ -125,7 +128,10 @@ class HomeViewModel @Inject constructor(
                 branchName = branchName,
                 swiftCode = swiftCode,
                 coverImageUri = coverImageUri,
-                isCard = isCard
+                isCard = isCard,
+                isMfs = isMfs,
+                mfsProvider = mfsProvider,
+                qrCodeUri = qrCodeUri
             )
             repository.insertBankAccount(account)
         }
