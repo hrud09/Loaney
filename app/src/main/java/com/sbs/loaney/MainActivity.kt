@@ -14,6 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import javax.inject.Inject
 import androidx.compose.foundation.isSystemInDarkTheme
 
@@ -29,11 +30,6 @@ class MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { keepSplashScreen }
         
         super.onCreate(savedInstanceState)
-        
-        lifecycleScope.launch {
-            delay(3000)
-            keepSplashScreen = false
-        }
 
         enableEdgeToEdge()
         setContent {
@@ -43,9 +39,26 @@ class MainActivity : ComponentActivity() {
                 2 -> true // Force Dark
                 else -> isSystemInDarkTheme() // System default
             }
+            
+            val onboardingCompleted by settingsRepository.onboardingCompletedFlow.collectAsState(initial = null)
+
+            // Keep the splash screen visible until we know if onboarding is completed
+            LaunchedEffect(onboardingCompleted) {
+                if (onboardingCompleted != null) {
+                    delay(300) // Small delay for smooth transition
+                    keepSplashScreen = false
+                }
+            }
 
             LoaneyTheme(darkTheme = isDarkTheme) {
-                MainScreen()
+                if (onboardingCompleted != null) {
+                    val startDest = if (onboardingCompleted == true) {
+                        com.sbs.loaney.ui.navigation.Screen.Home.route
+                    } else {
+                        com.sbs.loaney.ui.navigation.Screen.Onboarding.route
+                    }
+                    MainScreen(startDestination = startDest)
+                }
             }
         }
     }

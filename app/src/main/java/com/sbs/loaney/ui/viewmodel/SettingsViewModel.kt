@@ -73,4 +73,10 @@ class SettingsViewModel @Inject constructor(
             settingsRepository.setUserName(name)
         }
     }
+
+    fun setOnboardingCompleted(completed: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setOnboardingCompleted(completed)
+        }
+    }
 }

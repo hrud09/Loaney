@@ -24,7 +24,7 @@ import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 
 @Composable
-fun MainScreen() {
+fun MainScreen(startDestination: String = Screen.Home.route) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -73,7 +73,7 @@ fun MainScreen() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding),
             enterTransition = {
                 slideIntoContainer(
@@ -112,6 +112,19 @@ fun MainScreen() {
                 )
             }
         ) {
+            composable(Screen.Onboarding.route) {
+                val coroutineScope = rememberCoroutineScope()
+                // You can inject SettingsRepository here via Hilt/ViewModel, but for simplicity we'll assume it's done elsewhere or pass a lambda.
+                // It's better to pass an onFinish lambda to keep MainScreen decoupled exactly from DataStore where possible.
+                // We'll update MainActivity to handle this
+                OnboardingScreen(
+                    onFinish = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(Screen.Home.route) {
                 HomeScreen(
                     onNavigateToAddLoan = { type -> navController.navigate(Screen.AddLoan.createRoute(type)) },

@@ -21,6 +21,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val APP_LANGUAGE = stringPreferencesKey("app_language")
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val USER_NAME = stringPreferencesKey("user_name")
+        val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     }
 
     // --- Flows ---
@@ -64,6 +65,14 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.USER_NAME] ?: "Sajibur"
         }
 
+    val onboardingCompletedFlow: Flow<Boolean> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false // Default to false
+        }
+
     // --- Updaters ---
     suspend fun setThemeMode(mode: Int) {
         dataStore.edit { preferences ->
@@ -92,6 +101,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setUserName(name: String) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.USER_NAME] = name
+        }
+    }
+
+    suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.ONBOARDING_COMPLETED] = completed
         }
     }
 }
