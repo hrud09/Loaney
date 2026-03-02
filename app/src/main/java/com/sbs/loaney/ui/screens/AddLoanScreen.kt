@@ -13,6 +13,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,7 +63,19 @@ fun AddLoanScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     
-    var selectedLoanType by remember { mutableStateOf(initialType) }
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(initialType) {
+        if (initialType == LoanType.LEND) {
+            pagerState.scrollToPage(0)
+        } else {
+            pagerState.scrollToPage(1)
+        }
+    }
+    
+    val selectedLoanType = if (pagerState.currentPage == 0) LoanType.LEND else LoanType.BORROW
+
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
@@ -78,9 +93,9 @@ fun AddLoanScreen(
     var showSuggestions by remember { mutableStateOf(false) }
     var showExtraDetails by remember { mutableStateOf(false) }
     
-    val nameSuggestions = remember(name, uiState.loans) {
+    val nameSuggestions = remember(name, uiState.lentLoans, uiState.borrowedLoans) {
         if (name.isBlank()) emptyList()
-        else uiState.loans.map { it.loan.personName }.distinct()
+        else (uiState.lentLoans + uiState.borrowedLoans).map { it.loan.personName }.distinct()
             .filter { it.contains(name, ignoreCase = true) && it != name }
     }
 
@@ -234,16 +249,15 @@ fun AddLoanScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             // Segmented Control (Transfer / Request style)
             Surface(
                 color = MaterialTheme.colorScheme.outlineVariant,
                 shape = CircleShape,
-                modifier = Modifier.fillMaxWidth(0.8f)
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 8.dp)
             ) {
                 Row(modifier = Modifier.padding(4.dp)) {
                     val lendColor = if (selectedLoanType == LoanType.LEND) MaterialTheme.colorScheme.primary else Color.Transparent
@@ -252,7 +266,7 @@ fun AddLoanScreen(
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
                             .background(lendColor)
-                            .clickable { selectedLoanType = LoanType.LEND }
+                            .clickable { coroutineScope.launch { pagerState.animateScrollToPage(0) } }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -265,7 +279,7 @@ fun AddLoanScreen(
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
                             .background(borrowColor)
-                            .clickable { selectedLoanType = LoanType.BORROW }
+                            .clickable { coroutineScope.launch { pagerState.animateScrollToPage(1) } }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -274,7 +288,19 @@ fun AddLoanScreen(
                 }
             }
 
-            // Big Amount Input
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(32.dp)
+                ) {
+                    // Big Amount Input
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = stringResource(id = R.string.amount), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -586,6 +612,8 @@ fun AddLoanScreen(
             }
             
             Spacer(modifier = Modifier.height(20.dp))
+                }
+            }
         }
     }
 }

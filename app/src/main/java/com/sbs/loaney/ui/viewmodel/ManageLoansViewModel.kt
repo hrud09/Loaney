@@ -16,8 +16,8 @@ import java.util.Date
 import javax.inject.Inject
 
 data class ManageLoansUiState(
-    val loans: List<LoanWithPayments> = emptyList(),
-    val selectedType: LoanType = LoanType.LEND,
+    val lentLoans: List<LoanWithPayments> = emptyList(),
+    val borrowedLoans: List<LoanWithPayments> = emptyList(),
     val isLoading: Boolean = false,
     val currencySymbol: String = "৳"
 )
@@ -28,17 +28,13 @@ class ManageLoansViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
-    private val _selectedType = MutableStateFlow(LoanType.LEND)
-    val selectedType: StateFlow<LoanType> = _selectedType.asStateFlow()
-
     val uiState: StateFlow<ManageLoansUiState> = combine(
         repository.getAllLoans(),
-        _selectedType,
         settingsRepository.currencySymbolFlow
-    ) { allLoans, type, currency ->
+    ) { allLoans, currency ->
         ManageLoansUiState(
-            loans = allLoans.filter { it.loan.type == type },
-            selectedType = type,
+            lentLoans = allLoans.filter { it.loan.type == LoanType.LEND },
+            borrowedLoans = allLoans.filter { it.loan.type == LoanType.BORROW },
             currencySymbol = currency
         )
     }.stateIn(
@@ -46,10 +42,6 @@ class ManageLoansViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ManageLoansUiState()
     )
-
-    fun setLoanType(type: LoanType) {
-        _selectedType.value = type
-    }
 
     fun addLoan(
         type: LoanType,

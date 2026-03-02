@@ -8,8 +8,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -51,6 +54,9 @@ fun ManageLoansScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+    val coroutineScope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(pageCount = { 2 })
+
     var selectedLoanIdForPayment by remember { mutableStateOf<Long?>(null) }
     var loanToDelete by remember { mutableStateOf<LoanWithPayments?>(null) }
 
@@ -61,12 +67,18 @@ fun ManageLoansScreen(
         if (initialType != null) {
             try {
                 val parsedType = LoanType.valueOf(initialType)
-                viewModel.setLoanType(parsedType)
+                if (parsedType == LoanType.LEND) {
+                    pagerState.scrollToPage(0)
+                } else {
+                    pagerState.scrollToPage(1)
+                }
             } catch (e: Exception) {
                 // Ignore parsing errors and keep current state
             }
         }
     }
+    
+    val currentType = if (pagerState.currentPage == 0) LoanType.LEND else LoanType.BORROW
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -88,9 +100,9 @@ fun ManageLoansScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { onNavigateToAddLoan(uiState.selectedType.name) },
-                containerColor = if (uiState.selectedType == LoanType.LEND) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                contentColor = if (uiState.selectedType == LoanType.LEND) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary,
+                onClick = { onNavigateToAddLoan(currentType.name) },
+                containerColor = if (currentType == LoanType.LEND) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                contentColor = if (currentType == LoanType.LEND) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary,
                 shape = CircleShape
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add New Loan")
@@ -112,15 +124,15 @@ fun ManageLoansScreen(
                     .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
                     .padding(4.dp)
             ) {
-                listOf(LoanType.LEND to stringResource(id = R.string.lent), LoanType.BORROW to stringResource(id = R.string.borrowed)).forEach { (type, text) ->
-                    val selected = uiState.selectedType == type
+                listOf(0 to stringResource(id = R.string.lent), 1 to stringResource(id = R.string.borrowed)).forEach { (pageIndex, text) ->
+                    val selected = pagerState.currentPage == pageIndex
                     val activeColor = if (selected) MaterialTheme.colorScheme.surface else Color.Transparent
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .clip(CircleShape)
                             .background(activeColor)
-                            .bounceClick { viewModel.setLoanType(type) }
+                            .bounceClick { coroutineScope.launch { pagerState.animateScrollToPage(pageIndex) } }
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -133,65 +145,72 @@ fun ManageLoansScreen(
                 }
             }
 
-            if (uiState.loans.isEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .background(MaterialTheme.colorScheme.surface, CircleShape)
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
-                        contentAlignment = Alignment.Center
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                val loans = if (page == 0) uiState.lentLoans else uiState.borrowedLoans
+                
+                if (loans.isEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.HourglassEmpty,
-                            contentDescription = "No loans",
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        Box(
+                            modifier = Modifier
+                                .size(100.dp)
+                                .background(MaterialTheme.colorScheme.surface, CircleShape)
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.HourglassEmpty,
+                                contentDescription = "No loans",
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            stringResource(id = R.string.no_transactions_yet),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            stringResource(id = R.string.tap_to_start_tracking),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        stringResource(id = R.string.no_transactions_yet),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        stringResource(id = R.string.tap_to_start_tracking),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 100.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(uiState.loans, key = { it.loan.id }) { item ->
-                        SwipeableManageLoanCard(
-                            modifier = Modifier.animateItem(
-                                fadeInSpec = null, 
-                                placementSpec = androidx.compose.animation.core.tween(durationMillis = 300, easing = androidx.compose.animation.core.FastOutSlowInEasing), 
-                                fadeOutSpec = null
-                            ),
-                            item = item,
-                            dateFormat = dateFormat,
-                            currencySymbol = uiState.currencySymbol,
-                            onClick = { onNavigateToDetail(item.loan.id) },
-                            onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
-                            onSwipeRight = { loanToDelete = item },
-                            onProfilePhotoClick = { uri ->
-                                expandedImageUri = uri
-                                isImageExpanded = true
-                            }
-                        )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 100.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(loans, key = { it.loan.id }) { item ->
+                            SwipeableManageLoanCard(
+                                modifier = Modifier.animateItem(
+                                    fadeInSpec = null, 
+                                    placementSpec = androidx.compose.animation.core.tween(durationMillis = 300, easing = androidx.compose.animation.core.FastOutSlowInEasing), 
+                                    fadeOutSpec = null
+                                ),
+                                item = item,
+                                dateFormat = dateFormat,
+                                currencySymbol = uiState.currencySymbol,
+                                onClick = { onNavigateToDetail(item.loan.id) },
+                                onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
+                                onSwipeRight = { loanToDelete = item },
+                                onProfilePhotoClick = { uri ->
+                                    expandedImageUri = uri
+                                    isImageExpanded = true
+                                }
+                            )
+                        }
                     }
                 }
             }
