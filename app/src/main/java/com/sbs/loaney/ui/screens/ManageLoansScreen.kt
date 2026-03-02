@@ -28,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
+import com.sbs.loaney.ui.components.FullScreenImageViewer
 import com.sbs.loaney.ui.components.bounceClick
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
@@ -35,6 +36,8 @@ import com.sbs.loaney.ui.viewmodel.ManageLoansViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.sbs.loaney.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -49,6 +52,9 @@ fun ManageLoansScreen(
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
     var selectedLoanIdForPayment by remember { mutableStateOf<Long?>(null) }
     var loanToDelete by remember { mutableStateOf<LoanWithPayments?>(null) }
+
+    var expandedImageUri by remember { mutableStateOf<String?>(null) }
+    var isImageExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -169,6 +175,10 @@ fun ManageLoansScreen(
                             onClick = { onNavigateToDetail(item.loan.id) },
                             onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
                             onSwipeRight = { loanToDelete = item },
+                            onProfilePhotoClick = { uri ->
+                                expandedImageUri = uri
+                                isImageExpanded = true
+                            }
                         )
                     }
                 }
@@ -215,6 +225,12 @@ fun ManageLoansScreen(
             textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+
+    FullScreenImageViewer(
+        visible = isImageExpanded,
+        imageUri = expandedImageUri,
+        onDismiss = { isImageExpanded = false }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -226,7 +242,8 @@ fun SwipeableManageLoanCard(
     currencySymbol: String,
     onClick: () -> Unit,
     onSwipeLeft: () -> Unit,
-    onSwipeRight: () -> Unit
+    onSwipeRight: () -> Unit,
+    onProfilePhotoClick: (String?) -> Unit
 ) {
     val swipeState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
@@ -300,7 +317,8 @@ fun SwipeableManageLoanCard(
             item = item,
             dateFormat = dateFormat,
             currencySymbol = currencySymbol,
-            onClick = onClick
+            onClick = onClick,
+            onProfilePhotoClick = onProfilePhotoClick
         )
     }
 }
@@ -311,7 +329,8 @@ fun ManageLoanCard(
     item: LoanWithPayments,
     dateFormat: SimpleDateFormat,
     currencySymbol: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onProfilePhotoClick: (String?) -> Unit
 ) {
     val loan = item.loan
     val paid = item.payments.sumOf { it.amount }
@@ -343,6 +362,33 @@ fun ManageLoanCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
+                // Profile Photo
+                Box(
+                    modifier = Modifier
+                        .padding(end = 12.dp)
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { onProfilePhotoClick(loan.profilePhotoUri) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (loan.profilePhotoUri != null) {
+                        AsyncImage(
+                            model = loan.profilePhotoUri,
+                            contentDescription = "Profile Photo",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = loan.personName.take(1).uppercase(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = loan.personName,

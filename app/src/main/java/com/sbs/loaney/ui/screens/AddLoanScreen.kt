@@ -72,6 +72,7 @@ fun AddLoanScreen(
     var proofFileName by remember { mutableStateOf<String?>(null) }
     var selectedRelationship by remember { mutableStateOf("Other") }
     var witness by remember { mutableStateOf("") }
+    var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
     
     var showSuggestions by remember { mutableStateOf(false) }
     var showExtraDetails by remember { mutableStateOf(false) }
@@ -183,6 +184,12 @@ fun AddLoanScreen(
                 }
             }
         }
+    }
+
+    val profilePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? -> 
+        profilePhotoUri = uri
     }
 
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
@@ -314,6 +321,34 @@ fun AddLoanScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // Profile Photo Picker
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { profilePhotoLauncher.launch("image/*") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (profilePhotoUri != null) {
+                                AsyncImage(
+                                    model = profilePhotoUri,
+                                    contentDescription = "Profile Photo",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(Icons.Default.AddAPhoto, contentDescription = "Add Profile Photo", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
+                            }
+                        }
+                    }
+
                     Box(modifier = Modifier.fillMaxWidth()) {
                         CustomLightTextField(
                             value = name,
@@ -518,7 +553,8 @@ fun AddLoanScreen(
                         purpose = purpose.ifBlank { null }, notes = notes.ifBlank { null },
                         interest = null, relationshipType = selectedRelationship,
                         witness = witness.ifBlank { null },
-                        proofUri = proofUri?.toString()
+                        proofUri = proofUri?.toString(),
+                        profilePhotoUri = profilePhotoUri?.toString()
                     )
                     onNavigateBack()
                 },

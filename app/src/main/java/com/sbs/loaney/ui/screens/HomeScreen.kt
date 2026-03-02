@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -42,6 +43,7 @@ import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.ui.components.CustomLightTextField
+import com.sbs.loaney.ui.components.FullScreenImageViewer
 import com.sbs.loaney.ui.components.WalletCardHolder
 import com.sbs.loaney.ui.components.bounceClick
 import com.sbs.loaney.ui.theme.*
@@ -61,6 +63,9 @@ fun HomeScreen(
     val context = LocalContext.current
     var showAddBankSheet by remember { mutableStateOf(false) }
     var showNotificationsSheet by remember { mutableStateOf(false) }
+
+    var expandedImageUri by remember { mutableStateOf<String?>(null) }
+    var isImageExpanded by remember { mutableStateOf(false) }
 
     val balance = uiState.totalLent - uiState.totalBorrowed
     val bankAccounts = uiState.bankAccounts
@@ -233,13 +238,12 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.lend)) { onNavigateToAddLoan("LEND") }
-                        ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.borrow)) { onNavigateToAddLoan("BORROW") }
-                        ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history)) { onNavigateToHistory() }
-                        ActionButton(icon = Icons.Default.Menu, label = stringResource(id = R.string.details)) { onNavigateToHistory() }
+                        ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.lend), modifier = Modifier.weight(1f)) { onNavigateToAddLoan("LEND") }
+                        ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.borrow), modifier = Modifier.weight(1f)) { onNavigateToAddLoan("BORROW") }
+                        ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history), modifier = Modifier.weight(1f)) { onNavigateToHistory() }
                     }
                 }
             }
@@ -330,14 +334,29 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(48.dp)
                                     .background(MaterialTheme.colorScheme.surface, CircleShape)
-                                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
+                                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                                    .clickable {
+                                        if (item.loan.profilePhotoUri != null) {
+                                            expandedImageUri = item.loan.profilePhotoUri
+                                            isImageExpanded = true
+                                        }
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = item.loan.personName.take(1).uppercase(),
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
+                                if (item.loan.profilePhotoUri != null) {
+                                    AsyncImage(
+                                        model = item.loan.profilePhotoUri,
+                                        contentDescription = "Profile Photo",
+                                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Text(
+                                        text = item.loan.personName.take(1).uppercase(),
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
@@ -397,6 +416,12 @@ fun HomeScreen(
             onDismiss = { showNotificationsSheet = false }
         )
     }
+
+    FullScreenImageViewer(
+        visible = isImageExpanded,
+        imageUri = expandedImageUri,
+        onDismiss = { isImageExpanded = false }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -457,21 +482,31 @@ fun NotificationsBottomSheet(onDismiss: () -> Unit) {
 }
 
 @Composable
-fun ActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
+fun ActionButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.bounceClick(onClick)
+        modifier = modifier.bounceClick(onClick)
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(64.dp)
                 .background(MaterialTheme.colorScheme.surface, CircleShape)
                 .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSurface)
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(28.dp)
+            )
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -575,7 +610,13 @@ fun BankAccountCard(
                         color = MaterialTheme.colorScheme.onBackground
                     ),
                     maxLines = 1,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        clipboardManager.setPrimaryClip(ClipData.newPlainText("Bank Name", account.bankName))
+                        Toast.makeText(context, "Bank Name Copied!", Toast.LENGTH_SHORT).show()
+                    }
                 )
 
                 // Main Account Number
@@ -584,7 +625,17 @@ fun BankAccountCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                clipboardManager.setPrimaryClip(ClipData.newPlainText("Account Number", account.accountNumber))
+                                Toast.makeText(context, "Account No. Copied!", Toast.LENGTH_SHORT).show()
+                            }
+                    ) {
                         Text(stringResource(id = R.string.account_number), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             text = account.accountNumber,
@@ -595,15 +646,6 @@ fun BankAccountCard(
                             ),
                             maxLines = 1
                         )
-                    }
-                    IconButton(
-                        onClick = {
-                            clipboardManager.setPrimaryClip(ClipData.newPlainText("Account Number", account.accountNumber))
-                            Toast.makeText(context, "Account No. Copied!", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.size(20.dp) // 24.dp * 0.8
-                    ) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(11.dp)) // 14.dp * 0.8
                     }
                 }
 
@@ -642,22 +684,23 @@ fun BankField(label: String, value: String, clipboardManager: ClipboardManager, 
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    clipboardManager.setPrimaryClip(ClipData.newPlainText(label, value))
+                    Toast.makeText(context, "$label Copied!", Toast.LENGTH_SHORT).show()
+                }
+        ) {
             Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.5.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 value,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground),
                 maxLines = 1
             )
-        }
-        IconButton(
-            onClick = {
-                clipboardManager.setPrimaryClip(ClipData.newPlainText(label, value))
-                Toast.makeText(context, "$label Copied!", Toast.LENGTH_SHORT).show()
-            },
-            modifier = Modifier.size(20.dp) // 24.dp * 0.8
-        ) {
-            Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(11.dp)) // 14.dp * 0.8
         }
     }
 }

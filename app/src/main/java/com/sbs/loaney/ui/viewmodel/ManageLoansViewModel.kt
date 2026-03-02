@@ -65,7 +65,8 @@ class ManageLoansViewModel @Inject constructor(
         interest: Double?,
         relationshipType: String? = null,
         witness: String? = null,
-        proofUri: String? = null
+        proofUri: String? = null,
+        profilePhotoUri: String? = null
     ) {
         viewModelScope.launch {
             val loan = LoanEntity(
@@ -81,6 +82,7 @@ class ManageLoansViewModel @Inject constructor(
                 notes = notes,
                 interest = interest,
                 proofUri = proofUri,
+                profilePhotoUri = profilePhotoUri,
                 relationshipType = relationshipType,
                 witness = witness,
                 status = LoanStatus.ACTIVE

@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -37,10 +38,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
-import com.sbs.loaney.ui.theme.*
+import com.sbs.loaney.ui.components.FullScreenImageViewer
 import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 
@@ -57,6 +60,9 @@ fun LoanTrackerScreen(
     var showAddLoanSheet by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showSettleConfirmation by remember { mutableStateOf(false) }
+
+    var expandedImageUri by remember { mutableStateOf<String?>(null) }
+    var isImageExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(loanId) {
         viewModel.selectLoan(loanId)
@@ -227,13 +233,45 @@ fun LoanTrackerScreen(
                     shape = RoundedCornerShape(18.dp), // 24.dp * 0.75
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    Row(
+                     Row(
                         modifier = Modifier
                             .padding(15.dp) // 20.dp * 0.75
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        // Profile Photo 
+                        Box(
+                            modifier = Modifier
+                                .padding(end = 12.dp)
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable {
+                                    if (loan.profilePhotoUri != null) {
+                                        expandedImageUri = loan.profilePhotoUri
+                                        isImageExpanded = true
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (loan.profilePhotoUri != null) {
+                                AsyncImage(
+                                    model = loan.profilePhotoUri,
+                                    contentDescription = "Profile Photo",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Text(
+                                    text = loan.personName.take(1).uppercase(),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = loan.personName,
@@ -366,6 +404,12 @@ fun LoanTrackerScreen(
             }
         )
     }
+
+    FullScreenImageViewer(
+        visible = isImageExpanded,
+        imageUri = expandedImageUri,
+        onDismiss = { isImageExpanded = false }
+    )
 }
 
 @Composable

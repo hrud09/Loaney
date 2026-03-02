@@ -21,6 +21,7 @@ data class LoanEntity(
     val notes: String?,
     val interest: Double?,
     val proofUri: String? = null,
+    val profilePhotoUri: String? = null,
     val status: LoanStatus = LoanStatus.ACTIVE,
     val relationshipType: String? = null,
     val witness: String? = null,
