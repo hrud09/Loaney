@@ -41,7 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
+import com.sbs.loaney.data.model.calculateLoaneyPiePoints
 import com.sbs.loaney.ui.components.FullScreenImageViewer
+import com.sbs.loaney.ui.components.LoaneyPieRewardOverlay
 import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -70,6 +72,10 @@ fun LoanTrackerScreen(
 
     var expandedImageUri by remember { mutableStateOf<String?>(null) }
     var isImageExpanded by remember { mutableStateOf(false) }
+
+    // Loaney Pie reward overlay
+    var showRewardOverlay by remember { mutableStateOf(false) }
+    var rewardPoints by remember { mutableStateOf(0) }
 
     LaunchedEffect(loanId) {
         viewModel.selectLoan(loanId)
@@ -494,7 +500,34 @@ fun LoanTrackerScreen(
             onAddPayment = { amount, method, note, proofUri ->
                 viewModel.addPayment(amount, method, note, proofUri)
                 showAddPaymentSheet = false
+
+                // Calculate Loaney Pie reward
+                val dueDate = uiState.selectedLoan?.loan?.promisedReturnDate
+                val daysBeforeDue = if (dueDate != null) {
+                    val diffMs = dueDate.time - System.currentTimeMillis()
+                    (diffMs / (1000 * 60 * 60 * 24)).toInt()
+                } else 0
+                // Reward points for on-time or early payments
+                val userXpLevel = 1 // TODO: pull from UserProfile ViewModel
+                val pts = calculateLoaneyPiePoints(
+                    amountPaid   = amount,
+                    daysBeforeDue = daysBeforeDue,
+                    userXpLevel  = userXpLevel
+                )
+                if (pts > 0 && daysBeforeDue >= 0) {
+                    rewardPoints = pts
+                    showRewardOverlay = true
+                }
             }
+        )
+    }
+
+    // Loaney Pie reward overlay — rendered last so it sits above everything
+    if (showRewardOverlay) {
+        LoaneyPieRewardOverlay(
+            pointsEarned       = rewardPoints,
+            isVisible          = showRewardOverlay,
+            onAnimationComplete = { showRewardOverlay = false }
         )
     }
 
