@@ -103,7 +103,7 @@ fun ProfileSidebarContent(
             }
         }
 
-        // ── XP Progress bar ────────────────────────────────────────
+        // XP Progress bar
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -139,7 +139,7 @@ fun ProfileSidebarContent(
             )
         }
 
-        // ── Loaney Pie Vault card ─────────────────────────────────
+        // Loaney Pie Vault card
         Card(
             modifier = Modifier
                 .fillMaxWidth()

@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -23,6 +24,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.R
+import com.sbs.loaney.ui.components.OnboardingIllustration
+import com.sbs.loaney.ui.components.OnboardingIllustrationType
+import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 
@@ -35,17 +39,17 @@ fun OnboardingScreen(
         OnboardingPage(
             title = "Welcome to Loaney",
             description = "Track all your lent and borrowed money in one secure place.",
-            icon = R.drawable.ic_launcher_foreground
+            type = OnboardingIllustrationType.WELCOME
         ),
         OnboardingPage(
             title = "Never Forget a Debt",
             description = "Keep a clear history of your transactions so you always know who owes who.",
-            icon = R.drawable.ic_launcher_foreground
+            type = OnboardingIllustrationType.HISTORY
         ),
         OnboardingPage(
             title = "Gain Financial Clarity",
             description = "Visualize your balances and maintain healthy financial relationships.",
-            icon = R.drawable.ic_launcher_foreground
+            type = OnboardingIllustrationType.CLARITY
         )
     )
 
@@ -76,15 +80,14 @@ fun OnboardingScreen(
     }
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = DeepDarkBg
     ) { paddingValues ->
         if (showProfileSetup) {
-            // Profile Setup Screen (replaces pager)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(MaterialTheme.colorScheme.background),
+                    .padding(paddingValues),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(modifier = Modifier.weight(1f)) {
@@ -93,32 +96,32 @@ fun OnboardingScreen(
                         onNameChange = { userName = it },
                         selectedCurrency = selectedCurrency,
                         currencies = currencies,
-                        onCurrencySelect = { selectedCurrency = it }
+                        onCurrencySelect = { selectedCurrency = it },
+                        onSkip = completeOnboarding
                     )
                 }
-                Column(
+                
+                Button(
+                    onClick = completeOnboarding,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(horizontal = 32.dp, vertical = 24.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = userName.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = SoftViolet,
+                        contentColor = Color.White
+                    )
                 ) {
-                    Button(
-                        onClick = completeOnboarding,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium,
-                        enabled = userName.isNotBlank()
-                    ) {
-                        Text("Get Started")
-                    }
+                    Text("Get Started", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         } else {
-            // Info Pages Pager
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(MaterialTheme.colorScheme.background),
+                    .padding(paddingValues),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 HorizontalPager(
@@ -128,53 +131,40 @@ fun OnboardingScreen(
                     OnboardingPageContent(page = pages[position])
                 }
 
-                // Bottom Section (Indicator & Buttons)
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(horizontal = 32.dp, vertical = 40.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Page Indicator
-                    Row(
-                        modifier = Modifier.padding(bottom = 32.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         repeat(pages.size) { iteration ->
-                            val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            val isSelected = pagerState.currentPage == iteration
                             Box(
                                 modifier = Modifier
-                                    .padding(4.dp)
+                                    .size(width = if (isSelected) 24.dp else 8.dp, height = 8.dp)
                                     .clip(CircleShape)
-                                    .background(color)
-                                    .size(if (pagerState.currentPage == iteration) 12.dp else 8.dp)
+                                    .background(if (isSelected) SoftViolet else MutedText.copy(alpha = 0.3f))
                             )
                         }
                     }
 
-                    // Action Buttons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(onClick = { showProfileSetup = true }) {
-                            Text("Skip", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Button(
-                            onClick = {
-                                if (pagerState.currentPage == pages.size - 1) {
-                                    showProfileSetup = true
-                                } else {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                    }
+                    Button(
+                        onClick = {
+                            if (pagerState.currentPage == pages.size - 1) {
+                                showProfileSetup = true
+                            } else {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
                                 }
-                            },
-                            shape = MaterialTheme.shapes.medium
-                        ) {
-                            Text(if (pagerState.currentPage == pages.size - 1) "Continue" else "Next")
-                        }
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SoftViolet)
+                    ) {
+                        Text(if (pagerState.currentPage == pages.size - 1) "Finish" else "Next", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -188,7 +178,8 @@ fun ProfileSetupPage(
     onNameChange: (String) -> Unit,
     selectedCurrency: String,
     currencies: List<Pair<String, String>>,
-    onCurrencySelect: (String) -> Unit
+    onCurrencySelect: (String) -> Unit,
+    onSkip: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -197,106 +188,123 @@ fun ProfileSetupPage(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Avatar icon
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = onSkip) {
+                Text("Skip for now", color = MutedText)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Large icon container
         Box(
             modifier = Modifier
-                .size(100.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                .size(120.dp)
+                .background(DarkSurface, CircleShape)
+                .border(2.dp, SoftViolet.copy(alpha = 0.3f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.Person,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(56.dp)
+                tint = SoftViolet,
+                modifier = Modifier.size(64.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         Text(
-            text = "Set Up Your Profile",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground
+            text = "Nearly There!",
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
+            ),
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Tell us a bit about yourself",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "Tell us your name and preferred currency to personalize your experience.",
+            style = MaterialTheme.typography.bodyLarge.copy(
+                color = MutedText,
+                lineHeight = 24.sp
+            ),
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(36.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
         // Name Input
         OutlinedTextField(
             value = userName,
             onValueChange = onNameChange,
-            label = { Text("Your Name") },
-            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+            label = { Text("Your Name", color = MutedText) },
+            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = SoftViolet) },
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = SoftViolet,
+                unfocusedBorderColor = DarkOutline,
+                cursorColor = SoftViolet
             )
         )
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Currency Selection
         Text(
-            text = "Preferred Currency",
+            text = "Local Currency",
             style = MaterialTheme.typography.titleSmall.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             ),
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             currencies.forEach { (symbol, code) ->
                 val isSelected = selectedCurrency == symbol
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (isSelected) SoftViolet.copy(alpha = 0.15f) else DarkSurface,
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onCurrencySelect(symbol) }
-                        .then(
-                            if (isSelected) Modifier.border(
-                                2.dp,
-                                MaterialTheme.colorScheme.primary,
-                                RoundedCornerShape(14.dp)
-                            ) else Modifier
+                        .border(
+                            width = if (isSelected) 2.dp else 1.dp,
+                            color = if (isSelected) SoftViolet else DarkOutline,
+                            shape = RoundedCornerShape(16.dp)
                         )
                 ) {
                     Column(
-                        modifier = Modifier.padding(vertical = 12.dp),
+                        modifier = Modifier.padding(vertical = 14.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
                             text = symbol,
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isSelected) SoftViolet else Color.White
                             )
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = code,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (isSelected) SoftViolet else MutedText,
                                 fontSize = 10.sp
                             )
                         )
@@ -316,36 +324,30 @@ fun OnboardingPageContent(page: OnboardingPage) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(200.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = page.icon),
-                contentDescription = null,
-                modifier = Modifier.size(100.dp)
-            )
-        }
+        OnboardingIllustration(type = page.type)
         
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(64.dp))
         
         Text(
             text = page.title,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground
+            style = MaterialTheme.typography.headlineLarge.copy(
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White,
+                fontSize = 32.sp
+            ),
+            textAlign = TextAlign.Center
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         
         Text(
             text = page.description,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.bodyLarge.copy(
+                color = MutedText,
+                lineHeight = 26.sp,
+                fontSize = 18.sp
+            ),
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -353,5 +355,5 @@ fun OnboardingPageContent(page: OnboardingPage) {
 data class OnboardingPage(
     val title: String,
     val description: String,
-    val icon: Int
+    val type: OnboardingIllustrationType
 )
