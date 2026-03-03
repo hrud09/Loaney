@@ -42,6 +42,14 @@
     <string name="due_date">Due Date</string>
     <string name="reason_for_loan">Reason for Loan</string>
     <string name="phone_optional">Phone (Optional)</string>
+    <string name="email_optional">Email (Optional)</string>
+    <string name="interest_rate_optional">Interest Rate (%) (Optional)</string>
+    <string name="relationship">Relationship</string>
+    <string name="relationship_friend">Friend</string>
+    <string name="relationship_family">Family</string>
+    <string name="relationship_colleague">Colleague</string>
+    <string name="relationship_neighbor">Neighbor</string>
+    <string name="relationship_other">Other</string>
     <string name="location_optional">Location (Optional)</string>
     <string name="witness_optional">Witness (Optional)</string>
     <string name="attachment">Attachment</string>

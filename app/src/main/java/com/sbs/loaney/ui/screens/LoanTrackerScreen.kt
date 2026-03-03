@@ -22,8 +22,11 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Percent
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
@@ -454,7 +457,15 @@ fun LoanTrackerScreen(
                 ) {
                     Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) { // 16.dp * 0.75, 12.dp * 0.75
                         DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
+                        DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = loan.relationshipType ?: stringResource(id = R.string.not_specified))
+                        if (!loan.email.isNullOrBlank()) {
+                            DetailRow(icon = Icons.Default.Email, label = stringResource(id = R.string.email_optional), value = loan.email)
+                        }
                         DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.location_optional), value = loan.address ?: stringResource(id = R.string.not_specified))
+                        DetailRow(icon = Icons.Default.Group, label = stringResource(id = R.string.witness_optional), value = loan.witness ?: stringResource(id = R.string.not_specified))
+                        if (loan.interest != null) {
+                            DetailRow(icon = Icons.Default.Percent, label = stringResource(id = R.string.interest_rate_optional), value = "${loan.interest}%")
+                        }
                         DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes ?: stringResource(id = R.string.no_notes))
 
                         val statusColor = when (loan.status) {

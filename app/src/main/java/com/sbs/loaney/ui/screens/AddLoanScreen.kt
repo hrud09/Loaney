@@ -90,6 +90,8 @@ fun AddLoanScreen(
     var proofUri by remember { mutableStateOf<Uri?>(null) }
     var proofFileName by remember { mutableStateOf<String?>(null) }
     var selectedRelationship by remember { mutableStateOf("Other") }
+    var email by remember { mutableStateOf("") }
+    var interestRate by remember { mutableStateOf("") }
     var witness by remember { mutableStateOf("") }
     var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
     
@@ -106,7 +108,13 @@ fun AddLoanScreen(
     var showReturnDatePicker by remember { mutableStateOf(false) }
 
     val loanReasons = listOf("🍔 Food", "🚑 Emergency", "🛍️ Shopping", "🚌 Travel", "Bills", "Other")
-    val relationships = listOf("Friend", "Family", "Colleague", "Neighbor", "Other")
+    val relationships = listOf(
+        stringResource(R.string.relationship_friend) to "Friend",
+        stringResource(R.string.relationship_family) to "Family",
+        stringResource(R.string.relationship_colleague) to "Colleague",
+        stringResource(R.string.relationship_neighbor) to "Neighbor",
+        stringResource(R.string.relationship_other) to "Other"
+    )
     val quickAmounts = listOf(500, 1000, 5000)
 
     val datePickerColors = DatePickerDefaults.colors(
@@ -468,22 +476,28 @@ fun AddLoanScreen(
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                CustomLightTextField(
-                                    value = dateFormat.format(Date(loanDate)),
-                                    onValueChange = {},
-                                    label = stringResource(id = R.string.loan_date),
-                                    readOnly = true,
-                                    leadingIcon = Icons.Default.CalendarToday,
-                                    modifier = Modifier.weight(1f).clickable { showLoanDatePicker = true }
-                                )
-                                CustomLightTextField(
-                                    value = dateFormat.format(Date(returnDate)),
-                                    onValueChange = {},
-                                    label = stringResource(id = R.string.due_date),
-                                    readOnly = true,
-                                    leadingIcon = Icons.Default.Event,
-                                    modifier = Modifier.weight(1f).clickable { showReturnDatePicker = true }
-                                )
+                                Box(modifier = Modifier.weight(1f).clickable { showLoanDatePicker = true }) {
+                                    CustomLightTextField(
+                                        value = dateFormat.format(Date(loanDate)),
+                                        onValueChange = {},
+                                        label = stringResource(id = R.string.loan_date),
+                                        readOnly = true,
+                                        enabled = false,
+                                        leadingIcon = Icons.Default.CalendarToday,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                                Box(modifier = Modifier.weight(1f).clickable { showReturnDatePicker = true }) {
+                                    CustomLightTextField(
+                                        value = dateFormat.format(Date(returnDate)),
+                                        onValueChange = {},
+                                        label = stringResource(id = R.string.due_date),
+                                        readOnly = true,
+                                        enabled = false,
+                                        leadingIcon = Icons.Default.Event,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
                             }
 
                             // Reason for Loan
@@ -523,10 +537,54 @@ fun AddLoanScreen(
                             )
 
                             CustomLightTextField(
+                                value = email,
+                                onValueChange = { email = it },
+                                label = stringResource(id = R.string.email_optional),
+                                leadingIcon = Icons.Default.Email,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                            )
+
+                            // Relationship Picker
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(stringResource(id = R.string.relationship), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    items(relationships) { (label, value) ->
+                                        val isSelected = selectedRelationship == value
+                                        FilterChip(
+                                            selected = isSelected,
+                                            onClick = { selectedRelationship = value },
+                                            label = { Text(label) },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            border = FilterChipDefaults.filterChipBorder(
+                                                borderColor = Color.Transparent,
+                                                selectedBorderColor = MaterialTheme.colorScheme.primary,
+                                                enabled = true,
+                                                selected = isSelected
+                                            ),
+                                            shape = CircleShape
+                                        )
+                                    }
+                                }
+                            }
+
+                            CustomLightTextField(
                                 value = address,
                                 onValueChange = { address = it },
                                 label = stringResource(id = R.string.location_optional),
                                 leadingIcon = Icons.Default.LocationOn
+                            )
+
+                            CustomLightTextField(
+                                value = interestRate,
+                                onValueChange = { if (it.isEmpty() || it.all { c -> c.isDigit() || c == '.' }) interestRate = it },
+                                label = stringResource(id = R.string.interest_rate_optional),
+                                leadingIcon = Icons.Default.Percent,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                             )
 
                             CustomLightTextField(
@@ -602,11 +660,11 @@ fun AddLoanScreen(
                 onClick = {
                     viewModel.addLoan(
                         type = selectedLoanType, name = name, phone = phone, 
-                        email = null, address = address.ifBlank { null },
+                        email = email.ifBlank { null }, address = address.ifBlank { null },
                         amount = amount.toDoubleOrNull() ?: 0.0,
                         loanDate = Date(loanDate), returnDate = Date(returnDate),
                         purpose = purpose.ifBlank { null }, notes = notes.ifBlank { null },
-                        interest = null, relationshipType = selectedRelationship,
+                        interest = interestRate.toDoubleOrNull(), relationshipType = selectedRelationship,
                         witness = witness.ifBlank { null },
                         proofUri = proofUri?.toString(),
                         profilePhotoUri = profilePhotoUri?.toString()
@@ -646,6 +704,7 @@ fun CustomLightTextField(
     label: String,
     modifier: Modifier = Modifier,
     readOnly: Boolean = false,
+    enabled: Boolean = true,
     leadingIcon: ImageVector? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     trailingIcon: ImageVector? = null,
@@ -657,6 +716,7 @@ fun CustomLightTextField(
         label = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         modifier = modifier.fillMaxWidth(),
         shape = ButtonShape,
+        enabled = enabled,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.secondary,
             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
