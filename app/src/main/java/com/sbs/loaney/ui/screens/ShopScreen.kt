@@ -1,6 +1,8 @@
 package com.sbs.loaney.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -117,7 +119,14 @@ fun ShopScreen(
             LazyRow(
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.padding(bottom = 20.dp)
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    )
             ) {
                 item {
                     CategoryChip(

@@ -523,13 +523,11 @@ fun LoanTrackerScreen(
     }
 
     // Loaney Pie reward overlay — rendered last so it sits above everything
-    if (showRewardOverlay) {
-        LoaneyPieRewardOverlay(
-            pointsEarned       = rewardPoints,
-            isVisible          = showRewardOverlay,
-            onAnimationComplete = { showRewardOverlay = false }
-        )
-    }
+    LoaneyPieRewardOverlay(
+        pointsEarned       = rewardPoints,
+        isVisible          = showRewardOverlay,
+        onAnimationComplete = { showRewardOverlay = false }
+    )
 
     if (showAddLoanSheet) {
         AddMoreLoanBottomSheet(

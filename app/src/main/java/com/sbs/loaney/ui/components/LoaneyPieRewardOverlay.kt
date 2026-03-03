@@ -91,7 +91,11 @@ fun LoaneyPieRewardOverlay(
         }
     }
 
-    if (isVisible || cardScale.value > 0f) {
+    AnimatedVisibility(
+        visible = isVisible || cardScale.value > 0f,
+        enter = fadeIn(tween(200)),
+        exit = fadeOut(tween(400))
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
