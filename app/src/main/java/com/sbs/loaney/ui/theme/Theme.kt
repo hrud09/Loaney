@@ -17,18 +17,18 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = Color.White,
     primaryContainer = SoftVioletLight.copy(alpha = 0.3f),
     onPrimaryContainer = SoftVioletDark,
-    secondary = SoftViolet,
+    secondary = EmeraldGreen,
     onSecondary = Color.White,
     tertiary = SkyBlue,
     onTertiary = Color.White,
     background = LightGrayBg,
-    onBackground = DarkCard,
+    onBackground = TextMainDark,
     surface = Color.White,
-    onSurface = DarkCard,
-    surfaceVariant = Color(0xFFEDEDF2),
-    onSurfaceVariant = MutedText,
+    onSurface = TextMainDark,
+    surfaceVariant = Color(0xFFE2E8F0),
+    onSurfaceVariant = Color(0xFF64748B),
     outline = SubtleGray,
-    error = CoralRed,
+    error = CoralRose,
     onError = Color.White
 )
 
@@ -37,22 +37,22 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = Color.White,
     primaryContainer = Color(0xFF2D2660),
     onPrimaryContainer = Color(0xFFD8D0FF),
-    secondary = SoftViolet,
+    secondary = EmeraldGreen,
     onSecondary = Color.White,
     tertiary = SkyBlue,
     onTertiary = Color.Black,
     background = DeepDarkBg,
-    onBackground = Color.White,
+    onBackground = Color(0xFFE2E8F0),
     surface = DarkSurface,
-    onSurface = Color.White,
+    onSurface = Color(0xFFE2E8F0),
     surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = Color(0xFF8E8E93),
+    onSurfaceVariant = MutedText,
     outline = DarkOutline,
-    outlineVariant = Color(0xFF2A2A2E),
-    error = CoralRed,
+    outlineVariant = Color(0xFF1E293B),
+    error = CoralRose,
     onError = Color.White,
-    errorContainer = Color(0xFF3A1520),
-    onErrorContainer = Color(0xFFFFB3B3)
+    errorContainer = Color(0xFF3B1324),
+    onErrorContainer = Color(0xFFFFC0CB)
 )
 
 data class ColorfulAccent(
@@ -170,7 +170,7 @@ private fun colorfulColorScheme(accentIndex: Int): androidx.compose.material3.Co
         onPrimaryContainer = accent.onPrimaryContainer,
         errorContainer = Color(0xFF4A2030),
         onErrorContainer = Color(0xFFFFB3B3),
-        error = SoftNeonError,
+        error = CoralRose,
         onError = Color.White
     )
 }

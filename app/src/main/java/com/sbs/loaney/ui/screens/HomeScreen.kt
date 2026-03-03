@@ -188,86 +188,103 @@ fun HomeScreen(
                 }
             }
 
-            // --- BALANCE CARDS ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            // --- NET BALANCE HERO CARD ---
+            Surface(
+                shape = CardShape,
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, GlassBorder, CardShape)
             ) {
-                // Left Card - Total Lent
-                Surface(
-                    shape = SmallCardShape,
-                    color = NeonLime.copy(alpha = 0.15f),
-                    shadowElevation = 4.dp,
-                    modifier = Modifier
-                        .weight(1f)
-                        .bounceClick { onNavigateToHistory("LEND") }
-                        .combinedClickable(
-                            onClick = { onNavigateToHistory("LEND") },
-                            onLongClick = { showLentSummary = true }
-                        )
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier.padding(18.dp),
-                        verticalArrangement = Arrangement.Center
+                    Text(
+                        text = "Net Balance",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    val netColor = if (balance >= 0) EmeraldGreen else CoralRose
+                    val netPrefix = if (balance >= 0) "+" else "-"
+                    Text(
+                        text = "$netPrefix${uiState.currencySymbol}${String.format("%,.0f", kotlin.math.abs(balance))}",
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = netColor
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    HorizontalDivider(color = GlassBorder, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
+                        // You are owed (Lent)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .weight(1f)
+                                .bounceClick { onNavigateToHistory("LEND") }
+                                .combinedClickable(
+                                    onClick = { onNavigateToHistory("LEND") },
+                                    onLongClick = { showLentSummary = true }
+                                )
                         ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Default.CallReceived, contentDescription = null, tint = EmeraldGreen, modifier = Modifier.size(14.dp))
+                                Text(
+                                    text = stringResource(id = R.string.total_lent),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = stringResource(id = R.string.total_lent),
-                                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.7f), lineHeight = 18.sp)
+                                text = "+${uiState.currencySymbol}${String.format("%,.0f", uiState.totalLent)}",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldGreen
+                                )
                             )
-                            Icon(Icons.Default.CallReceived, contentDescription = null, tint = NeonLime, modifier = Modifier.size(20.dp))
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "+${uiState.currencySymbol}${String.format("%,.0f", uiState.totalLent)}",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White
-                            )
+                        // Divider
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(40.dp)
+                                .background(GlassBorder)
                         )
-                    }
-                }
-
-                // Right Card (Coral) - Total Borrowed
-                Surface(
-                    shape = SmallCardShape,
-                    color = CoralRed.copy(alpha = 0.15f),
-                    shadowElevation = 4.dp,
-                    modifier = Modifier
-                        .weight(1f)
-                        .bounceClick { onNavigateToHistory("BORROW") }
-                        .combinedClickable(
-                            onClick = { onNavigateToHistory("BORROW") },
-                            onLongClick = { showBorrowedSummary = true }
-                        )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(18.dp),
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
+                        // You owe (Borrowed)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .weight(1f)
+                                .bounceClick { onNavigateToHistory("BORROW") }
+                                .combinedClickable(
+                                    onClick = { onNavigateToHistory("BORROW") },
+                                    onLongClick = { showBorrowedSummary = true }
+                                )
                         ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Default.ArrowOutward, contentDescription = null, tint = CoralRose, modifier = Modifier.size(14.dp))
+                                Text(
+                                    text = stringResource(id = R.string.total_borrowed),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = stringResource(id = R.string.total_borrowed),
-                                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.8f), lineHeight = 18.sp)
+                                text = "-${uiState.currencySymbol}${String.format("%,.0f", uiState.totalBorrowed)}",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = CoralRose
+                                )
                             )
-                            Icon(Icons.Default.ArrowOutward, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "-${uiState.currencySymbol}${String.format("%,.0f", uiState.totalBorrowed)}",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White
-                            )
-                        )
                     }
                 }
             }
@@ -297,11 +314,43 @@ fun HomeScreen(
                 }
 
                 if (bankAccounts.isEmpty()) {
-                    Text(
-                        text = stringResource(id = R.string.no_bank_accounts),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
+                    // Proper empty state
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(20.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.AccountBalance,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(id = R.string.no_bank_accounts),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedButton(
+                            onClick = { showAddBankSheet = true },
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Link Bank Account", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
                 } else {
                     val lazyListState = rememberLazyListState()
                     val snapBehavior = rememberSnapFlingBehavior(lazyListState)
@@ -414,7 +463,7 @@ fun HomeScreen(
                                     text = "${if (isLent) "+" else "-"}${uiState.currencySymbol} ${String.format("%,.0f", remainingBalance)}",
                                     style = MaterialTheme.typography.bodyLarge.copy(
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = if (isLent) EmeraldGreen else CoralRose
                                     )
                                 )
                                 Text(
@@ -422,6 +471,13 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 )
                             }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }

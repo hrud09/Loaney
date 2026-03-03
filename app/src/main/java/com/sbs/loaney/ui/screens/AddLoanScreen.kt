@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
@@ -351,8 +352,7 @@ fun AddLoanScreen(
                     quickAmounts.forEach { quickVal ->
                         Surface(
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surface,
-                            border = borderStroke(),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
                             modifier = Modifier.clickable { 
                                 val curr = amount.toDoubleOrNull() ?: 0.0
                                 amount = (curr + quickVal).toLong().toString() 
@@ -362,7 +362,7 @@ fun AddLoanScreen(
                                 text = "+$quickVal",
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onBackground
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -373,7 +373,7 @@ fun AddLoanScreen(
             Surface(
                 shape = CardShape,
                 color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().border(1.dp, GlassBorder, CardShape)
             ) {
                 Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     // Profile Photo Picker

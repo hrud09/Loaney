@@ -2,40 +2,44 @@ package com.sbs.loaney.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── New Core Palette (matching screenshots) ──
-val SoftViolet = Color(0xFF7C6EF6)           // Primary accent (action buttons)
+// ── Premium Slate Palette ──
+val SoftViolet = Color(0xFF7C6EF6)           // Primary accent (luminous indigo)
 val SoftVioletDark = Color(0xFF6A5CE0)       // Pressed/darker variant
 val SoftVioletLight = Color(0xFF9B8FFF)      // Lighter variant
-val DeepDarkBg = Color(0xFF111118)           // Screen background (very deep dark)
-val DarkSurface = Color(0xFF1C1C1E)          // Card / surface background
-val DarkSurfaceVariant = Color(0xFF2A2A2E)   // Icon containers, input fields
-val DarkOutline = Color(0xFF38383A)          // Borders & dividers
-val MutedText = Color(0xFF8E8E93)            // Secondary/label text
+val DeepDarkBg = Color(0xFF0F172A)           // Deep slate background
+val DarkSurface = Color(0xFF1E293B)          // Elevated surface / cards
+val DarkSurfaceVariant = Color(0xFF334155)   // Input fields, icon containers
+val DarkOutline = Color(0xFF475569)          // Subtle borders
+val GlassBorder = Color(0x0DFFFFFF)          // ~5% white for glassmorphic edges
+val MutedText = Color(0xFF94A3B8)            // Slate-gray secondary text
 
 // ── Semantic Colors ──
-val CoralRed = Color(0xFFFF3B30)             // Error / negative / expense
-val NeonLime = Color(0xFF34C759)             // Positive / income indicator
+val EmeraldGreen = Color(0xFF10B981)         // Positive / lent / income
+val CoralRose = Color(0xFFF43F5E)            // Negative / borrowed / expense
 val SkyBlue = Color(0xFF5AC8FA)              // Accent blue
+val AmberWarn = Color(0xFFF59E0B)            // Warning / overdue
 
-// ── Legacy / backward compat ──
-val CoralPink = Color(0xFFF06B7A)
-val CoralPinkDark = Color(0xFFE85565)
+// ── Legacy backward compat (mapped to new palette) ──
+val CoralPink = CoralRose
+val CoralPinkDark = Color(0xFFE11D48)
 val CoralPinkLight = Color(0xFFFDE8EB)
-val DarkCard = Color(0xFF1C1C1E)
-val LightGrayBg = Color(0xFFF2F2F7)
-val SubtleGray = Color(0xFFE0E0E5)
-val SurfaceElevated = Color(0xFF2C2C2E)
-val DarkCardBg = Color(0xFF1C1C1E)
-val TextSubtextDark = Color(0xFF8E8E93)
-val TextSubtextLight = Color(0xFFE5E5EA)
-val TextMainDark = Color(0xFF1C1C1E)
-val TextMainLight = Color(0xFFF2F2F7)
-val DashboardBg = Color(0xFFF2F2F7)
-val SubtleBorder = Color(0xFF38383A)
-val ThemeGreen = Color(0xFF34C759)
-val ThemeLightGreen = Color(0xFFE8F5E9)
-val PrimaryLime = Color(0xFF34C759)
-val SecondaryOrange = Color(0xFFFF9F0A)
+val CoralRed = CoralRose
+val NeonLime = EmeraldGreen
+val DarkCard = DarkSurface
+val LightGrayBg = Color(0xFFF1F5F9)
+val SubtleGray = Color(0xFFCBD5E1)
+val SurfaceElevated = Color(0xFF334155)
+val DarkCardBg = DarkSurface
+val TextSubtextDark = MutedText
+val TextSubtextLight = Color(0xFFE2E8F0)
+val TextMainDark = Color(0xFF0F172A)
+val TextMainLight = Color(0xFFF1F5F9)
+val DashboardBg = Color(0xFFF1F5F9)
+val SubtleBorder = DarkOutline
+val ThemeGreen = EmeraldGreen
+val ThemeLightGreen = Color(0xFFD1FAE5)
+val PrimaryLime = EmeraldGreen
+val SecondaryOrange = Color(0xFFF59E0B)
 
 // ── Colorful Theme - Soft Neon Palette ──
 val SoftNeonPurple = Color(0xFF9B72FF)

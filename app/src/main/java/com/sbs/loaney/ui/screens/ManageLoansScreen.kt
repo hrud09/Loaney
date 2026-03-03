@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material3.*
@@ -91,6 +92,15 @@ fun ManageLoansScreen(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     ) 
+                },
+                actions = {
+                    IconButton(onClick = { /* TODO: filter */ }) {
+                        Icon(
+                            Icons.Default.FilterList,
+                            contentDescription = "Filter",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent,
@@ -377,7 +387,7 @@ fun ManageLoanCard(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
+                color = GlassBorder,
                 shape = CardShape
             ),
         shape = CardShape,
@@ -437,11 +447,28 @@ fun ManageLoanCard(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(id = R.string.due_by, dateFormat.format(loan.promisedReturnDate)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    val isOverdue = loan.promisedReturnDate.before(Date())
+                    if (isOverdue && loan.status != LoanStatus.FULLY_PAID) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = "Overdue",
+                                tint = CoralRose,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Text(
+                                text = stringResource(id = R.string.due_by, dateFormat.format(loan.promisedReturnDate)),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = CoralRose
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(id = R.string.due_by, dateFormat.format(loan.promisedReturnDate)),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 Text(
                     text = "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", remainingBalance)}",
@@ -458,10 +485,10 @@ fun ManageLoanCard(
                     progress = { progress },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(8.dp) 
-                        .clip(RoundedCornerShape(4.dp)), 
+                        .height(10.dp) 
+                        .clip(RoundedCornerShape(5.dp)), 
                     color = accentColor,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    trackColor = DarkSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
