@@ -73,6 +73,9 @@ class HomeViewModel @Inject constructor(
 
         loans.forEach { item ->
             val loan = item.loan
+            // Skip forgiven and fully paid loans
+            if (loan.status == LoanStatus.FORGIVEN || loan.status == LoanStatus.FULLY_PAID) return@forEach
+
             val totalLoan = loan.amount + item.loanItems.sumOf { it.amount }
             val paid = item.payments.sumOf { it.amount }
             val balance = (totalLoan - paid).coerceAtLeast(0.0)
@@ -103,8 +106,8 @@ class HomeViewModel @Inject constructor(
             overdueAmount = overdueAmount,
             overdueCount = overdueCount,
             dueSoonCount = dueSoonCount,
-            lentLoans = loans.filter { it.loan.type == LoanType.LEND && it.loan.status != LoanStatus.FULLY_PAID },
-            borrowedLoans = loans.filter { it.loan.type == LoanType.BORROW && it.loan.status != LoanStatus.FULLY_PAID }
+            lentLoans = loans.filter { it.loan.type == LoanType.LEND && it.loan.status != LoanStatus.FULLY_PAID && it.loan.status != LoanStatus.FORGIVEN },
+            borrowedLoans = loans.filter { it.loan.type == LoanType.BORROW && it.loan.status != LoanStatus.FULLY_PAID && it.loan.status != LoanStatus.FORGIVEN }
         )
     }
 

@@ -2,6 +2,7 @@ package com.sbs.loaney.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -23,6 +24,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -47,6 +50,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.*
+import com.sbs.loaney.util.PdfReceiptGenerator
+import com.sbs.loaney.util.sendReminder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +66,7 @@ fun LoanTrackerScreen(
     var showAddLoanSheet by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showSettleConfirmation by remember { mutableStateOf(false) }
+    var showForgiveConfirmation by remember { mutableStateOf(false) }
 
     var expandedImageUri by remember { mutableStateOf<String?>(null) }
     var isImageExpanded by remember { mutableStateOf(false) }
@@ -128,6 +134,40 @@ fun LoanTrackerScreen(
         )
     }
 
+    // Forgive Debt Confirmation Dialog
+    if (showForgiveConfirmation) {
+        val remainingAmount = uiState.selectedLoan?.let { lwp ->
+            val total = lwp.loan.amount + lwp.loanItems.sumOf { it.amount }
+            val paid = lwp.payments.sumOf { it.amount }
+            (total - paid).coerceAtLeast(0.0)
+        } ?: 0.0
+        AlertDialog(
+            onDismissRequest = { showForgiveConfirmation = false },
+            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = AmberWarn) },
+            title = { Text("Forgive Debt?") },
+            text = { Text("Are you sure you want to write off the remaining ${uiState.currencySymbol}${String.format("%,.0f", remainingAmount)}? This will not log it as received cash.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.forgiveLoan()
+                        showForgiveConfirmation = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = AmberWarn)
+                ) {
+                    Text("Forgive", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showForgiveConfirmation = false }) {
+                    Text(stringResource(id = R.string.cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onBackground,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -140,6 +180,20 @@ fun LoanTrackerScreen(
                 },
                 actions = {
                     if (uiState.selectedLoan != null) {
+                        // Share PDF receipt
+                        IconButton(onClick = {
+                            uiState.selectedLoan?.let { lwp ->
+                                PdfReceiptGenerator.generateAndShare(
+                                    context = context,
+                                    loan = lwp.loan,
+                                    payments = lwp.payments,
+                                    loanItems = lwp.loanItems,
+                                    currencySymbol = uiState.currencySymbol
+                                )
+                            }
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = "Share Receipt", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                         IconButton(onClick = { showDeleteConfirmation = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                         }
@@ -152,49 +206,87 @@ fun LoanTrackerScreen(
             )
         },
         bottomBar = {
-            if (uiState.selectedLoan != null && uiState.selectedLoan?.loan?.status != LoanStatus.FULLY_PAID) {
+            if (uiState.selectedLoan != null && uiState.selectedLoan?.loan?.status != LoanStatus.FULLY_PAID && uiState.selectedLoan?.loan?.status != LoanStatus.FORGIVEN) {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp, // 8.dp * 0.75
-                    shadowElevation = 6.dp // 8.dp * 0.75
+                    tonalElevation = 6.dp,
+                    shadowElevation = 6.dp
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .padding(bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                         Button(
-                             onClick = { showAddPaymentSheet = true },
-                             modifier = Modifier
-                                 .weight(1f)
-                                 .height(52.dp),
-                             shape = SoftChipShape, // chip
-                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
-                         ) {
-                             Text(stringResource(id = R.string.pay), fontWeight = FontWeight.Bold)
-                         }
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                             Button(
+                                 onClick = { showAddPaymentSheet = true },
+                                 modifier = Modifier
+                                     .weight(1f)
+                                     .height(52.dp),
+                                 shape = SoftChipShape,
+                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+                             ) {
+                                 Text(stringResource(id = R.string.pay), fontWeight = FontWeight.Bold)
+                             }
 
-                         Button(
-                             onClick = { showAddLoanSheet = true },
-                             modifier = Modifier
-                                 .weight(1f)
-                                 .height(52.dp),
-                             shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
-                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary, contentColor = MaterialTheme.colorScheme.onSecondary)
-                         ) {
-                             Text(stringResource(id = R.string.add_more), fontWeight = FontWeight.Bold)
-                         }
+                             Button(
+                                 onClick = { showAddLoanSheet = true },
+                                 modifier = Modifier
+                                     .weight(1f)
+                                     .height(52.dp),
+                                 shape = RoundedCornerShape(12.dp),
+                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary, contentColor = MaterialTheme.colorScheme.onSecondary)
+                             ) {
+                                 Text(stringResource(id = R.string.add_more), fontWeight = FontWeight.Bold)
+                             }
 
-                         FilledIconButton(
-                             onClick = { showSettleConfirmation = true },
-                             modifier = Modifier.size(52.dp),
-                             shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
-                             colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                         ) {
-                             Icon(Icons.Default.CheckCircle, contentDescription = "Settle", tint = MaterialTheme.colorScheme.primary)
-                         }
+                             FilledIconButton(
+                                 onClick = { showSettleConfirmation = true },
+                                 modifier = Modifier.size(52.dp),
+                                 shape = RoundedCornerShape(12.dp),
+                                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                             ) {
+                                 Icon(Icons.Default.CheckCircle, contentDescription = "Settle", tint = MaterialTheme.colorScheme.primary)
+                             }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Forgive Debt
+                            TextButton(
+                                onClick = { showForgiveConfirmation = true },
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                            ) {
+                                Text("Forgive Debt", style = MaterialTheme.typography.labelMedium)
+                            }
+                            // Send Reminder
+                            TextButton(
+                                onClick = {
+                                    uiState.selectedLoan?.let { lwp ->
+                                        val loan = lwp.loan
+                                        val total = loan.amount + lwp.loanItems.sumOf { it.amount }
+                                        val paid = lwp.payments.sumOf { it.amount }
+                                        val remaining = (total - paid).coerceAtLeast(0.0)
+                                        val dateFormat = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+                                        sendReminder(
+                                            context = context,
+                                            contactName = loan.personName,
+                                            amount = remaining,
+                                            dueDate = dateFormat.format(loan.promisedReturnDate),
+                                            phoneNumber = loan.phoneNumber.ifBlank { null },
+                                            currencySymbol = uiState.currencySymbol
+                                        )
+                                    }
+                                },
+                                colors = ButtonDefaults.textButtonColors(contentColor = SkyBlue)
+                            ) {
+                                Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Send Reminder", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }

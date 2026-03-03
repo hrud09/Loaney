@@ -11,7 +11,8 @@ enum class LoanStatus {
     ACTIVE,
     PARTIALLY_PAID,
     FULLY_PAID,
-    OVERDUE
+    OVERDUE,
+    FORGIVEN
 }
 
 data class Loan(

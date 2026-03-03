@@ -100,6 +100,14 @@ class LoanTrackerViewModel @Inject constructor(
         }
     }
 
+    fun forgiveLoan() {
+        val loanId = _selectedLoanId.value ?: return
+        viewModelScope.launch {
+            val loanWithPayments = repository.getLoanById(loanId).firstOrNull() ?: return@launch
+            repository.updateLoan(loanWithPayments.loan.copy(status = LoanStatus.FORGIVEN))
+        }
+    }
+
     private suspend fun updateLoanStatus(loanId: Long) {
         val loanWithPayments = repository.getLoanById(loanId).firstOrNull() ?: return
         val totalLoan = loanWithPayments.loan.amount + loanWithPayments.loanItems.sumOf { it.amount }
