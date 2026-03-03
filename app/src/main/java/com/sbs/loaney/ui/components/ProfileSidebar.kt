@@ -36,6 +36,7 @@ fun ProfileSidebarContent(
     profile: UserProfile,
     onNavigateToSettings: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToShop: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -182,7 +183,7 @@ fun ProfileSidebarContent(
                 }
                 Spacer(Modifier.height(14.dp))
                 Button(
-                    onClick = { /* TODO: Navigate to Redeem screen */ },
+                    onClick = onNavigateToShop,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(

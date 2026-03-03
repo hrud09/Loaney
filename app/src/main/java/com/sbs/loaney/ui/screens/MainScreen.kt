@@ -1,5 +1,7 @@
 package com.sbs.loaney.ui.screens
 
+import com.sbs.loaney.ui.screens.ShopScreen
+
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -70,6 +72,10 @@ fun MainScreen(
                         launchSingleTop = true
                         restoreState = true
                     }
+                },
+                onNavigateToShop = {
+                    scope.launch { drawerState.close() }
+                    navController.navigate(Screen.Shop.route)
                 }
             )
         }
@@ -232,6 +238,9 @@ fun MainScreen(
                 }
                 composable(Screen.Settings.route) {
                     SettingsScreen(onNavigateBack = { navController.popBackStack() })
+                }
+                composable(Screen.Shop.route) {
+                    ShopScreen(onNavigateBack = { navController.popBackStack() })
                 }
                 composable(
                     route = Screen.LoanDetail.route,
