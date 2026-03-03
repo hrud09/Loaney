@@ -28,6 +28,10 @@ interface LoanDao {
     fun getAllLoans(): Flow<List<LoanWithPayments>>
 
     @Transaction
+    @Query("SELECT * FROM loans ORDER BY createdAt DESC")
+    suspend fun getAllLoansOnce(): List<LoanWithPayments>
+
+    @Transaction
     @Query("SELECT * FROM loans WHERE type = :type ORDER BY createdAt DESC")
     fun getLoansByType(type: LoanType): Flow<List<LoanWithPayments>>
 
