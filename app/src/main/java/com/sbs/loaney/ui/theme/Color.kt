@@ -51,3 +51,24 @@ val SoftNeonSurfaceVar = Color(0xFF2E2644)
 val SoftNeonError = Color(0xFFFF6B6B)
 val SoftNeonOnSurface = Color(0xFFE8DFFF)
 val SoftNeonOutline = Color(0xFF4A3D6B)
+
+// ── Hero Card Gradient ──
+val HeroCardDark1 = Color(0xFF0A2E1F)      // Deep emerald-black
+val HeroCardDark2 = Color(0xFF0F3B2A)      // Forest green
+val HeroCardDark3 = Color(0xFF152E3D)      // Dark slate-teal
+val HeroCardAccent = Color(0xFF1A4030)      // Subtle green tint
+
+// ── Gradient Avatar Palette (vibrant pairs) ──
+val AvatarGradients = listOf(
+    Color(0xFF667EEA) to Color(0xFF764BA2),  // Indigo → Purple
+    Color(0xFFF093FB) to Color(0xFFF5576C),  // Pink → Coral
+    Color(0xFF4FACFE) to Color(0xFF00F2FE),  // Blue → Cyan
+    Color(0xFF43E97B) to Color(0xFF38F9D7),  // Green → Teal
+    Color(0xFFF6D365) to Color(0xFFFDA085),  // Gold → Peach
+    Color(0xFFA18CD1) to Color(0xFFFBC2EB),  // Lavender → Rose
+    Color(0xFF30CFD0) to Color(0xFF330867),  // Teal → Midnight
+    Color(0xFFFF9A9E) to Color(0xFFFECFEF),  // Salmon → Blush
+)
+
+// ── FAB Glow ──
+val FabGlow = Color(0xFF7C6EF6)             // Matches primary violet
