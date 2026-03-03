@@ -46,6 +46,7 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
+import com.sbs.loaney.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -160,16 +161,16 @@ fun LoanTrackerScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp) // 16.dp * 0.75
-                            .padding(bottom = 12.dp), // 16.dp * 0.75
-                        horizontalArrangement = Arrangement.spacedBy(12.dp) // 16.dp * 0.75
+                            .padding(16.dp)
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                          Button(
                              onClick = { showAddPaymentSheet = true },
                              modifier = Modifier
                                  .weight(1f)
-                                 .height(42.dp), // 56.dp * 0.75
-                             shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
+                                 .height(52.dp),
+                             shape = SoftChipShape, // chip
                              colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                          ) {
                              Text(stringResource(id = R.string.pay), fontWeight = FontWeight.Bold)
@@ -179,7 +180,7 @@ fun LoanTrackerScreen(
                              onClick = { showAddLoanSheet = true },
                              modifier = Modifier
                                  .weight(1f)
-                                 .height(42.dp), // 56.dp * 0.75
+                                 .height(52.dp),
                              shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                              colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary, contentColor = MaterialTheme.colorScheme.onSecondary)
                          ) {
@@ -188,7 +189,7 @@ fun LoanTrackerScreen(
 
                          FilledIconButton(
                              onClick = { showSettleConfirmation = true },
-                             modifier = Modifier.size(42.dp), // 56.dp * 0.75
+                             modifier = Modifier.size(52.dp),
                              shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
                              colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                          ) {
@@ -224,13 +225,13 @@ fun LoanTrackerScreen(
                     .padding(padding)
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(15.dp), // 20.dp * 0.75
-                verticalArrangement = Arrangement.spacedBy(15.dp) // 20.dp * 0.75
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 // Header Card - Clean White Card
                 Card(
                     modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp)), // 24.dp * 0.75
-                    shape = RoundedCornerShape(18.dp), // 24.dp * 0.75
+                    shape = SmallCardShape, // section card
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
@@ -245,7 +246,7 @@ fun LoanTrackerScreen(
                         Box(
                             modifier = Modifier
                                 .padding(end = 12.dp)
-                                .size(48.dp)
+                                .size(56.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .clickable {
@@ -349,7 +350,7 @@ fun LoanTrackerScreen(
                 // Detailed Information
                 Card(
                     modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp)), // 24.dp * 0.75
-                    shape = RoundedCornerShape(18.dp), // 24.dp * 0.75
+                    shape = SmallCardShape, // section card
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
@@ -454,7 +455,7 @@ data class HistoryEvent(
 fun InfoTile(title: String, value: String, highlight: Boolean = false, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(15.dp)), // 20.dp * 0.75
-        shape = RoundedCornerShape(15.dp), // 20.dp * 0.75
+        shape = SmallCardShape, // item card
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(12.dp)) { // 16.dp * 0.75
@@ -491,7 +492,7 @@ fun TimelineItem(date: String, title: String, subtitle: String, isLoan: Boolean 
 
         Card(
             modifier = Modifier.weight(1f).border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)), // 16.dp * 0.75
-            shape = RoundedCornerShape(12.dp), // 16.dp * 0.75
+            shape = SoftChipShape, // inner card
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Row(

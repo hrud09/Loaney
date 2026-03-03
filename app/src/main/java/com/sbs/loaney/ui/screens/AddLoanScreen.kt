@@ -355,7 +355,7 @@ fun AddLoanScreen(
 
             // Core Recipient Card
             Surface(
-                shape = RoundedCornerShape(24.dp),
+                shape = CardShape,
                 color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -640,7 +640,7 @@ fun CustomLightTextField(
         onValueChange = onValueChange,
         label = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = ButtonShape,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.secondary,
             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,

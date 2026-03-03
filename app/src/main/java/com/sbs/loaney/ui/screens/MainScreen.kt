@@ -29,7 +29,7 @@ fun MainScreen(startDestination: String = Screen.Home.route) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     
-    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route)
+    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route, Screen.AddLoan.route)
     val isTopLevel = currentDestination?.route in topLevelRoutes
 
     val items = listOf(

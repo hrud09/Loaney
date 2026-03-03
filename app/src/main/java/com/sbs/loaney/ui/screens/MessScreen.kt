@@ -15,10 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.sbs.loaney.ui.theme.PrimaryLime
-import androidx.compose.ui.unit.dp
-import com.sbs.loaney.ui.theme.PrimaryLime
-import com.sbs.loaney.ui.theme.SecondaryOrange
+import com.sbs.loaney.ui.theme.*
 import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 
@@ -57,7 +54,7 @@ fun MessScreen(
                 title = stringResource(id = R.string.tool_tracker_title),
                 description = stringResource(id = R.string.tool_tracker_desc),
                 icon = Icons.Default.Info,
-                backgroundColor = PrimaryLime,
+                backgroundColor = CoralPink,
                 onClick = onNavigateToTracker
             )
             
@@ -92,7 +89,7 @@ fun ToolCard(
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = CardShape,
         colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
         Row(

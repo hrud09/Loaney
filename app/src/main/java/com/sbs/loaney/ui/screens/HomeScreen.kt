@@ -9,6 +9,19 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -80,6 +93,7 @@ fun HomeScreen(
     var isImageExpanded by remember { mutableStateOf(false) }
     var showLentSummary by remember { mutableStateOf(false) }
     var showBorrowedSummary by remember { mutableStateOf(false) }
+    var isFabExpanded by remember { mutableStateOf(false) }
 
     val balance = uiState.totalLent - uiState.totalBorrowed
     val bankAccounts = uiState.bankAccounts
@@ -87,20 +101,26 @@ fun HomeScreen(
     
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
+    val fabRotation by animateFloatAsState(
+        targetValue = if (isFabExpanded) 45f else 0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "fab_rotation"
+    )
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
         if (uiState.isLoading) {
-             com.sbs.loaney.ui.components.AnimatedLoadingScreen(modifier = Modifier.padding(padding))
+             com.sbs.loaney.ui.components.AnimatedLoadingScreen()
         } else {
         Column(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
                 .animateContentSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             // --- TOP HEADER ---
             Row(
@@ -111,7 +131,7 @@ fun HomeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(52.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
@@ -125,7 +145,7 @@ fun HomeScreen(
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onBackground,
-                                fontSize = 18.sp
+                                fontSize = 20.sp
                             )
                         )
                         Text(
@@ -140,23 +160,23 @@ fun HomeScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(44.dp)
                             .background(MaterialTheme.colorScheme.surface, CircleShape)
                             .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                             .bounceClick { onNavigateToSettings() },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
                     }
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(44.dp)
                             .background(MaterialTheme.colorScheme.surface, CircleShape)
                             .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                             .bounceClick { showNotificationsSheet = true },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
                         Box(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
@@ -168,112 +188,91 @@ fun HomeScreen(
                 }
             }
 
-            // --- BALANCE CARD WITH ACTIONS ---
-            Surface(
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shadowElevation = 8.dp,
-                modifier = Modifier.fillMaxWidth()
+            // --- BALANCE CARDS ---
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // Left Card - Total Lent
+                Surface(
+                    shape = SmallCardShape,
+                    color = Color(0xFF1B5E4B),
+                    shadowElevation = 4.dp,
+                    modifier = Modifier
+                        .weight(1f)
+                        .bounceClick { onNavigateToHistory("LEND") }
+                        .combinedClickable(
+                            onClick = { onNavigateToHistory("LEND") },
+                            onLongClick = { showLentSummary = true }
+                        )
                 ) {
-                    // --- TWO CARDS (Previously below) ---
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        // Left Card (Dark) - Total Lent
-                        Surface(
-                            shape = RoundedCornerShape(20.dp),
-                            color = MaterialTheme.colorScheme.background,
-                            shadowElevation = 4.dp,
-                            modifier = Modifier
-                                .weight(1f)
-                                .bounceClick { onNavigateToHistory("LEND") }
-                                .combinedClickable(
-                                    onClick = { onNavigateToHistory("LEND") },
-                                    onLongClick = { showLentSummary = true }
-                                )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
                         ) {
-                            Column(
-                                modifier = Modifier.padding(14.dp),
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.Top
-                                ) {
-                                    Text(
-                                        text = stringResource(id = R.string.total_lent),
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp)
-                                    )
-                                    Icon(Icons.Default.CallReceived, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "+${uiState.currencySymbol}${String.format("%,.0f", uiState.totalLent)}",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.onBackground
-                                    )
-                                )
-                            }
+                            Text(
+                                text = stringResource(id = R.string.total_lent),
+                                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.7f), lineHeight = 18.sp)
+                            )
+                            Icon(Icons.Default.CallReceived, contentDescription = null, tint = CoralPink, modifier = Modifier.size(20.dp))
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "+${uiState.currencySymbol}${String.format("%,.0f", uiState.totalLent)}",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White
+                            )
+                        )
+                    }
+                }
 
-                        // Right Card (Light) - Total Borrowed
-                        Surface(
-                            shape = RoundedCornerShape(20.dp),
-                            color = MaterialTheme.colorScheme.surface,
-                            shadowElevation = 4.dp,
-                            modifier = Modifier
-                                .weight(1f)
-                                .bounceClick { onNavigateToHistory("BORROW") }
-                                .combinedClickable(
-                                    onClick = { onNavigateToHistory("BORROW") },
-                                    onLongClick = { showBorrowedSummary = true }
-                                )
+                // Right Card (Coral) - Total Borrowed
+                Surface(
+                    shape = SmallCardShape,
+                    color = CoralPink,
+                    shadowElevation = 4.dp,
+                    modifier = Modifier
+                        .weight(1f)
+                        .bounceClick { onNavigateToHistory("BORROW") }
+                        .combinedClickable(
+                            onClick = { onNavigateToHistory("BORROW") },
+                            onLongClick = { showBorrowedSummary = true }
+                        )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
                         ) {
-                            Column(
-                                modifier = Modifier.padding(14.dp),
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.Top
-                                ) {
-                                    Text(
-                                        text = stringResource(id = R.string.total_borrowed),
-                                        style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp)
-                                    )
-                                    Icon(Icons.Default.ArrowOutward, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "-${uiState.currencySymbol}${String.format("%,.0f", uiState.totalBorrowed)}",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                )
-                            }
+                            Text(
+                                text = stringResource(id = R.string.total_borrowed),
+                                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.8f), lineHeight = 18.sp)
+                            )
+                            Icon(Icons.Default.ArrowOutward, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "-${uiState.currencySymbol}${String.format("%,.0f", uiState.totalBorrowed)}",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White
+                            )
+                        )
                     }
                 }
             }
 
-            // --- ACTION BUTTONS (Moved Outside) ---
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                ActionButton(icon = Icons.Default.ArrowUpward, label = stringResource(id = R.string.lend), modifier = Modifier.weight(1f)) { onNavigateToAddLoan("LEND") }
-                ActionButton(icon = Icons.Default.ArrowDownward, label = stringResource(id = R.string.borrow), modifier = Modifier.weight(1f)) { onNavigateToAddLoan("BORROW") }
-                ActionButton(icon = Icons.Default.History, label = stringResource(id = R.string.history), modifier = Modifier.weight(1f)) { onNavigateToHistory(null) }
-            }
+
 
             // --- BANK ACCOUNTS ---
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -287,7 +286,7 @@ fun HomeScreen(
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 18.sp
+                            fontSize = 20.sp
                         )
                     )
                     Text(
@@ -358,12 +357,12 @@ fun HomeScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .bounceClick { onNavigateToDetail(item.loan.id) }
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(48.dp)
+                                    .size(52.dp)
                                     .background(MaterialTheme.colorScheme.surface, CircleShape)
                                     .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                                     .clickable {
@@ -429,6 +428,138 @@ fun HomeScreen(
             }
             Spacer(modifier = Modifier.height(100.dp))
         }
+        }
+
+            // --- SCRIM OVERLAY ---
+            AnimatedVisibility(
+                visible = isFabExpanded,
+                enter = fadeIn(animationSpec = tween(200)),
+                exit = fadeOut(animationSpec = tween(200))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { isFabExpanded = false }
+                )
+            }
+
+            // --- EXPANDABLE FAB ---
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 24.dp),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Mini FABs
+                AnimatedVisibility(
+                    visible = isFabExpanded,
+                    enter = slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    ) + scaleIn(
+                        initialScale = 0.3f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeIn(animationSpec = tween(150)),
+                    exit = slideOutVertically(
+                        targetOffsetY = { it / 2 },
+                        animationSpec = tween(200)
+                    ) + scaleOut(targetScale = 0.5f) + fadeOut(animationSpec = tween(150))
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Lend button
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Surface(
+                                shape = SmallCardShape,
+                                color = MaterialTheme.colorScheme.surface,
+                                shadowElevation = 6.dp
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.lend),
+                                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                )
+                            }
+                            FloatingActionButton(
+                                onClick = {
+                                    onNavigateToAddLoan("LEND")
+                                },
+                                containerColor = Color(0xFF00C853),
+                                contentColor = Color.White,
+                                shape = CircleShape
+                            ) {
+                                Icon(Icons.Default.ArrowUpward, contentDescription = "Lend", modifier = Modifier.size(28.dp))
+                            }
+                        }
+
+                        // Borrow button
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Surface(
+                                shape = SmallCardShape,
+                                color = MaterialTheme.colorScheme.surface,
+                                shadowElevation = 6.dp
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.borrow),
+                                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                )
+                            }
+                            FloatingActionButton(
+                                onClick = {
+                                    onNavigateToAddLoan("BORROW")
+                                },
+                                containerColor = Color(0xFFFF3B5C),
+                                contentColor = Color.White,
+                                shape = CircleShape
+                            ) {
+                                Icon(Icons.Default.ArrowDownward, contentDescription = "Borrow", modifier = Modifier.size(28.dp))
+                            }
+                        }
+                    }
+                }
+
+                // Main FAB
+                FloatingActionButton(
+                    onClick = { isFabExpanded = !isFabExpanded },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White,
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Add",
+                        modifier = Modifier
+                            .size(28.dp)
+                            .rotate(fabRotation)
+                    )
+                }
+            }
         }
     }
 
@@ -557,7 +688,7 @@ fun ActionButton(
     ) {
         Box(
             modifier = Modifier
-                .size(64.dp)
+                .size(68.dp)
                 .background(MaterialTheme.colorScheme.surface, CircleShape)
                 .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
             contentAlignment = Alignment.Center
@@ -566,13 +697,13 @@ fun ActionButton(
                 icon,
                 contentDescription = label,
                 tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(30.dp)
             )
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+            style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
         )
     }
 }
@@ -608,7 +739,7 @@ fun BankAccountCard(
     val dividerColor = MaterialTheme.colorScheme.outlineVariant
 
     Card(
-        shape = RoundedCornerShape(28.dp),
+        shape = BigCardShape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         modifier = Modifier.width(cardWidth)

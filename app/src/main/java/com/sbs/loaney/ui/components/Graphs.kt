@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sbs.loaney.ui.theme.CoralRed
-import com.sbs.loaney.ui.theme.NeonLime
+import com.sbs.loaney.ui.theme.CoralPink
 import com.sbs.loaney.ui.theme.SkyBlue
 import kotlin.math.max
 import com.sbs.loaney.ui.theme.SurfaceElevated
@@ -75,7 +75,7 @@ fun DonutChart(
             // Lent Arc (Lime)
             if (lentRatio > 0f) {
                 drawArc(
-                    color = NeonLime,
+                    color = CoralPink,
                     startAngle = -90f,
                     sweepAngle = sweepAngle.value * lentRatio,
                     useCenter = false,
@@ -107,7 +107,7 @@ fun DonutChart(
                 color = Color.White.copy(alpha = 0.6f)
             )
             val netBalance = totalLent - totalBorrowed
-            val color = if (netBalance >= 0) NeonLime else CoralRed
+            val color = if (netBalance >= 0) CoralPink else CoralRed
             Text(
                 text = "৳${String.format("%.0f", Math.abs(netBalance))}",
                 style = MaterialTheme.typography.titleLarge,

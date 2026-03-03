@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sbs.loaney.ui.theme.NeonLime
+import com.sbs.loaney.ui.theme.CoralPink
 import com.sbs.loaney.ui.theme.SkyBlue
 
 @Composable
@@ -62,13 +62,13 @@ fun AnimatedLoadingScreen(modifier: Modifier = Modifier) {
                 Box(
                     modifier = Modifier
                         .size(64.dp)
-                        .background(NeonLime.copy(alpha = alpha * 0.3f), CircleShape)
+                        .background(CoralPink.copy(alpha = alpha * 0.3f), CircleShape)
                 )
                 // Inner circle
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(NeonLime.copy(alpha = alpha), CircleShape)
+                        .background(CoralPink.copy(alpha = alpha), CircleShape)
                 )
                 // App initial inside
                 Text(

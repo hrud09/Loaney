@@ -13,38 +13,42 @@ import androidx.compose.ui.platform.LocalContext
 
 
 private val LightColorScheme = lightColorScheme(
-    primary = ThemeGreen,
+    primary = CoralPink,
     onPrimary = Color.White,
-    secondary = ThemeGreen,
+    primaryContainer = CoralPinkLight,
+    onPrimaryContainer = CoralPinkDark,
+    secondary = DarkCard,
     onSecondary = Color.White,
-    tertiary = ThemeGreen,
+    tertiary = CoralPink,
     onTertiary = Color.White,
-    background = Color.White,
-    onBackground = Color.Black,
+    background = LightGrayBg,
+    onBackground = DarkCard,
     surface = Color.White,
-    onSurface = Color.Black,
-    surfaceVariant = ThemeLightGreen,
-    onSurfaceVariant = Color.Black,
-    outline = SubtleBorder,
+    onSurface = DarkCard,
+    surfaceVariant = Color(0xFFEDEDF2),
+    onSurfaceVariant = MutedText,
+    outline = SubtleGray,
     error = CoralRed,
     onError = Color.White
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = NeonLime,
-    onPrimary = Color.Black,
-    secondary = SkyBlue,
-    onSecondary = Color.Black,
-    tertiary = CoralRed,
-    onTertiary = Color.White,
-    background = Color(0xFF1E1E22), // Deep dark background
+    primary = CoralPink,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF5A2028),
+    onPrimaryContainer = Color(0xFFFFDADE),
+    secondary = CoralPink,
+    onSecondary = Color.White,
+    tertiary = SkyBlue,
+    onTertiary = Color.Black,
+    background = DarkBg,
     onBackground = Color.White,
-    surface = Color(0xFF2C2C2E), // Elevated dark cards
+    surface = DarkSurface,
     onSurface = Color.White,
-    surfaceVariant = Color(0xFF38383A), // Even lighter dark surfaces
-    onSurfaceVariant = Color.LightGray,
-    outline = Color.DarkGray,
-    error = CoralRed,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = Color(0xFFAAAAAE),
+    outline = DarkOutline,
+    error = Color(0xFFFF6B6B),
     onError = Color.White
 )
 

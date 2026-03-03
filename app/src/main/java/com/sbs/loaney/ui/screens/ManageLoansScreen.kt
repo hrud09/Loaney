@@ -323,7 +323,7 @@ fun SwipeableManageLoanCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(CardShape)
                     .background(color),
                 contentAlignment = alignment
             ) {
@@ -378,9 +378,9 @@ fun ManageLoanCard(
             .border(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
-                shape = RoundedCornerShape(24.dp)
+                shape = CardShape
             ),
-        shape = RoundedCornerShape(24.dp),
+        shape = CardShape,
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp
     ) {
