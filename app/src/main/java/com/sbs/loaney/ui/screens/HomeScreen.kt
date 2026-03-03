@@ -196,7 +196,7 @@ fun HomeScreen(
                 // Left Card - Total Lent
                 Surface(
                     shape = SmallCardShape,
-                    color = Color(0xFF1B5E4B),
+                    color = NeonLime.copy(alpha = 0.15f),
                     shadowElevation = 4.dp,
                     modifier = Modifier
                         .weight(1f)
@@ -219,7 +219,7 @@ fun HomeScreen(
                                 text = stringResource(id = R.string.total_lent),
                                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.7f), lineHeight = 18.sp)
                             )
-                            Icon(Icons.Default.CallReceived, contentDescription = null, tint = CoralPink, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.CallReceived, contentDescription = null, tint = NeonLime, modifier = Modifier.size(20.dp))
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -235,7 +235,7 @@ fun HomeScreen(
                 // Right Card (Coral) - Total Borrowed
                 Surface(
                     shape = SmallCardShape,
-                    color = CoralPink,
+                    color = CoralRed.copy(alpha = 0.15f),
                     shadowElevation = 4.dp,
                     modifier = Modifier
                         .weight(1f)
@@ -503,7 +503,7 @@ fun HomeScreen(
                                 onClick = {
                                     onNavigateToAddLoan("LEND")
                                 },
-                                containerColor = Color(0xFF00C853),
+                                containerColor = NeonLime,
                                 contentColor = Color.White,
                                 shape = CircleShape
                             ) {
@@ -534,7 +534,7 @@ fun HomeScreen(
                                 onClick = {
                                     onNavigateToAddLoan("BORROW")
                                 },
-                                containerColor = Color(0xFFFF3B5C),
+                                containerColor = CoralRed,
                                 contentColor = Color.White,
                                 shape = CircleShape
                             ) {

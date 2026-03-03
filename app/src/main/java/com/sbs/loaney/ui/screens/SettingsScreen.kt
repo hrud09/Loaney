@@ -295,9 +295,9 @@ fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
         Card(
-            shape = ButtonShape,
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(content = content)
@@ -317,7 +317,7 @@ fun SettingsItem(icon: ImageVector, title: String, subtitle: String? = null, onC
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(icon, contentDescription = title, tint = MaterialTheme.colorScheme.primary)
@@ -345,7 +345,7 @@ fun SettingsToggleItem(icon: ImageVector, title: String, isChecked: Boolean, onT
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(icon, contentDescription = title, tint = MaterialTheme.colorScheme.primary)

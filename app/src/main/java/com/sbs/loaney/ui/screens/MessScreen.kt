@@ -54,7 +54,7 @@ fun MessScreen(
                 title = stringResource(id = R.string.tool_tracker_title),
                 description = stringResource(id = R.string.tool_tracker_desc),
                 icon = Icons.Default.Info,
-                backgroundColor = CoralPink,
+                backgroundColor = SoftViolet,
                 onClick = onNavigateToTracker
             )
             
@@ -100,7 +100,7 @@ fun ToolCard(
                 icon,
                 contentDescription = null,
                 modifier = Modifier.size(40.dp),
-                tint = Color.Black
+                tint = Color.White
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
@@ -108,12 +108,12 @@ fun ToolCard(
                     text = title, 
                     style = MaterialTheme.typography.titleMedium, 
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = Color.White
                 )
                 Text(
                     text = description, 
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Black.copy(alpha = 0.7f)
+                    color = Color.White.copy(alpha = 0.7f)
                 )
             }
         }

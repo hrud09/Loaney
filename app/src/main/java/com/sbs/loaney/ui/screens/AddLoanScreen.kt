@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -33,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -249,6 +251,20 @@ fun AddLoanScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .pointerInput(Unit) {
+                    var totalDrag = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = { totalDrag = 0f },
+                        onHorizontalDrag = { _, dragAmount ->
+                            totalDrag += dragAmount
+                        },
+                        onDragEnd = {
+                            if (totalDrag > 100f) {
+                                onNavigateBack()
+                            }
+                        }
+                    )
+                }
         ) {
             // Segmented Control (Transfer / Request style)
             Surface(
@@ -260,7 +276,7 @@ fun AddLoanScreen(
                     .padding(vertical = 8.dp)
             ) {
                 Row(modifier = Modifier.padding(4.dp)) {
-                    val lendColor = if (selectedLoanType == LoanType.LEND) MaterialTheme.colorScheme.primary else Color.Transparent
+                val lendColor = if (selectedLoanType == LoanType.LEND) MaterialTheme.colorScheme.primary else Color.Transparent
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -607,7 +623,7 @@ fun AddLoanScreen(
                 shape = CircleShape,
                 enabled = name.isNotBlank() && (amount.toDoubleOrNull() ?: 0.0) > 0
             ) {
-                val actionText = if (selectedLoanType == LoanType.LEND) "Send Loan" else "Save Loan"
+                val actionText = if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title)
                 Text(actionText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
             }
             
