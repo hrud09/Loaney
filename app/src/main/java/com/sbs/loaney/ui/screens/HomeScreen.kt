@@ -224,9 +224,11 @@ fun HomeScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Net Balance",
+                            text = stringResource(id = R.string.net_balance),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         val netColor = if (balance >= 0) EmeraldGreen else CoralRose
@@ -236,7 +238,9 @@ fun HomeScreen(
                             style = MaterialTheme.typography.headlineLarge.copy(
                                 fontWeight = FontWeight.ExtraBold,
                                 color = netColor
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.height(20.dp))
                         HorizontalDivider(color = GlassBorder, thickness = 1.dp)
@@ -261,7 +265,9 @@ fun HomeScreen(
                                     Text(
                                         text = stringResource(id = R.string.total_lent),
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -270,7 +276,9 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = EmeraldGreen
-                                    )
+                                    ),
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
                             }
                             // Divider
@@ -296,7 +304,9 @@ fun HomeScreen(
                                     Text(
                                         text = stringResource(id = R.string.total_borrowed),
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -305,7 +315,9 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = CoralRose
-                                    )
+                                    ),
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -346,7 +358,9 @@ fun HomeScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 fontSize = 20.sp
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         Text(
                             text = stringResource(id = R.string.add),
@@ -414,117 +428,6 @@ fun HomeScreen(
                 }
             }
 
-            // --- TRANSACTIONS ---
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.transactions),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 18.sp
-                        )
-                    )
-                    Text(
-                        text = stringResource(id = R.string.see_all),
-                        style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
-                        modifier = Modifier.clickable { onNavigateToHistory(null) }
-                    )
-                }
-
-                // ... Rest logic remains exactly the same logic but colors are tied to Theme.
-                if (allLoans.isEmpty()) {
-                    Text(stringResource(id = R.string.no_recent_transactions), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 16.dp))
-                } else {
-                    allLoans.take(5).forEach { item ->
-                        val isLent = item.loan.type == LoanType.LEND
-                        val totalLoan = item.loan.amount + item.loanItems.sumOf { it.amount }
-                        val paid = item.payments.sumOf { it.amount }
-                        val remainingBalance = (totalLoan - paid).coerceAtLeast(0.0)
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .bounceClick { onNavigateToDetail(item.loan.id) }
-                                .padding(vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(52.dp)
-                                    .background(MaterialTheme.colorScheme.surface, CircleShape)
-                                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                                    .clickable {
-                                        if (item.loan.profilePhotoUri != null) {
-                                            expandedImageUri = item.loan.profilePhotoUri
-                                            isImageExpanded = true
-                                        }
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (item.loan.profilePhotoUri != null) {
-                                    AsyncImage(
-                                        model = item.loan.profilePhotoUri,
-                                        contentDescription = "Profile Photo",
-                                        modifier = Modifier.fillMaxSize().clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    val bgColor = if (isLent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
-                                    val textColor = if (isLent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
-                                    Box(
-                                        modifier = Modifier.fillMaxSize().background(bgColor, CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = item.loan.personName.take(1).uppercase(),
-                                            fontWeight = FontWeight.Bold,
-                                            color = textColor
-                                        )
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = item.loan.personName,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                )
-                                Text(
-                                    text = if (isLent) stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed),
-                                    style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = "${if (isLent) "+" else "-"}${uiState.currencySymbol} ${String.format("%,.0f", remainingBalance)}",
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isLent) EmeraldGreen else CoralRose
-                                    )
-                                )
-                                Text(
-                                    text = dateFormat.format(item.loan.loanDate),
-                                    style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(
-                                Icons.Default.ChevronRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-            }
             Spacer(modifier = Modifier.height(100.dp))
         }
         }
@@ -602,11 +505,11 @@ fun HomeScreen(
                                 onClick = {
                                     onNavigateToAddLoan("LEND")
                                 },
-                                containerColor = NeonLime,
+                                containerColor = EmeraldGreen,
                                 contentColor = Color.White,
                                 shape = CircleShape
                             ) {
-                                Icon(Icons.Default.ArrowUpward, contentDescription = "Lend", modifier = Modifier.size(28.dp))
+                                Icon(Icons.Default.CallReceived, contentDescription = "Lend", modifier = Modifier.size(28.dp))
                             }
                         }
 
@@ -633,11 +536,11 @@ fun HomeScreen(
                                 onClick = {
                                     onNavigateToAddLoan("BORROW")
                                 },
-                                containerColor = CoralRed,
+                                containerColor = CoralRose,
                                 contentColor = Color.White,
                                 shape = CircleShape
                             ) {
-                                Icon(Icons.Default.ArrowDownward, contentDescription = "Borrow", modifier = Modifier.size(28.dp))
+                                Icon(Icons.Default.ArrowOutward, contentDescription = "Borrow", modifier = Modifier.size(28.dp))
                             }
                         }
                     }
@@ -723,6 +626,7 @@ fun HomeScreen(
 fun NotificationsBottomSheet(onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.background,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
@@ -1131,6 +1035,7 @@ fun AddBankAccountBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.background,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
@@ -1518,7 +1423,7 @@ fun UpcomingDeadlineSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Upcoming Deadlines",
+                text = stringResource(id = R.string.upcoming_deadlines),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
@@ -1556,7 +1461,7 @@ fun UpcomingDeadlineSection(
                     onClick = { onDateSelected(date) },
                     shape = RoundedCornerShape(16.dp),
                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.width(60.dp).height(85.dp),
+                    modifier = Modifier.width(60.dp).height(70.dp),
                     border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
                     Column(
@@ -1668,7 +1573,7 @@ fun UpcomingDeadlineCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = item.loan.purpose?.ifBlank { if (isLent) "Lent" else "Borrowed" } ?: if (isLent) "Lent" else "Borrowed",
+                    text = item.loan.purpose?.ifBlank { if (isLent) stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed) } ?: if (isLent) stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

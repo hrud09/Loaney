@@ -3,6 +3,7 @@ package com.sbs.loaney.ui.screens
 import com.sbs.loaney.ui.screens.ShopScreen
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -141,39 +142,29 @@ fun MainScreen(
                 modifier = Modifier.padding(innerPadding),
                 enterTransition = {
                     slideIntoContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = androidx.compose.animation.core.spring(
-                            dampingRatio = 0.6f,
-                            stiffness = androidx.compose.animation.core.Spring.StiffnessLow
-                        )
-                    )
+                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(400, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(400))
                 },
                 exitTransition = {
                     slideOutOfContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = androidx.compose.animation.core.spring(
-                            dampingRatio = 0.6f,
-                            stiffness = androidx.compose.animation.core.Spring.StiffnessLow
-                        )
-                    )
+                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(400, easing = FastOutSlowInEasing),
+                        targetOffset = { it / 4 }
+                    ) + fadeOut(animationSpec = tween(400))
                 },
                 popEnterTransition = {
                     slideIntoContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = androidx.compose.animation.core.spring(
-                            dampingRatio = 0.6f,
-                            stiffness = androidx.compose.animation.core.Spring.StiffnessLow
-                        )
-                    )
+                        towards = AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(400, easing = FastOutSlowInEasing),
+                        initialOffset = { it / 4 }
+                    ) + fadeIn(animationSpec = tween(300, delayMillis = 100))
                 },
                 popExitTransition = {
                     slideOutOfContainer(
-                        AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = androidx.compose.animation.core.spring(
-                            dampingRatio = 0.6f,
-                            stiffness = androidx.compose.animation.core.Spring.StiffnessLow
-                        )
-                    )
+                        towards = AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(400, easing = FastOutSlowInEasing)
+                    ) + fadeOut(animationSpec = tween(150))
                 }
             ) {
                 composable(Screen.Onboarding.route) {

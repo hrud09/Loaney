@@ -210,18 +210,36 @@ fun SettingsScreen(
     }
 
     if (showThemeSheet) {
-        ModalBottomSheet(onDismissRequest = { showThemeSheet = false }, containerColor = MaterialTheme.colorScheme.surface) {
+        val themeSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showThemeSheet = false },
+            sheetState = themeSheetState,
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
             Column(modifier = Modifier.padding(16.dp).padding(bottom = 32.dp)) {
                 Text(stringResource(id = R.string.select_theme), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
-                ThemeOption(stringResource(id = R.string.theme_system), uiState.themeMode == 0) { viewModel.setThemeMode(0); showThemeSheet = false }
-                ThemeOption(stringResource(id = R.string.theme_light), uiState.themeMode == 1) { viewModel.setThemeMode(1); showThemeSheet = false }
-                ThemeOption(stringResource(id = R.string.theme_dark), uiState.themeMode == 2) { viewModel.setThemeMode(2); showThemeSheet = false }
-                ThemeOption("Colorful", uiState.themeMode == 3) { viewModel.setThemeMode(3); showThemeSheet = false }
+                ThemeOption(stringResource(id = R.string.theme_system), uiState.themeMode == 0) {
+                    coroutineScope.launch { themeSheetState.hide() }.invokeOnCompletion { showThemeSheet = false }
+                    viewModel.setThemeMode(0)
+                }
+                ThemeOption(stringResource(id = R.string.theme_light), uiState.themeMode == 1) {
+                    coroutineScope.launch { themeSheetState.hide() }.invokeOnCompletion { showThemeSheet = false }
+                    viewModel.setThemeMode(1)
+                }
+                ThemeOption(stringResource(id = R.string.theme_dark), uiState.themeMode == 2) {
+                    coroutineScope.launch { themeSheetState.hide() }.invokeOnCompletion { showThemeSheet = false }
+                    viewModel.setThemeMode(2)
+                }
+                ThemeOption("Colorful", uiState.themeMode == 3) {
+                    coroutineScope.launch { themeSheetState.hide() }.invokeOnCompletion { showThemeSheet = false }
+                    viewModel.setThemeMode(3)
+                }
             }
         }
     }
 
     if (showCurrencySheet) {
+        val currencySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val currencies = listOf(
             "৳" to stringResource(id = R.string.currency_bdt),
             "$" to stringResource(id = R.string.currency_usd),
@@ -229,13 +247,17 @@ fun SettingsScreen(
             "£" to stringResource(id = R.string.currency_gbp),
             "₹" to stringResource(id = R.string.currency_inr)
         )
-        ModalBottomSheet(onDismissRequest = { showCurrencySheet = false }, containerColor = MaterialTheme.colorScheme.surface) {
+        ModalBottomSheet(
+            onDismissRequest = { showCurrencySheet = false },
+            sheetState = currencySheetState,
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
             Column(modifier = Modifier.padding(16.dp).padding(bottom = 32.dp)) {
                 Text(stringResource(id = R.string.select_currency), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
                 currencies.forEach { (symbol, name) ->
-                    ThemeOption(name, uiState.currencySymbol == symbol) { 
+                    ThemeOption(name, uiState.currencySymbol == symbol) {
                         viewModel.setCurrencySymbol(symbol)
-                        showCurrencySheet = false 
+                        coroutineScope.launch { currencySheetState.hide() }.invokeOnCompletion { showCurrencySheet = false }
                     }
                 }
             }
@@ -243,11 +265,16 @@ fun SettingsScreen(
     }
 
     if (showLanguageSheet) {
-        ModalBottomSheet(onDismissRequest = { showLanguageSheet = false }, containerColor = MaterialTheme.colorScheme.surface) {
+        val langSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showLanguageSheet = false },
+            sheetState = langSheetState,
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
             Column(modifier = Modifier.padding(16.dp).padding(bottom = 32.dp)) {
                 Text(stringResource(id = R.string.app_language), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
                 ThemeOption(stringResource(id = R.string.english), uiState.appLanguage == "en") {
-                    showLanguageSheet = false 
+                    coroutineScope.launch { langSheetState.hide() }.invokeOnCompletion { showLanguageSheet = false }
                     if (uiState.appLanguage != "en") {
                         coroutineScope.launch {
                             isLoading = true
@@ -259,7 +286,7 @@ fun SettingsScreen(
                     }
                 }
                 ThemeOption(stringResource(id = R.string.bangla), uiState.appLanguage == "bn") {
-                    showLanguageSheet = false 
+                    coroutineScope.launch { langSheetState.hide() }.invokeOnCompletion { showLanguageSheet = false }
                     if (uiState.appLanguage != "bn") {
                         coroutineScope.launch {
                             isLoading = true

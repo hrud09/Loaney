@@ -12,8 +12,8 @@
     <string name="history">ইতিহাস</string>
     <string name="details">বিস্তারিত</string>
     <string name="latest_recipient">সর্বশেষ গ্রহীতা</string>
-    <string name="total_lent">মোট\nপ্রদান</string>
-    <string name="total_borrowed">মোট\nগ্রহণ</string>
+    <string name="total_lent">মোট প্রদান</string>
+    <string name="total_borrowed">মোট গ্রহণ</string>
     <string name="bank_accounts">ব্যাংক একাউন্টস</string>
     <string name="add">যোগ করুন</string>
     <string name="no_bank_accounts">কোন ব্যাংক একাউন্ট সেভ করা নেই।</string>
@@ -140,4 +140,5 @@
     <string name="add_attachment">সংযুক্তি যোগ করুন</string>
     <string name="preview">প্রিভিউ</string>
     <string name="add_loan">লোন যোগ করুন</string>
+    <string name="upcoming_deadlines">আগামী পরিশোধের সময়</string>
 </resources>

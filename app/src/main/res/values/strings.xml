@@ -141,4 +141,5 @@
     <string name="via_method">via %1$s</string>
     <string name="status">Status</string>
     <string name="add_loan">Add Loan</string>
+    <string name="upcoming_deadlines">Upcoming Deadlines</string>
 </resources>
