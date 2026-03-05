@@ -5,31 +5,21 @@ import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.provider.ContactsContract
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Notes
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Percent
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,6 +65,7 @@ fun LoanTrackerScreen(
 
     var expandedImageUri by remember { mutableStateOf<String?>(null) }
     var isImageExpanded by remember { mutableStateOf(false) }
+    var showEditLoanSheet by remember { mutableStateOf(false) }
 
     // Loaney Pie reward overlay
     var showRewardOverlay by remember { mutableStateOf(false) }
@@ -202,6 +193,9 @@ fun LoanTrackerScreen(
                             }
                         }) {
                             Icon(Icons.Default.Share, contentDescription = "Share Receipt", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        IconButton(onClick = { showEditLoanSheet = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
                         }
                         IconButton(onClick = { showDeleteConfirmation = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
@@ -550,11 +544,343 @@ fun LoanTrackerScreen(
         )
     }
 
+    if (showEditLoanSheet && uiState.selectedLoan != null) {
+        val loan = uiState.selectedLoan!!.loan
+        EditLoanBottomSheet(
+            loan = loan,
+            onDismiss = { showEditLoanSheet = false },
+            onUpdateLoan = { name, phone, email, address, amount, lDate, rDate, purpose, notes, int, rel, wit, pUri, photoUri ->
+                viewModel.updateLoan(name, phone, email, address, amount, lDate, rDate, purpose, notes, int, rel, wit, pUri, photoUri)
+                showEditLoanSheet = false
+            }
+        )
+    }
+
     FullScreenImageViewer(
         visible = isImageExpanded,
         imageUri = expandedImageUri,
         onDismiss = { isImageExpanded = false }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditLoanBottomSheet(
+    loan: com.sbs.loaney.data.local.entity.LoanEntity,
+    onDismiss: () -> Unit,
+    onUpdateLoan: (String, String, String?, String?, Double, Date, Date, String?, String?, Double?, String?, String?, String?, String?) -> Unit
+) {
+    var name by remember { mutableStateOf(loan.personName) }
+    var phone by remember { mutableStateOf(loan.phoneNumber) }
+    var email by remember { mutableStateOf(loan.email ?: "") }
+    var address by remember { mutableStateOf(loan.address ?: "") }
+    var amount by remember { mutableStateOf(loan.amount.toLong().toString()) }
+    var loanDate by remember { mutableLongStateOf(loan.loanDate.time) }
+    var returnDate by remember { mutableLongStateOf(loan.promisedReturnDate.time) }
+    var purpose by remember { mutableStateOf(loan.purpose ?: "") }
+    var notes by remember { mutableStateOf(loan.notes ?: "") }
+    var interestRate by remember { mutableStateOf(loan.interest?.toString() ?: "") }
+    var selectedRelationship by remember { mutableStateOf(loan.relationshipType ?: "Other") }
+    var witness by remember { mutableStateOf(loan.witness ?: "") }
+    var proofUri by remember { mutableStateOf<Uri?>(loan.proofUri?.let { Uri.parse(it) }) }
+    var profilePhotoUri by remember { mutableStateOf<Uri?>(loan.profilePhotoUri?.let { Uri.parse(it) }) }
+
+    val context = LocalContext.current
+    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
+    var showLoanDatePicker by remember { mutableStateOf(false) }
+    var showReturnDatePicker by remember { mutableStateOf(false) }
+
+    val loanReasons = listOf("🍔 Food", "🚑 Emergency", "🛍️ Shopping", "🚌 Travel", "Bills", "Other")
+    val relationships = listOf(
+        stringResource(R.string.relationship_friend) to "Friend",
+        stringResource(R.string.relationship_family) to "Family",
+        stringResource(R.string.relationship_colleague) to "Colleague",
+        stringResource(R.string.relationship_neighbor) to "Neighbor",
+        stringResource(R.string.relationship_other) to "Other"
+    )
+
+    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        proofUri = uri
+    }
+    
+    val profilePhotoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        profilePhotoUri = uri
+    }
+
+    val contactLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                val projection = arrayOf(
+                    ContactsContract.CommonDataKinds.Phone.NUMBER,
+                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME
+                )
+                context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                        val nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                        
+                        if (numberIndex >= 0) {
+                            phone = cursor.getString(numberIndex)
+                        }
+                        if (nameIndex >= 0 && name.isBlank()) {
+                            name = cursor.getString(nameIndex)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showLoanDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = loanDate)
+        DatePickerDialog(
+            onDismissRequest = { showLoanDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { loanDate = it }
+                    showLoanDatePicker = false
+                }) { Text(stringResource(id = R.string.ok), fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLoanDatePicker = false }) { Text(stringResource(id = R.string.cancel)) }
+            }
+        ) { DatePicker(state = datePickerState) }
+    }
+
+    if (showReturnDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = returnDate)
+        DatePickerDialog(
+            onDismissRequest = { showReturnDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { returnDate = it }
+                    showReturnDatePicker = false
+                }) { Text(stringResource(id = R.string.ok), fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReturnDatePicker = false }) { Text(stringResource(id = R.string.cancel)) }
+            }
+        ) { DatePicker(state = datePickerState) }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 18.dp)
+                .padding(bottom = 36.dp)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(15.dp)
+        ) {
+            Text("Edit Loan Details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+
+            // Name & Phone using CustomLightTextField for consistency and contact selection
+            CustomLightTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = "Name",
+                leadingIcon = Icons.Default.Person,
+                trailingIcon = Icons.Default.ContactPhone,
+                onTrailingIconClick = { 
+                    val intent = Intent(Intent.ACTION_PICK).apply {
+                        type = ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE
+                    }
+                    contactLauncher.launch(intent) 
+                }
+            )
+
+            CustomLightTextField(
+                value = phone,
+                onValueChange = { phone = it },
+                label = "Phone",
+                leadingIcon = Icons.Default.Phone,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+            )
+
+            CustomLightTextField(
+                value = amount,
+                onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) amount = it },
+                label = "Amount",
+                leadingIcon = Icons.Default.AttachMoney,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+
+            // Purpose / Reason for Loan
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Reason for Loan", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(loanReasons) { r ->
+                        val isSelected = purpose == r
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { purpose = if (isSelected) "" else r },
+                            label = { Text(r) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                selectedLabelColor = MaterialTheme.colorScheme.primary
+                            ),
+                            shape = CircleShape
+                        )
+                    }
+                }
+            }
+
+            // Dates
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(modifier = Modifier.weight(1f).clickable { showLoanDatePicker = true }) {
+                    CustomLightTextField(
+                        value = dateFormat.format(Date(loanDate)),
+                        onValueChange = {},
+                        label = "Loan Date",
+                        readOnly = true,
+                        enabled = false,
+                        leadingIcon = Icons.Default.CalendarToday
+                    )
+                }
+                Box(modifier = Modifier.weight(1f).clickable { showReturnDatePicker = true }) {
+                    CustomLightTextField(
+                        value = dateFormat.format(Date(returnDate)),
+                        onValueChange = {},
+                        label = "Due Date",
+                        readOnly = true,
+                        enabled = false,
+                        leadingIcon = Icons.Default.Event
+                    )
+                }
+            }
+
+            // Relationship
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Relationship", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(relationships) { pair ->
+                        val label = pair.first
+                        val value = pair.second
+                        val isSelected = selectedRelationship == value
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedRelationship = value },
+                            label = { Text(label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                selectedLabelColor = MaterialTheme.colorScheme.primary
+                            ),
+                            shape = CircleShape
+                        )
+                    }
+                }
+            }
+
+            // Optional Details
+            CustomLightTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = "Email (Optional)",
+                leadingIcon = Icons.Default.Email,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            )
+
+            CustomLightTextField(
+                value = address,
+                onValueChange = { address = it },
+                label = "Address (Optional)",
+                leadingIcon = Icons.Default.LocationOn
+            )
+
+            CustomLightTextField(
+                value = witness,
+                onValueChange = { witness = it },
+                label = "Witness (Optional)",
+                leadingIcon = Icons.Default.Group
+            )
+
+            CustomLightTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = "Notes (Optional)",
+                leadingIcon = Icons.AutoMirrored.Filled.Notes
+            )
+            
+            // Attachments
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Profile Photo & Attachments", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // Profile Photo
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable { profilePhotoLauncher.launch(arrayOf("image/*")) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (profilePhotoUri != null) {
+                            AsyncImage(
+                                model = profilePhotoUri,
+                                contentDescription = "Profile Photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(Icons.Default.AddAPhoto, contentDescription = "Add Profile Photo", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    
+                    // Proof Attachment
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable { imageLauncher.launch(arrayOf("image/*")) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (proofUri != null) {
+                            AsyncImage(
+                                model = proofUri,
+                                contentDescription = "Proof",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(Icons.Default.AttachFile, contentDescription = "Add Proof", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    onUpdateLoan(
+                        name, phone, email.ifBlank { null }, address.ifBlank { null },
+                        amount.toDoubleOrNull() ?: 0.0, Date(loanDate), Date(returnDate),
+                        purpose.ifBlank { null }, notes.ifBlank { null }, interestRate.toDoubleOrNull(),
+                        selectedRelationship, witness.ifBlank { null }, proofUri?.toString(), profilePhotoUri?.toString()
+                    )
+                },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                enabled = name.isNotBlank() && amount.isNotBlank()
+            ) {
+                Text("Save Changes", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
 }
 
 @Composable

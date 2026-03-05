@@ -108,6 +108,46 @@ class LoanTrackerViewModel @Inject constructor(
         }
     }
 
+    fun updateLoan(
+        name: String,
+        phone: String,
+        email: String?,
+        address: String?,
+        amount: Double,
+        loanDate: Date,
+        returnDate: Date,
+        purpose: String?,
+        notes: String?,
+        interest: Double?,
+        relationshipType: String?,
+        witness: String?,
+        proofUri: String?,
+        profilePhotoUri: String?
+    ) {
+        val loanId = _selectedLoanId.value ?: return
+        viewModelScope.launch {
+            val currentLoan = repository.getLoanById(loanId).firstOrNull()?.loan ?: return@launch
+            val updatedLoan = currentLoan.copy(
+                personName = name,
+                phoneNumber = phone,
+                email = email,
+                address = address,
+                amount = amount,
+                loanDate = loanDate,
+                promisedReturnDate = returnDate,
+                purpose = purpose,
+                notes = notes,
+                interest = interest,
+                relationshipType = relationshipType,
+                witness = witness,
+                proofUri = proofUri,
+                profilePhotoUri = profilePhotoUri
+            )
+            repository.updateLoan(updatedLoan)
+            updateLoanStatus(loanId)
+        }
+    }
+
     private suspend fun updateLoanStatus(loanId: Long) {
         val loanWithPayments = repository.getLoanById(loanId).firstOrNull() ?: return
         val totalLoan = loanWithPayments.loan.amount + loanWithPayments.loanItems.sumOf { it.amount }
