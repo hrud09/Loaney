@@ -312,6 +312,27 @@ fun HomeScreen(
                     }
                 }
 
+                // --- UPCOMING DEADLINES (CALENDAR UI) ---
+                if (uiState.upcomingDeadlines.isNotEmpty()) {
+                    var selectedDate by remember { 
+                        mutableStateOf(
+                            // Default to the closest upcoming deadline's date
+                            uiState.upcomingDeadlines.firstOrNull()?.loan?.promisedReturnDate ?: 
+                            Calendar.getInstance().apply {
+                                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+                            }.time
+                        )
+                    }
+
+                    UpcomingDeadlineSection(
+                        deadlines = uiState.upcomingDeadlines,
+                        currencySymbol = uiState.currencySymbol,
+                        selectedDate = selectedDate,
+                        onDateSelected = { selectedDate = it },
+                        onNavigateToDetail = onNavigateToDetail
+                    )
+                }
+
                 // --- BANK ACCOUNTS ---
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row(
@@ -1455,6 +1476,216 @@ fun LoanSummaryDialog(
             }
         }
     )
+}
+
+@Composable
+fun UpcomingDeadlineSection(
+    deadlines: List<LoanWithPayments>,
+    currencySymbol: String,
+    selectedDate: Date,
+    onDateSelected: (Date) -> Unit,
+    onNavigateToDetail: (Long) -> Unit
+) {
+    val calendar = Calendar.getInstance()
+    // Generate dates for the strip (e.g., today + 14 days)
+    val dates = remember {
+        val today = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        val list = mutableListOf<Date>()
+        for (i in 0 until 14) {
+            val d = today.clone() as Calendar
+            d.add(Calendar.DAY_OF_YEAR, i)
+            list.add(d.time)
+        }
+        list
+    }
+
+    val filteredDeadlines = deadlines.filter { item ->
+        val loanCal = Calendar.getInstance().apply { time = item.loan.promisedReturnDate }
+        val selCal = Calendar.getInstance().apply { time = selectedDate }
+        loanCal.get(Calendar.YEAR) == selCal.get(Calendar.YEAR) &&
+        loanCal.get(Calendar.DAY_OF_YEAR) == selCal.get(Calendar.DAY_OF_YEAR)
+    }
+
+    val dayFormat = SimpleDateFormat("EEE", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("dd", Locale.getDefault())
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Upcoming Deadlines",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 20.sp
+                )
+            )
+            Icon(
+                Icons.Default.CalendarMonth,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        // Calendar Date Strip
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(dates) { date ->
+                val dateCal = Calendar.getInstance().apply { time = date }
+                val isSelected = dateCal.get(Calendar.DAY_OF_YEAR) == 
+                               Calendar.getInstance().apply { time = selectedDate }.get(Calendar.DAY_OF_YEAR)
+                
+                // Find deadlines for this date to show indicators
+                val dayDeadlines = deadlines.filter { item ->
+                    val loanCal = Calendar.getInstance().apply { time = item.loan.promisedReturnDate }
+                    loanCal.get(Calendar.YEAR) == dateCal.get(Calendar.YEAR) &&
+                    loanCal.get(Calendar.DAY_OF_YEAR) == dateCal.get(Calendar.DAY_OF_YEAR)
+                }
+                val hasLent = dayDeadlines.any { it.loan.type == LoanType.LEND }
+                val hasBorrowed = dayDeadlines.any { it.loan.type == LoanType.BORROW }
+
+                Surface(
+                    onClick = { onDateSelected(date) },
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.width(60.dp).height(85.dp),
+                    border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = dayFormat.format(date),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = dateFormat.format(date),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        // Indicators
+                        if (dayDeadlines.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                if (hasLent) {
+                                    Box(modifier = Modifier.size(6.dp).background(if (isSelected) Color.White else EmeraldGreen, CircleShape))
+                                }
+                                if (hasBorrowed) {
+                                    Box(modifier = Modifier.size(6.dp).background(if (isSelected) Color.White else CoralRose, CircleShape))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Deadline Cards for selected date
+        if (filteredDeadlines.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "No deadlines for this date",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                filteredDeadlines.forEach { item ->
+                    UpcomingDeadlineCard(
+                        item = item,
+                        currencySymbol = currencySymbol,
+                        onClick = { onNavigateToDetail(item.loan.id) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UpcomingDeadlineCard(
+    item: LoanWithPayments,
+    currencySymbol: String,
+    onClick: () -> Unit
+) {
+    val isLent = item.loan.type == LoanType.LEND
+    val totalLoan = item.loan.amount + item.loanItems.sumOf { it.amount }
+    val paid = item.payments.sumOf { it.amount }
+    val balance = (totalLoan - paid).coerceAtLeast(0.0)
+
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.fillMaxWidth().bounceClick { onClick() },
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(if (isLent) EmeraldGreen.copy(alpha = 0.1f) else CoralRose.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    if (isLent) Icons.Default.CallReceived else Icons.Default.ArrowOutward,
+                    contentDescription = null,
+                    tint = if (isLent) EmeraldGreen else CoralRose,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.loan.personName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = item.loan.purpose?.ifBlank { if (isLent) "Lent" else "Borrowed" } ?: if (isLent) "Lent" else "Borrowed",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "$currencySymbol${String.format("%,.0f", balance)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (isLent) EmeraldGreen else CoralRose
+                )
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
 }
 
 class CardNumberVisualTransformation : VisualTransformation {

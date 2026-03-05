@@ -28,6 +28,7 @@ data class HomeUiState(
     val dueSoonCount: Int = 0,
     val lentLoans: List<LoanWithPayments> = emptyList(),
     val borrowedLoans: List<LoanWithPayments> = emptyList(),
+    val upcomingDeadlines: List<LoanWithPayments> = emptyList(),
     val bankAccounts: List<BankAccountEntity> = emptyList(),
     val userName: String = "Sajibur",
     val currencySymbol: String = "৳"
@@ -68,8 +69,8 @@ class HomeViewModel @Inject constructor(
         val now = Date()
         val calendar = Calendar.getInstance()
         calendar.time = now
-        calendar.add(Calendar.DAY_OF_YEAR, 7)
-        val sevenDaysFromNow = calendar.time
+        calendar.add(Calendar.DAY_OF_YEAR, 30) // Show up to 30 days in calendar
+        val thirtyDaysFromNow = calendar.time
 
         loans.forEach { item ->
             val loan = item.loan
@@ -92,7 +93,7 @@ class HomeViewModel @Inject constructor(
                 if (now.after(loan.promisedReturnDate)) {
                     overdueAmount += balance
                     overdueCount++
-                } else if (loan.promisedReturnDate.before(sevenDaysFromNow)) {
+                } else if (loan.promisedReturnDate.before(thirtyDaysFromNow)) {
                     dueSoonCount++
                 }
             }
@@ -107,7 +108,18 @@ class HomeViewModel @Inject constructor(
             overdueCount = overdueCount,
             dueSoonCount = dueSoonCount,
             lentLoans = loans.filter { it.loan.type == LoanType.LEND && it.loan.status != LoanStatus.FULLY_PAID && it.loan.status != LoanStatus.FORGIVEN },
-            borrowedLoans = loans.filter { it.loan.type == LoanType.BORROW && it.loan.status != LoanStatus.FULLY_PAID && it.loan.status != LoanStatus.FORGIVEN }
+            borrowedLoans = loans.filter { it.loan.type == LoanType.BORROW && it.loan.status != LoanStatus.FULLY_PAID && it.loan.status != LoanStatus.FORGIVEN },
+            upcomingDeadlines = loans.filter { item ->
+                val loan = item.loan
+                if (loan.status == LoanStatus.FORGIVEN || loan.status == LoanStatus.FULLY_PAID) return@filter false
+                
+                val totalLoan = loan.amount + item.loanItems.sumOf { it.amount }
+                val paid = item.payments.sumOf { it.amount }
+                val balance = (totalLoan - paid).coerceAtLeast(0.0)
+                
+                // Show all future loans for the calendar, or recent overdue
+                balance > 0 && loan.promisedReturnDate.before(thirtyDaysFromNow)
+            }.sortedBy { it.loan.promisedReturnDate }
         )
     }
 
