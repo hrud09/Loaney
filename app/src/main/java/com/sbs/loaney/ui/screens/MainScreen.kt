@@ -4,15 +4,23 @@ import com.sbs.loaney.ui.screens.ShopScreen
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -27,6 +35,7 @@ import com.sbs.loaney.ui.navigation.Screen
 import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 
@@ -42,20 +51,18 @@ fun MainScreen(
     val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route)
     val isTopLevel = currentDestination?.route in topLevelRoutes
 
-    // ── Drawer state ────────────────────────────────────────────────
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // ── User name from the same DataStore source as HomeScreen ──────
     val settingsState by settingsViewModel.uiState.collectAsState()
     val userProfile = UserProfile(name = settingsState.userName)
 
-    val items = listOf(
-        NavigationItem(stringResource(id = R.string.nav_home), Screen.Home.route, Icons.Default.Home),
-        NavigationItem(stringResource(id = R.string.nav_history), Screen.ManageLoans.route, Icons.AutoMirrored.Filled.List)
+    // Bottom nav items (excluding center FAB)
+    val navItems = listOf(
+        BkashNavItem(stringResource(R.string.nav_home), Screen.Home.route, Icons.Default.Home),
+        BkashNavItem(stringResource(R.string.nav_history), Screen.ManageLoans.route, Icons.AutoMirrored.Filled.List)
     )
 
-    // ── Wrap the entire app in ModalNavigationDrawer ────────────────
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = isTopLevel,
@@ -83,56 +90,23 @@ fun MainScreen(
     ) {
         Scaffold(
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
                 if (isTopLevel) {
-                    NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.primary
-                    ) {
-                        // ── Hamburger / profile icon on the far LEFT ────────
-                        NavigationBarItem(
-                            selected = false,
-                            onClick = { scope.launch { drawerState.open() } },
-                            icon = {
-                                Icon(
-                                    Icons.Default.AccountCircle,
-                                    contentDescription = "Open profile"
-                                )
-                            },
-                            label = { Text("Profile") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                indicatorColor = Color.Transparent,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        )
-
-                        // ── Regular nav items ───────────────────────────────
-                        items.forEach { item ->
-                            val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = {
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(item.icon, contentDescription = item.label) },
-                                label = { Text(item.label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.onPrimary,
-                                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                                    indicatorColor = MaterialTheme.colorScheme.primary,
-                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            )
-                        }
-                    }
+                    BkashBottomNavBar(
+                        navItems = navItems,
+                        currentDestination = currentDestination,
+                        onNavItemClick = { route ->
+                            navController.navigate(route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        onCenterFabClick = { navController.navigate(Screen.AddLoan.createRoute("LEND")) },
+                        onProfileClick = { scope.launch { drawerState.open() } },
+                        onShopClick = { navController.navigate(Screen.Shop.route) }
+                    )
                 }
             }
         ) { innerPadding ->
@@ -143,27 +117,27 @@ fun MainScreen(
                 enterTransition = {
                     slideIntoContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                        animationSpec = tween(400, easing = FastOutSlowInEasing)
-                    ) + fadeIn(animationSpec = tween(400))
+                        animationSpec = tween(350, easing = FastOutSlowInEasing)
+                    ) + fadeIn(animationSpec = tween(350))
                 },
                 exitTransition = {
                     slideOutOfContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                        animationSpec = tween(400, easing = FastOutSlowInEasing),
+                        animationSpec = tween(350, easing = FastOutSlowInEasing),
                         targetOffset = { it / 4 }
-                    ) + fadeOut(animationSpec = tween(400))
+                    ) + fadeOut(animationSpec = tween(350))
                 },
                 popEnterTransition = {
                     slideIntoContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.End,
-                        animationSpec = tween(400, easing = FastOutSlowInEasing),
+                        animationSpec = tween(350, easing = FastOutSlowInEasing),
                         initialOffset = { it / 4 }
-                    ) + fadeIn(animationSpec = tween(300, delayMillis = 100))
+                    ) + fadeIn(animationSpec = tween(250, delayMillis = 100))
                 },
                 popExitTransition = {
                     slideOutOfContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.End,
-                        animationSpec = tween(400, easing = FastOutSlowInEasing)
+                        animationSpec = tween(350, easing = FastOutSlowInEasing)
                     ) + fadeOut(animationSpec = tween(150))
                 }
             ) {
@@ -248,4 +222,134 @@ fun MainScreen(
     }
 }
 
-data class NavigationItem(val label: String, val route: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+// ── bKash-style Bottom Navigation Bar ────────────────────────────────────────
+@Composable
+fun BkashBottomNavBar(
+    navItems: List<BkashNavItem>,
+    currentDestination: androidx.navigation.NavDestination?,
+    onNavItemClick: (String) -> Unit,
+    onCenterFabClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    onShopClick: () -> Unit
+) {
+    val pink = MaterialTheme.colorScheme.primary
+    val gray = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        // Top divider line
+        HorizontalDivider(
+            modifier = Modifier.align(Alignment.TopCenter),
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = 0.8.dp
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .navigationBarsPadding(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Home
+            val homeSelected = currentDestination?.hierarchy?.any { it.route == Screen.Home.route } == true
+            BkashNavBarItem(
+                icon = Icons.Default.Home,
+                label = stringResource(R.string.nav_home),
+                selected = homeSelected,
+                onClick = { onNavItemClick(Screen.Home.route) }
+            )
+
+            // History
+            val historySelected = currentDestination?.hierarchy?.any { it.route == Screen.ManageLoans.route } == true
+            BkashNavBarItem(
+                icon = Icons.AutoMirrored.Filled.List,
+                label = stringResource(R.string.nav_history),
+                selected = historySelected,
+                onClick = { onNavItemClick(Screen.ManageLoans.route) }
+            )
+
+            // Center FAB — Add button
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .shadow(8.dp, CircleShape)
+                    .clip(CircleShape)
+                    .background(pink)
+                    .then(Modifier.wrapContentSize()),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(
+                    onClick = onCenterFabClick,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Add",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            // Shop
+            BkashNavBarItem(
+                icon = Icons.Default.ShoppingBag,
+                label = "Shop",
+                selected = false,
+                onClick = onShopClick
+            )
+
+            // Profile
+            BkashNavBarItem(
+                icon = Icons.Default.AccountCircle,
+                label = "Profile",
+                selected = false,
+                onClick = onProfileClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun BkashNavBarItem(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val pink = MaterialTheme.colorScheme.primary
+    val gray = MaterialTheme.colorScheme.onSurfaceVariant
+    val color = if (selected) pink else gray
+
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.width(60.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = color,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = label,
+                color = color,
+                fontSize = 10.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+data class BkashNavItem(val label: String, val route: String, val icon: ImageVector)
+data class NavigationItem(val label: String, val route: String, val icon: ImageVector)

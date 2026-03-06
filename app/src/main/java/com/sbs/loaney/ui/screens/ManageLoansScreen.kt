@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -126,32 +127,37 @@ fun ManageLoansScreen(
                 .padding(padding)
                 .fillMaxSize()) {
             
-            // Segmented Toggle
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
-                    .padding(4.dp)
+            // Tab Row
+            TabRow(
+                selectedTabIndex = pagerState.currentPage,
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
+                indicator = { tabPositions ->
+                    if (pagerState.currentPage < tabPositions.size) {
+                        TabRowDefaults.SecondaryIndicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                            color = MaterialTheme.colorScheme.primary,
+                            height = 3.dp // Thick pink underline
+                        )
+                    }
+                },
+                divider = {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                }
             ) {
                 listOf(0 to stringResource(id = R.string.lent), 1 to stringResource(id = R.string.borrowed)).forEach { (pageIndex, text) ->
                     val selected = pagerState.currentPage == pageIndex
-                    val activeColor = if (selected) MaterialTheme.colorScheme.surface else Color.Transparent
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(CircleShape)
-                            .background(activeColor)
-                            .bounceClick { coroutineScope.launch { pagerState.animateScrollToPage(pageIndex) } }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = text,
-                            color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Tab(
+                        selected = selected,
+                        onClick = { coroutineScope.launch { pagerState.animateScrollToPage(pageIndex) } },
+                        text = {
+                            Text(
+                                text = text,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
                 }
             }
 
@@ -387,66 +393,85 @@ fun ManageLoanCard(
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = GlassBorder,
-                shape = CardShape
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(12.dp)
             ),
-        shape = CardShape,
+        shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 8.dp
+        shadowElevation = 0.dp
     ) {
-        Column(
+        Row(
             modifier = Modifier
-                .padding(20.dp) // Airy layout
-                .fillMaxWidth()
+                .padding(14.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+            // Profile Photo / Avatar
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { onProfilePhotoClick(loan.profilePhotoUri) },
+                contentAlignment = Alignment.Center
             ) {
-                // Profile Photo
-                Box(
-                    modifier = Modifier
-                        .padding(end = 12.dp)
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onProfilePhotoClick(loan.profilePhotoUri) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (loan.profilePhotoUri != null) {
-                        AsyncImage(
-                            model = loan.profilePhotoUri,
-                            contentDescription = "Profile Photo",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                if (loan.profilePhotoUri != null) {
+                    AsyncImage(
+                        model = loan.profilePhotoUri,
+                        contentDescription = "Profile Photo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    val isLent = loan.type == LoanType.LEND
+                    val bgColor = if (isLent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
+                    val textColor = if (isLent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(bgColor, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = loan.personName.firstOrNull()?.toString()?.uppercase() ?: "",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
                         )
-                    } else {
-                        val isLent = loan.type == LoanType.LEND
-                        val bgColor = if (isLent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
-                        val textColor = if (isLent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
-                        Box(
-                            modifier = Modifier.fillMaxSize().background(bgColor, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = loan.personName.take(1).uppercase(),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = textColor
-                            )
-                        }
                     }
                 }
+            }
 
-                Column(modifier = Modifier.weight(1f)) {
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Details Column
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = loan.personName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", remainingBalance)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     val isOverdue = loan.promisedReturnDate.before(Date())
                     if (isOverdue && loan.status != LoanStatus.FULLY_PAID) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -454,93 +479,58 @@ fun ManageLoanCard(
                                 Icons.Default.Warning,
                                 contentDescription = "Overdue",
                                 tint = CoralRose,
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.size(12.dp)
                             )
                             Text(
-                                text = stringResource(id = R.string.due_by, dateFormat.format(loan.promisedReturnDate)),
+                                text = "Due ${dateFormat.format(loan.promisedReturnDate)}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = CoralRose
+                                color = CoralRose,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     } else {
                         Text(
-                            text = stringResource(id = R.string.due_by, dateFormat.format(loan.promisedReturnDate)),
+                            text = "Due ${dateFormat.format(loan.promisedReturnDate)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-                Text(
-                    text = "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", remainingBalance)}",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Progress Section
-            Column {
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(10.dp) 
-                        .clip(RoundedCornerShape(5.dp)), 
-                    color = accentColor,
-                    trackColor = DarkSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                    // Status Chip
+                    val statusText = when {
+                        loan.status == LoanStatus.FULLY_PAID -> stringResource(id = R.string.status_paid)
+                        loan.status == LoanStatus.OVERDUE -> stringResource(id = R.string.status_overdue)
+                        else -> stringResource(id = R.string.status_active)
+                    }
+                    val statusColor = when (loan.status) {
+                        LoanStatus.OVERDUE -> MaterialTheme.colorScheme.error
+                        LoanStatus.FULLY_PAID -> accentColor
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    }
                     Text(
-                        text = stringResource(id = R.string.paid_amount, "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", paid)}"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "${(progress * 100).toInt()}%",
-                        style = MaterialTheme.typography.labelMedium,
+                        text = statusText,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = accentColor
+                        color = statusColor,
+                        modifier = Modifier
+                            .background(statusColor.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val statusText = when {
-                loan.status == LoanStatus.FULLY_PAID -> stringResource(id = R.string.status_paid)
-                loan.status == LoanStatus.OVERDUE -> stringResource(id = R.string.status_overdue)
-                else -> stringResource(id = R.string.status_active)
-            }
-            
-            val tonalButtonColors = when (loan.status) {
-                LoanStatus.OVERDUE -> ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-                LoanStatus.FULLY_PAID -> ButtonDefaults.filledTonalButtonColors(
-                    containerColor = accentColor.copy(alpha = 0.1f),
-                    contentColor = accentColor
-                )
-                else -> ButtonDefaults.filledTonalButtonColors( // Active
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Button(
-                onClick = { /* Non-interactive */ },
-                shape = CircleShape,
-                colors = tonalButtonColors,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                modifier = Modifier.height(28.dp),
-                enabled = true
-            ) {
-                 Text(text = statusText, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                // Tight Progress Line
+                if (loan.status != LoanStatus.FULLY_PAID && totalLoan > 0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)),
+                        color = accentColor,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
             }
         }
     }

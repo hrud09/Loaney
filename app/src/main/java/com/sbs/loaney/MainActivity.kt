@@ -43,6 +43,18 @@ class MainActivity : ComponentActivity() {
             }
             val isColorful = themeMode == 3
             
+            LaunchedEffect(isDarkTheme) {
+                // Blurred off-white: ~85% opacity of #F7F7F7
+                val offWhiteBlurred = android.graphics.Color.parseColor("#D9F7F7F7")
+                enableEdgeToEdge(
+                    statusBarStyle = if (isDarkTheme) {
+                        androidx.activity.SystemBarStyle.dark(android.graphics.Color.parseColor("#D91A1D2E"))
+                    } else {
+                        androidx.activity.SystemBarStyle.light(offWhiteBlurred, offWhiteBlurred)
+                    }
+                )
+            }
+            
             val onboardingCompleted by settingsRepository.onboardingCompletedFlow.collectAsState(initial = null)
 
             // Keep the splash screen visible until we know if onboarding is completed

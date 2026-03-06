@@ -227,11 +227,7 @@ fun LoanTrackerScreen(
             )
         },
         bottomBar = {
-            AnimatedVisibility(
-                visible = !isNavigatingBack,
-                enter = fadeIn(tween(0)),
-                exit = fadeOut(tween(0))
-            ) {
+            if (!isNavigatingBack) {
             if (uiState.selectedLoan != null && uiState.selectedLoan?.loan?.status != LoanStatus.FULLY_PAID && uiState.selectedLoan?.loan?.status != LoanStatus.FORGIVEN) {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
@@ -312,11 +308,10 @@ fun LoanTrackerScreen(
                                 Text("Send Reminder", style = MaterialTheme.typography.labelMedium)
                             }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
-            } // end AnimatedVisibility
+            } // end if (!isNavigatingBack)
         }
     ) { padding ->
         if (uiState.selectedLoan == null) {
@@ -344,13 +339,13 @@ fun LoanTrackerScreen(
                     .padding(padding)
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                    .padding(16.dp), // Denser padding
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Header Card - Clean White Card
                 Card(
-                    modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp)), // 24.dp * 0.75
-                    shape = SmallCardShape, // section card
+                    modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
@@ -392,7 +387,7 @@ fun LoanTrackerScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = loan.personName.take(1).uppercase(),
+                                        text = loan.personName.firstOrNull()?.toString()?.uppercase() ?: "",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = textColor
@@ -405,15 +400,15 @@ fun LoanTrackerScreen(
                             Text(
                                 text = loan.personName,
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
-                            Spacer(modifier = Modifier.height(3.dp)) // 4.dp * 0.75
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -421,8 +416,8 @@ fun LoanTrackerScreen(
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
                                 text = "${uiState.currencySymbol}${String.format("%.0f", remaining)}",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -472,12 +467,12 @@ fun LoanTrackerScreen(
 
                 // Detailed Information
                 Card(
-                    modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp)), // 24.dp * 0.75
-                    shape = SmallCardShape, // section card
+                    modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) { // 16.dp * 0.75, 12.dp * 0.75
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
                         DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = loan.relationshipType ?: stringResource(id = R.string.not_specified))
                         if (!loan.email.isNullOrBlank()) {

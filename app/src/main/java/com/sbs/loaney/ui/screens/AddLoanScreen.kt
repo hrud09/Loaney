@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -275,41 +276,37 @@ fun AddLoanScreen(
                     )
                 }
         ) {
-            // Segmented Control (Transfer / Request style)
-            Surface(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                shape = CircleShape,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 8.dp)
+            // Tab Row
+            TabRow(
+                selectedTabIndex = pagerState.currentPage,
+                containerColor = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.primary,
+                indicator = { tabPositions ->
+                    if (pagerState.currentPage < tabPositions.size) {
+                        TabRowDefaults.SecondaryIndicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                            color = MaterialTheme.colorScheme.primary,
+                            height = 3.dp
+                        )
+                    }
+                },
+                divider = {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                }
             ) {
-                Row(modifier = Modifier.padding(4.dp)) {
-                val lendColor = if (selectedLoanType == LoanType.LEND) MaterialTheme.colorScheme.primary else Color.Transparent
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(lendColor)
-                            .clickable { coroutineScope.launch { pagerState.animateScrollToPage(0) } }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(stringResource(id = R.string.lend), color = if (selectedLoanType == LoanType.LEND) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
-                    }
-
-                    val borrowColor = if (selectedLoanType == LoanType.BORROW) MaterialTheme.colorScheme.error else Color.Transparent
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(borrowColor)
-                            .clickable { coroutineScope.launch { pagerState.animateScrollToPage(1) } }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(stringResource(id = R.string.borrow), color = if (selectedLoanType == LoanType.BORROW) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
-                    }
+                listOf(0 to stringResource(id = R.string.lend), 1 to stringResource(id = R.string.borrow)).forEach { (pageIndex, text) ->
+                    val selected = pagerState.currentPage == pageIndex
+                    Tab(
+                        selected = selected,
+                        onClick = { coroutineScope.launch { pagerState.animateScrollToPage(pageIndex) } },
+                        text = {
+                            Text(
+                                text = text,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
                 }
             }
 
@@ -321,9 +318,9 @@ fun AddLoanScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(32.dp)
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     // Big Amount Input
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -379,11 +376,11 @@ fun AddLoanScreen(
 
             // Core Recipient Card
             Surface(
-                shape = CardShape,
+                shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth().border(1.dp, GlassBorder, CardShape)
+                modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
             ) {
-                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     // Profile Photo Picker
                     Box(
                         modifier = Modifier
@@ -467,13 +464,12 @@ fun AddLoanScreen(
                         )
                     }
 
-                    // PROGRESSIVE DISCLOSURE: Extra Details Form
                     AnimatedVisibility(
                         visible = showExtraDetails,
                         enter = androidx.compose.animation.expandVertically(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)),
                         exit = androidx.compose.animation.shrinkVertically(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300))
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Box(modifier = Modifier.weight(1f).clickable { showLoanDatePicker = true }) {
@@ -713,21 +709,21 @@ fun CustomLightTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        label = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium) },
         modifier = modifier.fillMaxWidth(),
-        shape = ButtonShape,
+        shape = RoundedCornerShape(12.dp),
         enabled = enabled,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.secondary,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedTextColor = MaterialTheme.colorScheme.onBackground,
             unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-            cursorColor = MaterialTheme.colorScheme.secondary
+            cursorColor = MaterialTheme.colorScheme.primary
         ),
         leadingIcon = leadingIcon?.let {
-            { Icon(it, contentDescription = null, tint = if (value.isNotEmpty()) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant) }
+            { Icon(it, contentDescription = null, tint = if (value.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) }
         },
         trailingIcon = if (trailingIcon != null) {
             {
@@ -739,6 +735,6 @@ fun CustomLightTextField(
         readOnly = readOnly,
         keyboardOptions = keyboardOptions,
         singleLine = true,
-        textStyle = MaterialTheme.typography.bodyMedium
+        textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
     )
 }

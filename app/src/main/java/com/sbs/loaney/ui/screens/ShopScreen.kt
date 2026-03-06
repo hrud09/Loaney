@@ -38,9 +38,7 @@ import com.sbs.loaney.data.model.CouponCategory
 import com.sbs.loaney.ui.theme.CurrencyTypography
 import com.sbs.loaney.ui.viewmodel.ShopViewModel
 
-private val GoldPie = Color(0xFFFFC107)
-private val SurfaceDark = Color(0xFF1A1D2E)
-private val CardBg = Color(0xFF252840)
+// Premium bKash style doesn't use these dark gamified colors anymore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,13 +60,13 @@ fun ShopScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = SurfaceDark,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
-        containerColor = SurfaceDark
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -81,20 +79,17 @@ fun ShopScreen(
                     .fillMaxWidth()
                     .padding(20.dp)
                     .clip(RoundedCornerShape(24.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color(0xFF252840), Color(0xFF1A1D2E))
-                        )
-                    )
-                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "Your Balance",
-                        color = Color.White.copy(alpha = 0.6f),
-                        fontSize = 14.sp
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -103,13 +98,13 @@ fun ShopScreen(
                         Icon(
                             Icons.Default.Stars,
                             contentDescription = null,
-                            tint = GoldPie,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(32.dp)
                         )
                         Text(
                             text = "${uiState.totalPies}",
                             style = CurrencyTypography.heroLarge,
-                            color = GoldPie
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -166,12 +161,12 @@ fun ShopScreen(
             val coupon = selectedCoupon!!
             AlertDialog(
                 onDismissRequest = { selectedCoupon = null },
-                containerColor = CardBg,
-                title = { Text("Confirm Redemption", color = Color.White) },
+                containerColor = MaterialTheme.colorScheme.surface,
+                title = { Text("Confirm Redemption", color = MaterialTheme.colorScheme.onBackground) },
                 text = {
                     Text(
                         "Spend ${coupon.costInPies} pies for ${coupon.brandName}'s ${coupon.discountTitle}?",
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 confirmButton = {
@@ -181,14 +176,14 @@ fun ShopScreen(
                             viewModel.purchaseCoupon(coupon)
                             selectedCoupon = null
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = GoldPie, contentColor = SurfaceDark)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                     ) {
                         Text("Redeem", fontWeight = FontWeight.Bold)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { selectedCoupon = null }) {
-                        Text("Cancel", color = Color.White.copy(alpha = 0.5f))
+                        Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             )
@@ -236,8 +231,8 @@ fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.clickable { onClick() },
         shape = CircleShape,
-        color = if (isSelected) GoldPie else Color.White.copy(alpha = 0.05f),
-        contentColor = if (isSelected) SurfaceDark else Color.White
+        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
     ) {
         Text(
             text = label,
@@ -254,9 +249,11 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .alpha(if (canAfford) 1f else 0.5f)
-            .clickable(enabled = canAfford) { onClick() },
+            .clickable(enabled = canAfford) { onClick() }
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp)),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBg)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             // Brand Accent
@@ -266,7 +263,7 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
                     .size(100.dp)
                     .background(
                         Brush.radialGradient(
-                            colors = listOf(coupon.brandColor.copy(alpha = 0.2f), Color.Transparent)
+                            colors = listOf(coupon.brandColor.copy(alpha = 0.1f), Color.Transparent)
                         )
                     )
             )
@@ -286,7 +283,7 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = coupon.brandName.take(1),
+                        text = coupon.brandName.firstOrNull()?.toString()?.uppercase() ?: "",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp
@@ -296,19 +293,19 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = coupon.brandName,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.ExtraBold,
                         fontSize = 18.sp
                     )
                     Text(
                         text = coupon.discountTitle,
                         color = coupon.brandColor,
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 20.sp
+                        fontSize = 18.sp
                     )
                     Text(
                         text = coupon.description,
-                        color = Color.White.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp,
                         lineHeight = 16.sp
                     )
@@ -318,21 +315,21 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
                         Icon(
                             Icons.Default.Stars,
                             contentDescription = null,
-                            tint = if (canAfford) GoldPie else Color.Gray,
-                            modifier = Modifier.size(14.dp)
+                            tint = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
                             text = "${coupon.costInPies}",
-                            color = if (canAfford) GoldPie else Color.Gray,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                            color = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 18.sp
                         )
                     }
                     if (!canAfford) {
                         Text(
                             "Not enough pies",
-                            color = Color.Red.copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.error,
                             fontSize = 10.sp
                         )
                     }
