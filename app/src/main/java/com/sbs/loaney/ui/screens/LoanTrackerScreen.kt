@@ -3,9 +3,14 @@ package com.sbs.loaney.ui.screens
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.provider.ContactsContract
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -70,6 +75,19 @@ fun LoanTrackerScreen(
     // Loaney Pie reward overlay
     var showRewardOverlay by remember { mutableStateOf(false) }
     var rewardPoints by remember { mutableStateOf(0) }
+
+    // When true the bottom action bar fades out immediately so it
+    // doesn't overlap the home-screen nav bar during the exit transition
+    var isNavigatingBack by remember { mutableStateOf(false) }
+
+    // Intercept back-navigation: hide the bar first, then navigate
+    val handleBack: () -> Unit = {
+        isNavigatingBack = true
+        onNavigateBack()
+    }
+
+    // Intercept system back gesture too
+    BackHandler { handleBack() }
 
     LaunchedEffect(loanId) {
         viewModel.selectLoan(loanId)
@@ -174,7 +192,7 @@ fun LoanTrackerScreen(
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(id = R.string.loan_details), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = handleBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
@@ -209,6 +227,11 @@ fun LoanTrackerScreen(
             )
         },
         bottomBar = {
+            AnimatedVisibility(
+                visible = !isNavigatingBack,
+                enter = fadeIn(tween(0)),
+                exit = fadeOut(tween(0))
+            ) {
             if (uiState.selectedLoan != null && uiState.selectedLoan?.loan?.status != LoanStatus.FULLY_PAID && uiState.selectedLoan?.loan?.status != LoanStatus.FORGIVEN) {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
@@ -293,6 +316,7 @@ fun LoanTrackerScreen(
                     }
                 }
             }
+            } // end AnimatedVisibility
         }
     ) { padding ->
         if (uiState.selectedLoan == null) {

@@ -261,7 +261,7 @@ fun HomeScreen(
                                     )
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.CallReceived, contentDescription = null, tint = EmeraldGreen, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.ArrowOutward, contentDescription = null, tint = EmeraldGreen, modifier = Modifier.size(14.dp))
                                     Text(
                                         text = stringResource(id = R.string.total_lent),
                                         style = MaterialTheme.typography.labelMedium,
@@ -300,7 +300,7 @@ fun HomeScreen(
                                     )
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.ArrowOutward, contentDescription = null, tint = CoralRose, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.CallReceived, contentDescription = null, tint = CoralRose, modifier = Modifier.size(14.dp))
                                     Text(
                                         text = stringResource(id = R.string.total_borrowed),
                                         style = MaterialTheme.typography.labelMedium,
@@ -1391,8 +1391,7 @@ fun UpcomingDeadlineSection(
     onDateSelected: (Date) -> Unit,
     onNavigateToDetail: (Long) -> Unit
 ) {
-    val calendar = Calendar.getInstance()
-    // Generate dates for the strip (e.g., today + 14 days)
+    // Generate dates for the strip (today + 14 days)
     val dates = remember {
         val today = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
@@ -1406,6 +1405,21 @@ fun UpcomingDeadlineSection(
         list
     }
 
+    val today = remember {
+        Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+    }
+
+    // Count deadlines within next 7 days for the badge
+    val weekDeadlineCount = remember(deadlines) {
+        val limit = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+            add(Calendar.DAY_OF_YEAR, 7)
+        }.time
+        deadlines.count { it.loan.promisedReturnDate.before(limit) }
+    }
+
     val filteredDeadlines = deadlines.filter { item ->
         val loanCal = Calendar.getInstance().apply { time = item.loan.promisedReturnDate }
         val selCal = Calendar.getInstance().apply { time = selectedDate }
@@ -1415,21 +1429,40 @@ fun UpcomingDeadlineSection(
 
     val dayFormat = SimpleDateFormat("EEE", Locale.getDefault())
     val dateFormat = SimpleDateFormat("dd", Locale.getDefault())
+    val monthYearFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // Header row with title + week-count badge
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = stringResource(id = R.string.upcoming_deadlines),
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 20.sp
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(id = R.string.upcoming_deadlines),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 20.sp
+                    )
                 )
-            )
+                if (weekDeadlineCount > 0) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = "$weekDeadlineCount this week",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            ),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+            }
             Icon(
                 Icons.Default.CalendarMonth,
                 contentDescription = null,
@@ -1438,6 +1471,15 @@ fun UpcomingDeadlineSection(
             )
         }
 
+        // Month label for the visible range
+        Text(
+            text = monthYearFormat.format(selectedDate),
+            style = MaterialTheme.typography.labelMedium.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold
+            )
+        )
+
         // Calendar Date Strip
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -1445,10 +1487,12 @@ fun UpcomingDeadlineSection(
         ) {
             items(dates) { date ->
                 val dateCal = Calendar.getInstance().apply { time = date }
-                val isSelected = dateCal.get(Calendar.DAY_OF_YEAR) == 
-                               Calendar.getInstance().apply { time = selectedDate }.get(Calendar.DAY_OF_YEAR)
-                
-                // Find deadlines for this date to show indicators
+                val isSelected = dateCal.get(Calendar.DAY_OF_YEAR) ==
+                    Calendar.getInstance().apply { time = selectedDate }.get(Calendar.DAY_OF_YEAR)
+                val isToday = dateCal.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                    dateCal.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+
+                // Deadlines for this date
                 val dayDeadlines = deadlines.filter { item ->
                     val loanCal = Calendar.getInstance().apply { time = item.loan.promisedReturnDate }
                     loanCal.get(Calendar.YEAR) == dateCal.get(Calendar.YEAR) &&
@@ -1462,18 +1506,38 @@ fun UpcomingDeadlineSection(
                     shape = RoundedCornerShape(16.dp),
                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                     modifier = Modifier.width(60.dp).height(70.dp),
-                    border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    border = if (isSelected) null else if (isToday)
+                        androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                    else
+                        androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(
-                            text = dayFormat.format(date),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        // "TODAY" label replaces day abbreviation for today's chip
+                        if (isToday && !isSelected) {
+                            Text(
+                                text = "TODAY",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 0.5.sp
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            Text(
+                                text = if (isToday && isSelected) "TODAY" else dayFormat.format(date),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = if (isToday && isSelected) 8.sp else MaterialTheme.typography.labelSmall.fontSize,
+                                    fontWeight = if (isToday && isSelected) FontWeight.ExtraBold else FontWeight.Normal,
+                                    letterSpacing = if (isToday && isSelected) 0.5.sp else 0.sp
+                                ),
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = dateFormat.format(date),
@@ -1481,8 +1545,8 @@ fun UpcomingDeadlineSection(
                             fontWeight = FontWeight.Bold,
                             color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                         )
-                        
-                        // Indicators
+
+                        // Dot indicators
                         if (dayDeadlines.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -1499,7 +1563,7 @@ fun UpcomingDeadlineSection(
             }
         }
 
-        // Deadline Cards for selected date
+        // Content for the selected date
         if (filteredDeadlines.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -1509,11 +1573,22 @@ fun UpcomingDeadlineSection(
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    "No deadlines for this date",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = EmeraldGreen.copy(alpha = 0.6f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        "All clear — no deadlines here!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1521,6 +1596,7 @@ fun UpcomingDeadlineSection(
                     UpcomingDeadlineCard(
                         item = item,
                         currencySymbol = currencySymbol,
+                        selectedDate = selectedDate,
                         onClick = { onNavigateToDetail(item.loan.id) }
                     )
                 }
@@ -1533,12 +1609,36 @@ fun UpcomingDeadlineSection(
 fun UpcomingDeadlineCard(
     item: LoanWithPayments,
     currencySymbol: String,
+    selectedDate: Date,
     onClick: () -> Unit
 ) {
     val isLent = item.loan.type == LoanType.LEND
     val totalLoan = item.loan.amount + item.loanItems.sumOf { it.amount }
     val paid = item.payments.sumOf { it.amount }
     val balance = (totalLoan - paid).coerceAtLeast(0.0)
+    val progressFraction = if (totalLoan > 0) (paid / totalLoan).coerceIn(0.0, 1.0).toFloat() else 0f
+    val percentPaid = (progressFraction * 100).toInt()
+
+    val accentColor = if (isLent) EmeraldGreen else CoralRose
+
+    // Urgency: days until deadline from today
+    val todayCal = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    }
+    val deadlineCal = Calendar.getInstance().apply { time = item.loan.promisedReturnDate }
+    val daysUntil = ((deadlineCal.timeInMillis - todayCal.timeInMillis) / (1000 * 60 * 60 * 24)).toInt()
+    val urgencyLabel = when {
+        daysUntil == 0 -> "Due Today"
+        daysUntil == 1 -> "Due Tomorrow"
+        daysUntil > 1 -> "Due in $daysUntil days"
+        else -> "Overdue"
+    }
+    val urgencyColor = when {
+        daysUntil == 0 -> CoralRose
+        daysUntil == 1 -> MaterialTheme.colorScheme.tertiary
+        daysUntil > 1 -> MaterialTheme.colorScheme.primary
+        else -> CoralRose
+    }
 
     Surface(
         onClick = onClick,
@@ -1547,48 +1647,94 @@ fun UpcomingDeadlineCard(
         modifier = Modifier.fillMaxWidth().bounceClick { onClick() },
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(if (isLent) EmeraldGreen.copy(alpha = 0.1f) else CoralRose.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Type icon
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(accentColor.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        if (isLent) Icons.Default.CallReceived else Icons.Default.ArrowOutward,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                // Name + note
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.loan.personName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = item.loan.purpose?.ifBlank { if (isLent) stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed) }
+                            ?: if (isLent) stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+                // Amount + chevron
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "$currencySymbol${String.format("%,.0f", balance)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = accentColor
+                    )
+                    // Urgency chip
+                    Surface(
+                        shape = CircleShape,
+                        color = urgencyColor.copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = urgencyLabel,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = urgencyColor
+                            ),
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+
+            // Repayment progress bar
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Text(
+                    text = "Repaid $percentPaid%",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Icon(
-                    if (isLent) Icons.Default.CallReceived else Icons.Default.ArrowOutward,
+                    Icons.Default.ChevronRight,
                     contentDescription = null,
-                    tint = if (isLent) EmeraldGreen else CoralRose,
-                    modifier = Modifier.size(24.dp)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.loan.personName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = item.loan.purpose?.ifBlank { if (isLent) stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed) } ?: if (isLent) stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "$currencySymbol${String.format("%,.0f", balance)}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (isLent) EmeraldGreen else CoralRose
-                )
-                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            Spacer(modifier = Modifier.height(4.dp))
+            LinearProgressIndicator(
+                progress = { progressFraction },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(CircleShape),
+                color = accentColor,
+                trackColor = accentColor.copy(alpha = 0.15f)
+            )
         }
     }
 }
