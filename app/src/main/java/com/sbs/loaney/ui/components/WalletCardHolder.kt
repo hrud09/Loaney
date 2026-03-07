@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sbs.loaney.data.local.entity.BankAccountEntity
+import com.sbs.loaney.ui.theme.*
 
 @Composable
 fun WalletCardHolder(
@@ -27,18 +29,12 @@ fun WalletCardHolder(
 ) {
     var showBalance by remember { mutableStateOf(false) }
 
-    // Colors matching the "Add Card" screenshot — blue gradient cards
-    val cardColors = listOf(
-        Brush.linearGradient(listOf(Color(0xFF5B7EF7), Color(0xFF7B9EFF))),  // Blue gradient (Front)
-        Brush.linearGradient(listOf(Color(0xFF7C6EF6), Color(0xFF9B8FFF))),  // Violet gradient (Middle)
-        Brush.linearGradient(listOf(Color(0xFF4A6CF7), Color(0xFF6B8CFF)))   // Deep blue (Back)
-    )
-
-    // Fallback solid colors for non-gradient surfaces
+    // Neubrutulism colors for cards
     val cardSolidColors = listOf(
-        Color(0xFF5B7EF7),
-        Color(0xFF7C6EF6),
-        Color(0xFF4A6CF7)
+        NbCoral,
+        NbSkyBlue,
+        NbYellow,
+        NbGreen
     )
 
     val displayAccounts = accounts.take(3)
@@ -54,14 +50,16 @@ fun WalletCardHolder(
         contentAlignment = Alignment.TopCenter
     ) {
         // Wallet Background
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = Color(0xFF1C1C1E).copy(alpha = 0.8f),
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth(0.96f)
                 .height(pocketHeight + 36.dp)
-        ) {}
+                .neubrutalistCard(
+                    shape = RoundedCornerShape(24.dp),
+                    backgroundColor = NbPureBlack.copy(alpha = 0.9f)
+                )
+        )
 
         // Stacked Cards
         displayAccounts.forEachIndexed { index, account ->
@@ -70,13 +68,15 @@ fun WalletCardHolder(
             val stickOutOffset = ((totalCards - 1 - index) * 42)
             val widthFraction = 0.85f - ((totalCards - 1 - index) * 0.05f)
 
-            Surface(
-                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 20.dp, bottomEnd = 20.dp),
-                color = cardColor,
+            Box(
                 modifier = Modifier
                     .fillMaxWidth(widthFraction)
                     .height(cardHeight)
                     .offset(y = stickOutOffset.dp)
+                    .neubrutalistCard(
+                        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 20.dp, bottomEnd = 20.dp),
+                        backgroundColor = cardColor
+                    )
             ) {
                 Row(
                     modifier = Modifier
@@ -89,11 +89,11 @@ fun WalletCardHolder(
                         text = account.bankName,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 18.sp,
-                        color = Color.White
+                        color = NbPureBlack
                     )
                     Text(
                         text = "* * * * * *",
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = NbPureBlack.copy(alpha = 0.5f),
                         letterSpacing = 2.sp
                     )
                 }
@@ -101,13 +101,15 @@ fun WalletCardHolder(
         }
 
         // Wallet Pocket / Cover
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = Color(0xFF1C1C1E).copy(alpha = 0.9f),
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth(0.92f)
                 .height(pocketHeight)
+                .neubrutalistCard(
+                    shape = RoundedCornerShape(24.dp),
+                    backgroundColor = NbPureBlack
+                )
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -116,7 +118,7 @@ fun WalletCardHolder(
             ) {
                 Text(
                     text = "* * * * * *",
-                    color = Color.White,
+                    color = NbPureWhite,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 4.sp
@@ -124,15 +126,15 @@ fun WalletCardHolder(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Total Balance",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 14.sp
+                    color = NbPureWhite.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodyMedium
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Icon(
                     imageVector = Icons.Outlined.VisibilityOff,
                     contentDescription = "Hidden Wallet",
-                    tint = Color.White.copy(alpha = 0.4f),
+                    tint = NbPureWhite.copy(alpha = 0.4f),
                     modifier = Modifier.size(24.dp)
                 )
             }

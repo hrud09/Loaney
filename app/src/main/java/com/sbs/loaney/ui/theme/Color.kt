@@ -2,89 +2,113 @@ package com.sbs.loaney.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── bKash Brand Palette ──────────────────────────────────────────────────────
-val BkashPink        = Color(0xFFE2136E)   // Primary brand pink/magenta
-val BkashPinkDark    = Color(0xFFC01060)   // Pressed / darker variant
-val BkashPinkLight   = Color(0xFFFF4B96)   // Lighter variant / hover
-val BkashPinkSurface = Color(0xFFFCE4EF)   // Pink tinted surface / chips
-val BkashHeroStart   = Color(0xFFE2136E)   // Hero gradient start
-val BkashHeroEnd     = Color(0xFFC4006A)   // Hero gradient end
+// ── Neubrutalism Core Palette ────────────────────────────────────────────────
+val NbCoral      = Color(0xFFFC6A4D)   // Vibrant Coral/Orange
+val NbSkyBlue    = Color(0xFF608BC1)   // Soft Sky Blue
+val NbYellow     = Color(0xFFFFE66D)   // Bright Yellow
+val NbGreen      = Color(0xFF00C896)   // Minty Green
+val NbCream      = Color(0xFFF8F4E1)   // Soft Cream Background
+val NbPureBlack  = Color(0xFF000000)   // Solid Black for borders/shadows
+val NbPureWhite  = Color(0xFFFFFFFF)   // Pure White
 
-// ── Light (default) neutrals ─────────────────────────────────────────────────
-val BkashWhite          = Color(0xFFFFFFFF)
-val BkashOffWhite       = Color(0xFFF7F7F7)    // Screen background
-val BkashSurface        = Color(0xFFFFFFFF)    // Card / sheet surface
-val BkashSurfaceVariant = Color(0xFFF2F2F2)    // Input backgrounds
-val BkashOutline        = Color(0xFFE0E0E0)    // Borders
-val BkashOutlineVariant = Color(0xFFEEEEEE)    // Subtle dividers
-val BkashOnSurface      = Color(0xFF1A1A1A)    // Primary text
-val BkashOnSurfaceVar   = Color(0xFF757575)    // Secondary / hint text
+// ── Theme Mapping ────────────────────────────────────────────────────────────
+// Light Mode
+val NbLightBg             = NbCream
+val NbLightSurface        = NbPureWhite
+val NbLightOnSurface      = NbPureBlack
+val NbLightOutline        = NbPureBlack
+val NbLightShadow         = NbPureBlack
 
-// ── Dark fallback (kept for dark theme option) ────────────────────────────────
-val DeepDarkBg          = Color(0xFF0F172A)
-val DarkSurface         = Color(0xFF1E293B)
-val DarkSurfaceVariant  = Color(0xFF334155)
-val DarkOutline         = Color(0xFF475569)
-val GlassBorder         = Color(0x0DFFFFFF)
-val MutedText           = Color(0xFF94A3B8)
+// Dark Mode
+val NbDarkBg              = Color(0xFF121212)
+val NbDarkSurface         = Color(0xFF1E1E1E)
+val NbDarkOnSurface       = NbPureWhite
+val NbDarkOutline         = NbPureWhite
+val NbDarkShadow          = Color(0xFF000000).copy(alpha = 0.8f)
 
-// ── Semantic / Financial Colors ───────────────────────────────────────────────
-val EmeraldGreen = Color(0xFF00875A)   // Positive / lent / income (bKash-compatible green)
-val CoralRose    = Color(0xFFE53935)   // Negative / borrowed / expense
-val SkyBlue      = Color(0xFF1565C0)   // Accent blue
-val AmberWarn    = Color(0xFFF59E0B)   // Warning / overdue
+// ── bKash Brand Palette (Re-mapped to Neubrutalism) ──────────────────────────
+val BkashPink        = NbCoral
+val BkashPinkDark    = NbCoral.copy(alpha = 0.8f)
+val BkashPinkLight   = NbCoral.copy(alpha = 0.6f)
+val BkashPinkSurface = NbCream
+val BkashHeroStart   = NbCoral
+val BkashHeroEnd     = Color(0xFFFF8E72)
 
-// ── Legacy compat (mapped so existing references compile) ─────────────────────
+// ── Neutrals (Re-mapped) ─────────────────────────────────────────────────────
+val BkashWhite          = NbPureWhite
+val BkashOffWhite       = NbCream
+val BkashSurface        = NbPureWhite
+val BkashSurfaceVariant = NbCream
+val BkashOutline        = NbPureBlack
+val BkashOutlineVariant = NbPureBlack.copy(alpha = 0.4f)
+val BkashOnSurface      = NbPureBlack
+val BkashOnSurfaceVar   = Color(0xFF333333)
+
+// ── Dark fallback (Re-mapped) ────────────────────────────────────────────────
+val DeepDarkBg          = NbDarkBg
+val DarkSurface         = NbDarkSurface
+val DarkSurfaceVariant  = Color(0xFF2C2C2C)
+val DarkOutline         = NbDarkOutline
+val GlassBorder         = Color(0x33FFFFFF)
+val MutedText           = Color(0xFFAAAAAA)
+
+// ── Semantic / Financial Colors (Re-mapped) ───────────────────────────────────
+val EmeraldGreen = NbGreen
+val CoralRose    = NbCoral
+val SkyBlue      = NbSkyBlue
+val AmberWarn    = NbYellow
+
+// ── Legacy compat ─────────────────────
 val SoftViolet         = BkashPink
 val SoftVioletDark     = BkashPinkDark
 val SoftVioletLight    = BkashPinkLight
 val CoralPink          = CoralRose
-val CoralPinkDark      = Color(0xFFB71C1C)
-val CoralPinkLight     = Color(0xFFFFEBEE)
-val CoralRed           = CoralRose
-val NeonLime           = EmeraldGreen
+val CoralPinkDark      = NbCoral
+val CoralPinkLight     = NbCream
+val CoralRed           = NbCoral
+val NeonLime           = NbGreen
 val DarkCard           = DarkSurface
-val LightGrayBg        = BkashOffWhite
-val SubtleGray         = BkashOutline
-val SurfaceElevated    = BkashSurfaceVariant
+val LightGrayBg        = NbCream
+val SubtleGray         = NbPureBlack
+val SurfaceElevated    = NbPureWhite
 val DarkCardBg         = DarkSurface
 val TextSubtextDark    = MutedText
-val TextSubtextLight   = Color(0xFFE2E8F0)
-val TextMainDark       = BkashOnSurface
-val TextMainLight      = Color(0xFFF1F5F9)
-val DashboardBg        = BkashOffWhite
-val SubtleBorder       = BkashOutline
-val ThemeGreen         = EmeraldGreen
-val ThemeLightGreen    = Color(0xFFD1FAE5)
-val PrimaryLime        = EmeraldGreen
-val SecondaryOrange    = Color(0xFFF59E0B)
-val FabGlow            = BkashPink
+val TextSubtextLight   = Color(0xFFCCCCCC)
+val TextMainDark       = NbPureWhite
+val TextMainLight      = NbPureBlack
+val DashboardBg        = NbCream
+val SubtleBorder       = NbPureBlack
+val ThemeGreen         = NbGreen
+val ThemeLightGreen    = NbGreen.copy(alpha = 0.2f)
+val PrimaryLime        = NbGreen
+val SecondaryOrange    = NbYellow
+val FabGlow            = NbCoral
 
-// ── Colorful/Neon Accents (kept for colorful theme option) ───────────────────
-val SoftNeonPurple   = Color(0xFF9B72FF)
-val SoftNeonPink     = Color(0xFFFF6B9D)
-val SoftNeonCyan     = Color(0xFF4DD9E8)
-val SoftNeonBg       = Color(0xFF1A1428)
-val SoftNeonSurface  = Color(0xFF241E36)
-val SoftNeonSurfaceVar = Color(0xFF2E2644)
-val SoftNeonError    = Color(0xFFFF6B6B)
-val SoftNeonOnSurface = Color(0xFFE8DFFF)
-val SoftNeonOutline  = Color(0xFF4A3D6B)
+// ── Colorful/Neon Accents (Re-mapped) ─────────────────────────────────────────
+val SoftNeonPurple   = NbSkyBlue
+val SoftNeonPink     = NbCoral
+val SoftNeonCyan     = NbSkyBlue
+val SoftNeonBg       = NbDarkBg
+val SoftNeonSurface  = NbDarkSurface
+val SoftNeonSurfaceVar = Color(0xFF2C2C2C)
+val SoftNeonError    = NbCoral
+val SoftNeonOnSurface = NbPureWhite
+val SoftNeonOutline  = NbPureWhite
 
-// ── Hero Card Gradient (kept for dark mode hero) ──────────────────────────────
-val HeroCardDark1  = Color(0xFF0A2E1F)
-val HeroCardDark2  = Color(0xFF0F3B2A)
-val HeroCardDark3  = Color(0xFF152E3D)
-val HeroCardAccent = Color(0xFF1A4030)
+// ── Hero Card Gradient ──────────────────────────────────────────────
+val HeroCardDark1  = Color(0xFF1E1E1E)
+val HeroCardDark2  = Color(0xFF2C2C2C)
+val HeroCardDark3  = Color(0xFF333333)
+val HeroCardAccent = NbCoral
 
-// ── Gradient Avatar Palette ───────────────────────────────────────────────────
+// ── Gradient Avatar Palette (Updated for Neubrutalism vibe) ───────────────────
 val AvatarGradients = listOf(
-    Color(0xFFE2136E) to Color(0xFFC4006A),  // bKash Pink
-    Color(0xFF667EEA) to Color(0xFF764BA2),  // Indigo → Purple
-    Color(0xFF4FACFE) to Color(0xFF00F2FE),  // Blue → Cyan
-    Color(0xFF43E97B) to Color(0xFF38F9D7),  // Green → Teal
-    Color(0xFFF6D365) to Color(0xFFFDA085),  // Gold → Peach
-    Color(0xFFA18CD1) to Color(0xFFFBC2EB),  // Lavender → Rose
-    Color(0xFF30CFD0) to Color(0xFF330867),  // Teal → Midnight
-    Color(0xFFFF9A9E) to Color(0xFFFECFEF),  // Salmon → Blush
+    NbCoral to Color(0xFFFF8E72),
+    NbSkyBlue to Color(0xFF8AB6D6),
+    NbYellow to Color(0xFFFFED90),
+    NbGreen to Color(0xFF4DD9B6),
+    NbSkyBlue to NbCoral,
+    NbCoral to NbYellow,
+    NbGreen to NbSkyBlue,
+    NbYellow to NbGreen,
 )

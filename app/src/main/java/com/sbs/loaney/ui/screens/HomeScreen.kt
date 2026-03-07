@@ -127,11 +127,11 @@ fun HomeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                            colors = listOf(BkashHeroStart, BkashHeroEnd)
-                        ),
-                        shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)
+                    .padding(bottom = 8.dp)
+                    .neubrutalistCard(
+                        shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp),
+                        backgroundColor = NbCoral,
+                        shadowOffset = 6.dp
                     )
             ) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
@@ -145,41 +145,48 @@ fun HomeScreen(
                             Text(
                                 text = stringResource(id = R.string.greeting_hi, uiState.userName),
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = NbPureBlack
                                 )
                             )
                             Text(
                                 text = stringResource(id = R.string.greeting_morning),
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color.White.copy(alpha = 0.8f)
+                                    color = NbPureBlack.copy(alpha = 0.6f)
                                 )
                             )
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Box(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                                    .size(44.dp)
+                                    .neubrutalistButton(
+                                        shape = ActionIconShape,
+                                        backgroundColor = NbPureWhite
+                                    )
                                     .bounceClick { onNavigateToSettings() },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = Color.White, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = NbPureBlack, modifier = Modifier.size(20.dp))
                             }
                             Box(
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                                    .size(44.dp)
+                                    .neubrutalistButton(
+                                        shape = ActionIconShape,
+                                        backgroundColor = NbPureWhite
+                                    )
                                     .bounceClick { showNotificationsSheet = true },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = Color.White, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = NbPureBlack, modifier = Modifier.size(20.dp))
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .padding(7.dp)
-                                        .size(8.dp)
-                                        .background(Color.White, CircleShape)
+                                        .padding(4.dp)
+                                        .size(10.dp)
+                                        .background(NbPureBlack, CircleShape)
+                                        .border(1.5.dp, NbPureWhite, CircleShape)
                                 )
                             }
                         }
@@ -191,7 +198,7 @@ fun HomeScreen(
                     Text(
                         text = stringResource(id = R.string.net_balance),
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = Color.White.copy(alpha = 0.8f),
+                            color = NbPureBlack.copy(alpha = 0.6f),
                             letterSpacing = 1.sp
                         )
                     )
@@ -200,7 +207,7 @@ fun HomeScreen(
                         text = "$netPrefix${uiState.currencySymbol}${String.format("%,.0f", kotlin.math.abs(balance))}",
                         style = MaterialTheme.typography.headlineLarge.copy(
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
+                            color = NbPureBlack,
                             letterSpacing = (-1).sp
                         ),
                         maxLines = 1
@@ -214,11 +221,14 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         // Lent chip
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color.White.copy(alpha = 0.18f),
+                        Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .neubrutalistCard(
+                                    shape = RoundedCornerShape(12.dp),
+                                    backgroundColor = NbGreen,
+                                    shadowOffset = 3.dp
+                                )
                                 .bounceClick { onNavigateToHistory("LEND") }
                                 .combinedClickable(
                                     onClick = { onNavigateToHistory("LEND") },
@@ -227,22 +237,25 @@ fun HomeScreen(
                         ) {
                             Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.ArrowOutward, null, tint = Color.White, modifier = Modifier.size(12.dp))
-                                    Text(stringResource(R.string.total_lent), style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(0.85f)))
+                                    Icon(Icons.Default.ArrowOutward, null, tint = NbPureBlack, modifier = Modifier.size(12.dp))
+                                    Text(stringResource(R.string.total_lent), style = MaterialTheme.typography.labelSmall.copy(color = NbPureBlack.copy(0.7f)))
                                 }
                                 Spacer(Modifier.height(2.dp))
                                 Text(
                                     text = "${uiState.currencySymbol}${String.format("%,.0f", uiState.totalLent)}",
-                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = Color.White)
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold, color = NbPureBlack)
                                 )
                             }
                         }
                         // Borrowed chip
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color.White.copy(alpha = 0.18f),
+                        Box(
                             modifier = Modifier
                                 .weight(1f)
+                                .neubrutalistCard(
+                                    shape = RoundedCornerShape(12.dp),
+                                    backgroundColor = NbSkyBlue,
+                                    shadowOffset = 3.dp
+                                )
                                 .bounceClick { onNavigateToHistory("BORROW") }
                                 .combinedClickable(
                                     onClick = { onNavigateToHistory("BORROW") },
@@ -251,19 +264,19 @@ fun HomeScreen(
                         ) {
                             Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Icon(Icons.Default.CallReceived, null, tint = Color.White, modifier = Modifier.size(12.dp))
-                                    Text(stringResource(R.string.total_borrowed), style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(0.85f)))
+                                    Icon(Icons.Default.CallReceived, null, tint = NbPureBlack, modifier = Modifier.size(12.dp))
+                                    Text(stringResource(R.string.total_borrowed), style = MaterialTheme.typography.labelSmall.copy(color = NbPureBlack.copy(0.7f)))
                                 }
                                 Spacer(Modifier.height(2.dp))
                                 Text(
                                     text = "${uiState.currencySymbol}${String.format("%,.0f", uiState.totalBorrowed)}",
-                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = Color.White)
+                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.ExtraBold, color = NbPureBlack)
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 
@@ -275,14 +288,14 @@ fun HomeScreen(
                 }
             } else {
                 // ── QUICK ACTION GRID ──────────────────────────────────────────────
-                Surface(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    shape = CardShape,
-                    color = MaterialTheme.colorScheme.surface,
-                    shadowElevation = 2.dp,
-                    tonalElevation = 0.dp
+                        .padding(horizontal = 16.dp)
+                        .neubrutalistCard(
+                            shape = CardShape,
+                            backgroundColor = NbPureWhite
+                        )
                 ) {
                     Row(
                         modifier = Modifier
@@ -328,15 +341,15 @@ fun HomeScreen(
                         Text(
                             text = "Recent Transactions",
                             style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
+                                fontWeight = FontWeight.ExtraBold,
+                                color = NbPureBlack
                             )
                         )
                         Text(
                             text = "See All",
                             style = MaterialTheme.typography.labelLarge.copy(
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold
+                                color = NbCoral,
+                                fontWeight = FontWeight.Bold
                             ),
                             modifier = Modifier.clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -354,6 +367,7 @@ fun HomeScreen(
                         )
                     }
                 }
+// ... (rest of the file update)
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -625,7 +639,6 @@ fun QuickActionItem(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val pink = MaterialTheme.colorScheme.primary
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -635,13 +648,17 @@ fun QuickActionItem(
         Box(
             modifier = Modifier
                 .size(52.dp)
-                .background(BkashPinkSurface, CircleShape),
+                .neubrutalistButton(
+                    shape = ActionIconShape,
+                    backgroundColor = NbYellow,
+                    shadowOffset = 2.dp
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 icon,
                 contentDescription = label,
-                tint = pink,
+                tint = NbPureBlack,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -649,8 +666,8 @@ fun QuickActionItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Medium
+                color = NbPureBlack,
+                fontWeight = FontWeight.Bold
             ),
             maxLines = 1
         )
@@ -665,76 +682,81 @@ fun BkashTransactionRow(
     onClick: () -> Unit
 ) {
     val isLent = item.loan.type == com.sbs.loaney.data.model.LoanType.LEND
-    val amountColor = if (isLent) EmeraldGreen else CoralRose
+    val amountColor = if (isLent) NbGreen else NbCoral
     val amountPrefix = if (isLent) "+" else "-"
-    val avatarColor = if (isLent)
-        listOf(Color(0xFFE2136E), Color(0xFFC4006A))
-    else
-        listOf(Color(0xFFE53935), Color(0xFFB71C1C))
+    val avatarColor = AvatarGradients[0].first // Using a simplified solid color for Brutalist look
 
     val totalLoan = item.loan.amount + item.loanItems.sumOf { it.amount }
     val paid = item.payments.sumOf { it.amount }
     val remaining = (totalLoan - paid).coerceAtLeast(0.0)
 
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SmallCardShape)
-            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 4.dp, vertical = 4.dp)
+            .neubrutalistCard(
+                shape = SmallCardShape,
+                backgroundColor = NbPureWhite,
+                shadowOffset = 2.dp
+            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { onClick() }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
-        // Avatar circle
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .background(
-                    brush = androidx.compose.ui.graphics.Brush.linearGradient(avatarColor),
-                    shape = CircleShape
-                ),
-            contentAlignment = Alignment.Center
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Avatar circle -> now Avatar Square/Rounded for Brutalist look
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .neubrutalistCard(
+                        shape = RoundedCornerShape(8.dp),
+                        backgroundColor = if (isLent) NbGreen else NbCoral,
+                        shadowOffset = 0.dp // No shadow for small avatar
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = item.loan.personName.firstOrNull()?.toString()?.uppercase() ?: "",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        color = NbPureBlack,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                )
+            }
+
+            // Name + type
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.loan.personName,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = NbPureBlack
+                    ),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+                Text(
+                    text = if (isLent) "Lent" else "Borrowed",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = NbPureBlack.copy(alpha = 0.6f)
+                    )
+                )
+            }
+
+            // Amount
             Text(
-                text = item.loan.personName.firstOrNull()?.toString()?.uppercase() ?: "",
+                text = "$amountPrefix$currencySymbol${String.format("%,.0f", remaining)}",
                 style = MaterialTheme.typography.titleSmall.copy(
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold,
+                    color = NbPureBlack
                 )
             )
         }
-
-        // Name + type
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = item.loan.personName,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                ),
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-            )
-            Text(
-                text = if (isLent) "Lent" else "Borrowed",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
-        }
-
-        // Amount
-        Text(
-            text = "$amountPrefix$currencySymbol${String.format("%,.0f", remaining)}",
-            style = MaterialTheme.typography.titleSmall.copy(
-                fontWeight = FontWeight.Bold,
-                color = amountColor
-            )
-        )
     }
 }
 
@@ -768,18 +790,22 @@ fun BankAccountCard(
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val dividerColor = MaterialTheme.colorScheme.outlineVariant
 
-    Card(
-        shape = BigCardShape,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        modifier = Modifier.width(cardWidth)
+    Box(
+        modifier = Modifier
+            .width(cardWidth)
+            .padding(4.dp)
+            .neubrutalistCard(
+                shape = BigCardShape,
+                backgroundColor = NbPureWhite
+            )
     ) {
         Column {
-            // Cover Image / MFS Header
+            // Header Section
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(72.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             ) {
                 if (!account.coverImageUri.isNullOrBlank() && !account.isMfs) {
                     AsyncImage(
@@ -793,18 +819,12 @@ fun BankAccountCard(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
-                                brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                                    colors = if (account.isMfs) {
-                                        listOf(mfsHeaderColor, mfsHeaderColor.copy(alpha = 0.8f))
-                                    } else {
-                                        listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.background)
-                                    }
-                                )
+                                color = if (account.isMfs) mfsHeaderColor else NbYellow
                             ),
                         contentAlignment = Alignment.Center
                     ) {
                         val headerIcon = if (account.isMfs) Icons.Default.PhoneIphone else Icons.Default.AccountBalance
-                        val headerTint = if (account.isMfs) Color.White.copy(alpha = 0.3f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        val headerTint = if (account.isMfs) NbPureWhite.copy(alpha = 0.4f) else NbPureBlack.copy(alpha = 0.1f)
                         Icon(headerIcon, contentDescription = null, tint = headerTint, modifier = Modifier.size(48.dp))
                     }
                 }
@@ -846,11 +866,13 @@ fun BankAccountCard(
                 }
             }
 
+            HorizontalDivider(color = NbPureBlack, thickness = 2.dp)
+
+            // Details Section
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Bank / Provider Name & QR Code Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -890,49 +912,41 @@ fun BankAccountCard(
                     }
                 }
 
-                // Main Account Number
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            clipboardManager.setPrimaryClip(ClipData.newPlainText(if (account.isCard) "Card Number" else "Account Number", account.accountNumber))
+                            Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
+                        }
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                clipboardManager.setPrimaryClip(ClipData.newPlainText(if (account.isCard) "Card Number" else "Account Number", account.accountNumber))
-                                Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
-                            }
-                    ) {
-                        val numberLabel = when {
-                            account.isCard -> "CARD NUMBER"
-                            account.isMfs -> "MOBILE NUMBER"
-                            else -> stringResource(id = R.string.account_number)
-                        }
-                        Text(numberLabel, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = labelColor)
-                        
-                        val displayNum = when {
-                            account.isCard -> account.accountNumber.chunked(4).joinToString(" ")
-                            else -> account.accountNumber
-                        }
-                        Text(
-                            text = displayNum,
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.primary,
-                                letterSpacing = 1.5.sp
-                            ),
-                            maxLines = 1
-                        )
+                    val numberLabel = when {
+                        account.isCard -> "CARD NUMBER"
+                        account.isMfs -> "MOBILE NUMBER"
+                        else -> stringResource(id = R.string.account_number)
                     }
+                    Text(numberLabel, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = labelColor)
+                    
+                    val displayNum = when {
+                        account.isCard -> account.accountNumber.chunked(4).joinToString(" ")
+                        else -> account.accountNumber
+                    }
+                    Text(
+                        text = displayNum,
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = 1.5.sp
+                        ),
+                        maxLines = 1
+                    )
                 }
 
                 HorizontalDivider(color = dividerColor, thickness = 0.5.dp)
 
-                // Holder Name
                 val holderLabel = when {
                     account.isCard -> "Cardholder Name"
                     account.isMfs -> "Account Holder"
@@ -940,7 +954,6 @@ fun BankAccountCard(
                 }
                 BankField(holderLabel, account.accountName, clipboardManager, context, labelColor, contentColor)
 
-                // Branch & SWIFT Row (Only for Banks)
                 if (!account.isMfs && (!account.branchName.isNullOrBlank() || !account.swiftCode.isNullOrBlank())) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -962,7 +975,6 @@ fun BankAccountCard(
         }
     }
 }
-
 @Composable
 fun BankField(label: String, value: String, clipboardManager: ClipboardManager, context: Context, labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant, contentColor: Color = MaterialTheme.colorScheme.onBackground) {
     Row(
@@ -1508,7 +1520,7 @@ fun UpcomingDeadlineSection(
 
         // Calendar Date Strip
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             items(dates) { date ->
@@ -1527,49 +1539,38 @@ fun UpcomingDeadlineSection(
                 val hasLent = dayDeadlines.any { it.loan.type == LoanType.LEND }
                 val hasBorrowed = dayDeadlines.any { it.loan.type == LoanType.BORROW }
 
-                Surface(
-                    onClick = { onDateSelected(date) },
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.width(60.dp).height(70.dp),
-                    border = if (isSelected) null else if (isToday)
-                        androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                    else
-                        androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(76.dp)
+                        .neubrutalistButton(
+                            shape = RoundedCornerShape(12.dp),
+                            backgroundColor = if (isSelected) NbCoral else NbPureWhite,
+                            shadowOffset = if (isSelected) 3.dp else 2.dp
+                        )
+                        .clickable { onDateSelected(date) },
+                    contentAlignment = Alignment.Center
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        // "TODAY" label replaces day abbreviation for today's chip
-                        if (isToday && !isSelected) {
-                            Text(
-                                text = "TODAY",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 8.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 0.5.sp
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        } else {
-                            Text(
-                                text = if (isToday && isSelected) "TODAY" else dayFormat.format(date),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = if (isToday && isSelected) 8.sp else MaterialTheme.typography.labelSmall.fontSize,
-                                    fontWeight = if (isToday && isSelected) FontWeight.ExtraBold else FontWeight.Normal,
-                                    letterSpacing = if (isToday && isSelected) 0.5.sp else 0.sp
-                                ),
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            text = if (isToday) "TODAY" else dayFormat.format(date).uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = if (isSelected) NbPureWhite else NbPureBlack.copy(alpha = 0.6f)
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = dateFormat.format(date),
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (isSelected) NbPureWhite else NbPureBlack
                         )
 
                         // Dot indicators
@@ -1577,10 +1578,10 @@ fun UpcomingDeadlineSection(
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 if (hasLent) {
-                                    Box(modifier = Modifier.size(6.dp).background(if (isSelected) Color.White else EmeraldGreen, CircleShape))
+                                    Box(modifier = Modifier.size(6.dp).background(if (isSelected) NbPureWhite else NbGreen, CircleShape).border(1.dp, NbPureBlack, CircleShape))
                                 }
                                 if (hasBorrowed) {
-                                    Box(modifier = Modifier.size(6.dp).background(if (isSelected) Color.White else CoralRose, CircleShape))
+                                    Box(modifier = Modifier.size(6.dp).background(if (isSelected) NbPureWhite else NbCoral, CircleShape).border(1.dp, NbPureBlack, CircleShape))
                                 }
                             }
                         }
