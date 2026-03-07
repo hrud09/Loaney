@@ -2,113 +2,86 @@ package com.sbs.loaney.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── Neubrutalism Core Palette ────────────────────────────────────────────────
-val NbCoral      = Color(0xFFFC6A4D)   // Vibrant Coral/Orange
-val NbSkyBlue    = Color(0xFF608BC1)   // Soft Sky Blue
-val NbYellow     = Color(0xFFFFE66D)   // Bright Yellow
-val NbGreen      = Color(0xFF00C896)   // Minty Green
-val NbCream      = Color(0xFFF8F4E1)   // Soft Cream Background
-val NbPureBlack  = Color(0xFF000000)   // Solid Black for borders/shadows
-val NbPureWhite  = Color(0xFFFFFFFF)   // Pure White
+// ── Cyber-Vibrant Core Palette ───────────────────────────────────────────────
+val CyberIndigo   = Color(0xFF6366F1)   // Primary
+val VibrantTeal   = Color(0xFF2DD4BF)   // Secondary
+val CoralRose     = Color(0xFFFB7185)   // Accent / Debt
+val SoftSlate     = Color(0xFFF8FAFC)   // Background
+val PureWhite     = Color(0xFFFFFFFF)
+val PureBlack     = Color(0xFF000000)
 
-// ── Theme Mapping ────────────────────────────────────────────────────────────
-// Light Mode
-val NbLightBg             = NbCream
-val NbLightSurface        = NbPureWhite
-val NbLightOnSurface      = NbPureBlack
-val NbLightOutline        = NbPureBlack
-val NbLightShadow         = NbPureBlack
+// ── Glassmorphism Helpers ────────────────────────────────────────────────────
+val GlassWhite    = Color(0xCCFFFFFF)   // 80% White
+val GlassBorder   = Color(0x4DFFFFFF)   // 30% White
 
-// Dark Mode
-val NbDarkBg              = Color(0xFF121212)
-val NbDarkSurface         = Color(0xFF1E1E1E)
-val NbDarkOnSurface       = NbPureWhite
-val NbDarkOutline         = NbPureWhite
-val NbDarkShadow          = Color(0xFF000000).copy(alpha = 0.8f)
+// ── Theme Mapping (Compat with existing code) ───────────────────────────────
+val NbPureBlack   = PureBlack 
+val NbPureWhite   = PureWhite
+val NbCoral       = CoralRose
+val NbSkyBlue     = CyberIndigo
+val NbYellow      = VibrantTeal
+val NbGreen       = VibrantTeal
+val NbCream       = SoftSlate
 
-// ── bKash Brand Palette (Re-mapped to Neubrutalism) ──────────────────────────
-val BkashPink        = NbCoral
-val BkashPinkDark    = NbCoral.copy(alpha = 0.8f)
-val BkashPinkLight   = NbCoral.copy(alpha = 0.6f)
-val BkashPinkSurface = NbCream
-val BkashHeroStart   = NbCoral
-val BkashHeroEnd     = Color(0xFFFF8E72)
+// Light Mode Mapping
+val NbLightBg             = SoftSlate
+val NbLightSurface        = PureWhite
+val NbLightOnSurface      = PureBlack
+val NbLightOutline        = PureBlack.copy(alpha = 0.1f)
+val NbLightShadow         = Color(0x0D000000)
 
-// ── Neutrals (Re-mapped) ─────────────────────────────────────────────────────
-val BkashWhite          = NbPureWhite
-val BkashOffWhite       = NbCream
-val BkashSurface        = NbPureWhite
-val BkashSurfaceVariant = NbCream
-val BkashOutline        = NbPureBlack
-val BkashOutlineVariant = NbPureBlack.copy(alpha = 0.4f)
-val BkashOnSurface      = NbPureBlack
-val BkashOnSurfaceVar   = Color(0xFF333333)
+// Dark Mode Mapping
+val NbDarkBg              = Color(0xFF0F172A) // Deep Slate
+val NbDarkSurface         = Color(0xFF1E293B)
+val NbDarkOnSurface       = PureWhite
+val NbDarkOutline         = Color(0x33FFFFFF)
+val NbDarkShadow          = Color(0x66000000)
 
-// ── Dark fallback (Re-mapped) ────────────────────────────────────────────────
-val DeepDarkBg          = NbDarkBg
-val DarkSurface         = NbDarkSurface
-val DarkSurfaceVariant  = Color(0xFF2C2C2C)
-val DarkOutline         = NbDarkOutline
-val GlassBorder         = Color(0x33FFFFFF)
-val MutedText           = Color(0xFFAAAAAA)
+// ── bKash/Legacy Mapping (Updated for Cyber-Vibrant) ─────────────────────────
+val BkashPink        = CyberIndigo
+val BkashPinkDark    = CyberIndigo.copy(alpha = 0.8f)
+val BkashPinkLight   = CyberIndigo.copy(alpha = 0.1f)
+val BkashPinkSurface = SoftSlate
+val BkashHeroStart   = CyberIndigo
+val BkashHeroEnd     = Color(0xFF818CF8)
 
-// ── Semantic / Financial Colors (Re-mapped) ───────────────────────────────────
-val EmeraldGreen = NbGreen
-val CoralRose    = NbCoral
-val SkyBlue      = NbSkyBlue
-val AmberWarn    = NbYellow
+// ── Neutrals ─────────────────────────────────────────────────────────────────
+val BkashWhite          = PureWhite
+val BkashOffWhite       = SoftSlate
+val BkashSurface        = PureWhite
+val BkashSurfaceVariant = Color(0xFFF1F5F9)
+val BkashOutline        = Color(0xFFE2E8F0)
+val BkashOutlineVariant = Color(0xFF94A3B8).copy(alpha = 0.2f)
+val BkashOnSurface      = PureBlack
+val BkashOnSurfaceVar   = Color(0xFF475569)
 
-// ── Legacy compat ─────────────────────
-val SoftViolet         = BkashPink
-val SoftVioletDark     = BkashPinkDark
-val SoftVioletLight    = BkashPinkLight
-val CoralPink          = CoralRose
-val CoralPinkDark      = NbCoral
-val CoralPinkLight     = NbCream
-val CoralRed           = NbCoral
-val NeonLime           = NbGreen
-val DarkCard           = DarkSurface
-val LightGrayBg        = NbCream
-val SubtleGray         = NbPureBlack
-val SurfaceElevated    = NbPureWhite
-val DarkCardBg         = DarkSurface
-val TextSubtextDark    = MutedText
-val TextSubtextLight   = Color(0xFFCCCCCC)
-val TextMainDark       = NbPureWhite
-val TextMainLight      = NbPureBlack
-val DashboardBg        = NbCream
-val SubtleBorder       = NbPureBlack
-val ThemeGreen         = NbGreen
-val ThemeLightGreen    = NbGreen.copy(alpha = 0.2f)
-val PrimaryLime        = NbGreen
-val SecondaryOrange    = NbYellow
-val FabGlow            = NbCoral
+// ── Semantic ─────────────────────────────────────────────────────────────────
+val EmeraldGreen = VibrantTeal
+val AmberWarn    = Color(0xFFFBBF24)
 
-// ── Colorful/Neon Accents (Re-mapped) ─────────────────────────────────────────
-val SoftNeonPurple   = NbSkyBlue
-val SoftNeonPink     = NbCoral
-val SoftNeonCyan     = NbSkyBlue
-val SoftNeonBg       = NbDarkBg
-val SoftNeonSurface  = NbDarkSurface
-val SoftNeonSurfaceVar = Color(0xFF2C2C2C)
-val SoftNeonError    = NbCoral
-val SoftNeonOnSurface = NbPureWhite
-val SoftNeonOutline  = NbPureWhite
-
-// ── Hero Card Gradient ──────────────────────────────────────────────
-val HeroCardDark1  = Color(0xFF1E1E1E)
-val HeroCardDark2  = Color(0xFF2C2C2C)
-val HeroCardDark3  = Color(0xFF333333)
-val HeroCardAccent = NbCoral
-
-// ── Gradient Avatar Palette (Updated for Neubrutalism vibe) ───────────────────
+// ── Avatar Gradients (Cyber-Vibrant Edition) ─────────────────────────────────
 val AvatarGradients = listOf(
-    NbCoral to Color(0xFFFF8E72),
-    NbSkyBlue to Color(0xFF8AB6D6),
-    NbYellow to Color(0xFFFFED90),
-    NbGreen to Color(0xFF4DD9B6),
-    NbSkyBlue to NbCoral,
-    NbCoral to NbYellow,
-    NbGreen to NbSkyBlue,
-    NbYellow to NbGreen,
+    CyberIndigo to Color(0xFF818CF8),
+    VibrantTeal to Color(0xFF5EEAD4),
+    CoralRose to Color(0xFFFDA4AF),
+    Color(0xFFA855F7) to Color(0xFFC084FC), 
+    CyberIndigo to VibrantTeal,
+    VibrantTeal to CoralRose,
+    CoralRose to CyberIndigo,
+    Color(0xFFF472B6) to Color(0xFFFB7185), 
 )
+
+// Comprehensive Legacy Mapping for Build Compatibility
+val CoralRed         = CoralRose
+val CoralPink        = CoralRose.copy(alpha = 0.6f)
+val SkyBlue          = CyberIndigo
+val SoftViolet       = CyberIndigo
+val SurfaceElevated  = PureWhite
+val SecondaryOrange  = VibrantTeal
+val DarkSurface      = Color(0xFF1E293B)
+val DarkOutline      = Color(0x33FFFFFF)
+val MutedText        = Color(0xFF94A3B8)
+val DashboardBg      = SoftSlate
+val DeepDarkBg       = Color(0xFF0F172A)
+val DarkSurfaceVariant = Color(0xFF1E293B)
+val SubtleBorder     = Color(0xFFE2E8F0)

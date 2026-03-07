@@ -25,11 +25,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.sbs.loaney.ui.theme.CoralRed
-import com.sbs.loaney.ui.theme.CoralPink
-import com.sbs.loaney.ui.theme.SkyBlue
+import com.sbs.loaney.ui.theme.VibrantTeal
+import com.sbs.loaney.ui.theme.CoralRose
+import com.sbs.loaney.ui.theme.CyberIndigo
 import kotlin.math.max
-import com.sbs.loaney.ui.theme.SurfaceElevated
+import com.sbs.loaney.ui.theme.SoftSlate
 import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 
@@ -37,7 +37,8 @@ import com.sbs.loaney.R
 fun DonutChart(
     totalLent: Double,
     totalBorrowed: Double,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    currencySymbol: String = "৳"
 ) {
     val total = totalLent + totalBorrowed
     val lentRatio = if (total > 0) (totalLent / total).toFloat() else 0f
@@ -72,10 +73,10 @@ fun DonutChart(
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
 
-            // Lent Arc (Lime)
+            // Lent Arc (Teal)
             if (lentRatio > 0f) {
                 drawArc(
-                    color = CoralPink,
+                    color = VibrantTeal,
                     startAngle = -90f,
                     sweepAngle = sweepAngle.value * lentRatio,
                     useCenter = false,
@@ -85,10 +86,10 @@ fun DonutChart(
                 )
             }
 
-            // Borrowed Arc (Red)
+            // Borrowed Arc (Coral)
             if (lentRatio < 1f && total > 0) {
                 drawArc(
-                    color = CoralRed,
+                    color = CoralRose,
                     startAngle = -90f + (360f * lentRatio),
                     sweepAngle = sweepAngle.value * (1f - lentRatio),
                     useCenter = false,
@@ -104,14 +105,14 @@ fun DonutChart(
             Text(
                 text = stringResource(id = R.string.net_balance),
                 style = MaterialTheme.typography.labelMedium,
-                color = Color.White.copy(alpha = 0.6f)
+                color = Color(0xFF64748B)
             )
             val netBalance = totalLent - totalBorrowed
-            val color = if (netBalance >= 0) CoralPink else CoralRed
+            val color = if (netBalance >= 0) VibrantTeal else CoralRose
             Text(
-                text = "৳${String.format("%.0f", Math.abs(netBalance))}",
+                text = "${if (netBalance >= 0) "+" else "-"}${currencySymbol}${String.format("%.0f", Math.abs(netBalance))}",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 color = color
             )
         }
@@ -128,7 +129,7 @@ fun LineChart(
             modifier = modifier
                 .fillMaxWidth()
                 .height(100.dp)
-                .background(SurfaceElevated, RoundedCornerShape(16.dp)),
+                .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
             Text(stringResource(id = R.string.no_activity), color = Color.Gray, style = MaterialTheme.typography.bodySmall)
@@ -152,7 +153,7 @@ fun LineChart(
 
     Surface(
         modifier = modifier.fillMaxWidth().height(120.dp),
-        color = SurfaceElevated,
+        color = Color.White.copy(alpha = 0.5f),
         shape = RoundedCornerShape(16.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -201,7 +202,7 @@ fun LineChart(
                 drawPath(
                     path = fillPath,
                     brush = Brush.verticalGradient(
-                        colors = listOf(SkyBlue.copy(alpha = 0.3f), Color.Transparent),
+                        colors = listOf(CyberIndigo.copy(alpha = 0.2f), Color.Transparent),
                         startY = 0f,
                         endY = height
                     )
@@ -210,7 +211,7 @@ fun LineChart(
                 // Draw line stroke
                 drawPath(
                     path = path,
-                    color = SkyBlue,
+                    color = CyberIndigo,
                     style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                 )
             }
@@ -225,7 +226,7 @@ fun LineChart(
                     center = Offset(lastX, lastY)
                 )
                 drawCircle(
-                    color = SkyBlue,
+                    color = CyberIndigo,
                     radius = 2.dp.toPx(),
                     center = Offset(lastX, lastY)
                 )

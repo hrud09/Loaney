@@ -48,7 +48,7 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route)
+    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route, Screen.Shop.route)
     val isTopLevel = currentDestination?.route in topLevelRoutes
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -83,7 +83,11 @@ fun MainScreen(
                 },
                 onNavigateToShop = {
                     scope.launch { drawerState.close() }
-                    navController.navigate(Screen.Shop.route)
+                    navController.navigate(Screen.Shop.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             )
         }
@@ -105,7 +109,13 @@ fun MainScreen(
                         },
                         onCenterFabClick = { navController.navigate(Screen.AddLoan.createRoute("LEND")) },
                         onProfileClick = { scope.launch { drawerState.open() } },
-                        onShopClick = { navController.navigate(Screen.Shop.route) }
+                        onShopClick = { 
+                            navController.navigate(Screen.Shop.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
                     )
                 }
             }
@@ -297,10 +307,11 @@ fun BkashBottomNavBar(
             }
 
             // Shop
+            val shopSelected = currentDestination?.hierarchy?.any { it.route == Screen.Shop.route } == true
             BkashNavBarItem(
                 icon = Icons.Default.ShoppingBag,
                 label = "Shop",
-                selected = false,
+                selected = shopSelected,
                 onClick = onShopClick
             )
 

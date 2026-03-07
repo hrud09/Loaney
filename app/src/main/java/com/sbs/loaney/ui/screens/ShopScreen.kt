@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -36,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.model.Coupon
 import com.sbs.loaney.data.model.CouponCategory
 import com.sbs.loaney.ui.theme.CurrencyTypography
+import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.ShopViewModel
 
 // Premium bKash style doesn't use these dark gamified colors anymore
@@ -53,20 +57,21 @@ fun ShopScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Loaney Pie Shop", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+                title = { 
+                    Text(
+                        "Shop Rewards", 
+                        fontWeight = FontWeight.Black,
+                        style = MaterialTheme.typography.headlineSmall,
+                        letterSpacing = (-0.5).sp
+                    ) 
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = Color.Transparent,
+                    titleContentColor = Color(0xFF1E293B)
                 )
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = SoftSlate
     ) { padding ->
         Column(
             modifier = Modifier
@@ -78,34 +83,66 @@ fun ShopScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
-                    .padding(24.dp),
+                    .glassCard(
+                        shape = RoundedCornerShape(32.dp),
+                        backgroundColor = CyberIndigo.copy(alpha = 0.9f),
+                        borderColor = Color.White.copy(alpha = 0.2f)
+                    )
+                    .padding(28.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Your Balance",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
+                // Background Glow
+                Canvas(modifier = Modifier.matchParentSize()) {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(VibrantTeal.copy(alpha = 0.3f), Color.Transparent),
+                            center = Offset(size.width * 0.8f, size.height * 0.2f)
+                        ),
+                        radius = size.width * 0.6f
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(20.dp)),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             Icons.Default.Stars,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = Color(0xFFFFD700),
                             modifier = Modifier.size(32.dp)
                         )
+                    }
+                    Column {
                         Text(
-                            text = "${uiState.totalPies}",
-                            style = CurrencyTypography.heroLarge,
-                            color = MaterialTheme.colorScheme.primary
+                            text = "CURRENT BALANCE",
+                            color = Color.White.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp
                         )
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                text = "${uiState.totalPies}",
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White,
+                                    fontSize = 36.sp
+                                )
+                            )
+                            Text(
+                                text = " PIES",
+                                color = Color.White.copy(alpha = 0.6f),
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -228,111 +265,135 @@ fun ShopScreen(
 
 @Composable
 fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.clickable { onClick() },
-        shape = CircleShape,
-        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+    Box(
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .clip(CircleShape)
+            .clickable { onClick() }
+            .then(
+                if (isSelected) {
+                    Modifier
+                        .background(CyberIndigo, CircleShape)
+                        .shadow(8.dp, CircleShape, spotColor = CyberIndigo.copy(alpha = 0.4f))
+                } else {
+                    Modifier
+                        .background(Color.White.copy(alpha = 0.8f), CircleShape)
+                        .border(0.5.dp, Color.Black.copy(alpha = 0.05f), CircleShape)
+                }
+            )
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp
+            fontSize = 14.sp,
+            color = if (isSelected) Color.White else Color(0xFF475569)
         )
     }
 }
 
 @Composable
 fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(if (canAfford) 1f else 0.5f)
+            .alpha(if (canAfford) 1f else 0.6f)
+            .glassCard(
+                shape = RoundedCornerShape(24.dp),
+                backgroundColor = Color.White,
+                borderColor = Color.Black.copy(alpha = 0.03f)
+            )
             .clickable(enabled = canAfford) { onClick() }
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Brand Accent
+        // Brand Accent (Modern Gradient)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(120.dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(coupon.brandColor.copy(alpha = 0.08f), Color.Transparent)
+                    )
+                )
+        )
+
+        Row(
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Brand Logo Placeholder - Modern Style
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(100.dp)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(coupon.brandColor.copy(alpha = 0.1f), Color.Transparent)
-                        )
-                    )
-            )
-
-            Row(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                    .size(56.dp)
+                    .background(coupon.brandColor.copy(alpha = 0.1f), CircleShape)
+                    .border(1.5.dp, coupon.brandColor.copy(alpha = 0.2f), CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                // Brand Initials / Logo Placeholder
-                Box(
+                Text(
+                    text = coupon.brandName.firstOrNull()?.toString()?.uppercase() ?: "",
+                    color = coupon.brandColor,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 22.sp
+                )
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = coupon.brandName.uppercase(),
+                    color = Color(0xFF64748B),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = coupon.discountTitle,
+                    color = Color(0xFF0F172A),
+                    fontWeight = FontWeight.Black,
+                    fontSize = 18.sp
+                )
+                Text(
+                    text = coupon.description,
+                    color = Color(0xFF64748B),
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
-                        .background(coupon.brandColor),
-                    contentAlignment = Alignment.Center
+                        .background(
+                            if (canAfford) CyberIndigo.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
+                    Icon(
+                        Icons.Default.Stars,
+                        contentDescription = null,
+                        tint = if (canAfford) Color(0xFFFFD700) else Color.Gray,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
                     Text(
-                        text = coupon.brandName.firstOrNull()?.toString()?.uppercase() ?: "",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp
+                        text = "${coupon.costInPies}",
+                        color = if (canAfford) CyberIndigo else Color.Gray,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 16.sp
                     )
                 }
-                Spacer(Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
+                if (!canAfford) {
                     Text(
-                        text = coupon.brandName,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp
+                        "INSUFFICIENT",
+                        color = CoralRose,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(top = 4.dp, end = 2.dp)
                     )
-                    Text(
-                        text = coupon.discountTitle,
-                        color = coupon.brandColor,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp
-                    )
-                    Text(
-                        text = coupon.description,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp
-                    )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Stars,
-                            contentDescription = null,
-                            tint = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = "${coupon.costInPies}",
-                            color = if (canAfford) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 18.sp
-                        )
-                    }
-                    if (!canAfford) {
-                        Text(
-                            "Not enough pies",
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 10.sp
-                        )
-                    }
                 }
             }
         }

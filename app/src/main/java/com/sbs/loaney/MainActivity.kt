@@ -38,10 +38,8 @@ class MainActivity : ComponentActivity() {
             val isDarkTheme = when (themeMode) {
                 1 -> false // Force Light
                 2 -> true // Force Dark
-                3 -> false // Colorful (handled separately)
                 else -> isSystemInDarkTheme() // System default
             }
-            val isColorful = themeMode == 3
             
             LaunchedEffect(isDarkTheme) {
                 // Blurred off-white: ~85% opacity of #F7F7F7
@@ -65,7 +63,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            LoaneyTheme(darkTheme = isDarkTheme, colorfulTheme = isColorful, colorfulAccent = accentColor) {
+            LoaneyTheme(darkTheme = isDarkTheme) {
                 if (onboardingCompleted != null) {
                     val startDest = if (onboardingCompleted == true) {
                         com.sbs.loaney.ui.navigation.Screen.Home.route

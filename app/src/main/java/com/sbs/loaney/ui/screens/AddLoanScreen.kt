@@ -33,6 +33,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -235,24 +236,25 @@ fun AddLoanScreen(
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = SoftSlate,
         topBar = {
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
                         if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title), 
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.5).sp
                     ) 
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back), tint = MaterialTheme.colorScheme.onBackground)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back), tint = Color(0xFF1E293B))
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    titleContentColor = Color(0xFF1E293B)
                 )
             )
         }
@@ -669,16 +671,17 @@ fun AddLoanScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp),
+                    .height(60.dp)
+                    .shadow(12.dp, CircleShape, spotColor = CyberIndigo.copy(alpha = 0.4f)),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = CyberIndigo,
+                    contentColor = Color.White
                 ),
                 shape = CircleShape,
                 enabled = name.isNotBlank() && (amount.toDoubleOrNull() ?: 0.0) > 0
             ) {
                 val actionText = if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title)
-                Text(actionText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+                Text(actionText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
             }
             
             Spacer(modifier = Modifier.height(20.dp))

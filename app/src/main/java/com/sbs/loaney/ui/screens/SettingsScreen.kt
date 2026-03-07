@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,7 +60,7 @@ fun SettingsScreen(
                 title = { Text(stringResource(id = R.string.settings), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -98,7 +99,6 @@ fun SettingsScreen(
                     0 -> stringResource(id = R.string.theme_system)
                     1 -> stringResource(id = R.string.theme_light)
                     2 -> stringResource(id = R.string.theme_dark)
-                    3 -> "Colorful"
                     else -> stringResource(id = R.string.theme_system)
                 }
                 SettingsItem(
@@ -108,49 +108,6 @@ fun SettingsScreen(
                     onClick = { showThemeSheet = true }
                 )
 
-                // Accent color picker (only when Colorful is active)
-                if (uiState.themeMode == 3) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        Text(
-                            "Accent Color",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            colorfulAccents.forEachIndexed { index, accent ->
-                                val isSelected = uiState.accentColor == index
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                        .background(accent.primary)
-                                        .then(
-                                            if (isSelected) Modifier.border(3.dp, Color.White, CircleShape)
-                                            else Modifier.border(1.dp, accent.primary.copy(alpha = 0.5f), CircleShape)
-                                        )
-                                        .clickable { viewModel.setAccentColor(index) },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (isSelected) {
-                                        Icon(
-                                            Icons.Default.Check,
-                                            contentDescription = "Selected",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
                 SettingsItem(
@@ -229,10 +186,6 @@ fun SettingsScreen(
                 ThemeOption(stringResource(id = R.string.theme_dark), uiState.themeMode == 2) {
                     coroutineScope.launch { themeSheetState.hide() }.invokeOnCompletion { showThemeSheet = false }
                     viewModel.setThemeMode(2)
-                }
-                ThemeOption("Colorful", uiState.themeMode == 3) {
-                    coroutineScope.launch { themeSheetState.hide() }.invokeOnCompletion { showThemeSheet = false }
-                    viewModel.setThemeMode(3)
                 }
             }
         }
