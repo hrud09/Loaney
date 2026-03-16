@@ -236,7 +236,7 @@ fun AddLoanScreen(
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
     Scaffold(
-        containerColor = SoftSlate,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 title = { 
@@ -249,12 +249,12 @@ fun AddLoanScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back), tint = Color(0xFF1E293B))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back), tint = MaterialTheme.colorScheme.onSurface)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = Color(0xFF1E293B)
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -641,7 +641,7 @@ fun AddLoanScreen(
                                                         .padding(2.dp)
                                                         .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                                                 ) {
-                                                    Icon(Icons.Default.Close, contentDescription = "Remove", tint = Color.White, modifier = Modifier.size(10.dp))
+                                                    Icon(Icons.Default.Close, contentDescription = "Remove", tint = PureWhite, modifier = Modifier.size(10.dp))
                                                 }
                                             }
                                         }

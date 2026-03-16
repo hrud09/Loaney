@@ -17,6 +17,10 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
 import javax.inject.Inject
+import com.sbs.loaney.data.model.CalendarEvent
+import com.sbs.loaney.data.model.CalendarEventType
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -29,6 +33,7 @@ data class HomeUiState(
     val lentLoans: List<LoanWithPayments> = emptyList(),
     val borrowedLoans: List<LoanWithPayments> = emptyList(),
     val upcomingDeadlines: List<LoanWithPayments> = emptyList(),
+    val allEvents: Map<String, List<CalendarEvent>> = emptyMap(),
     val bankAccounts: List<BankAccountEntity> = emptyList(),
     val userName: String = "Sajibur",
     val currencySymbol: String = "৳"
@@ -69,12 +74,59 @@ class HomeViewModel @Inject constructor(
         val now = Date()
         val calendar = Calendar.getInstance()
         calendar.time = now
-        calendar.add(Calendar.DAY_OF_YEAR, 30) // Show up to 30 days in calendar
+        val today = calendar.time
+        calendar.add(Calendar.DAY_OF_YEAR, 30) // Show up to 30 days in calendar visibility for home, but we want all events for the popup
         val thirtyDaysFromNow = calendar.time
+
+        val eventMap = mutableMapOf<String, MutableList<CalendarEvent>>()
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
         loans.forEach { item ->
             val loan = item.loan
-            // Skip forgiven and fully paid loans
+            
+            // Initiation Event
+            val initDateStr = dateFormat.format(loan.loanDate)
+            eventMap.getOrPut(initDateStr) { mutableListOf() }.add(
+                CalendarEvent(
+                    type = CalendarEventType.LOAN_INITIATION,
+                    date = loan.loanDate,
+                    amount = loan.amount,
+                    personName = loan.personName,
+                    loanId = loan.id,
+                    loanType = loan.type
+                )
+            )
+
+            // Deadline Event
+            val deadlineDateStr = dateFormat.format(loan.promisedReturnDate)
+            eventMap.getOrPut(deadlineDateStr) { mutableListOf() }.add(
+                CalendarEvent(
+                    type = CalendarEventType.DEADLINE,
+                    date = loan.promisedReturnDate,
+                    amount = loan.amount,
+                    personName = loan.personName,
+                    loanId = loan.id,
+                    loanType = loan.type
+                )
+            )
+
+            // Payment Events
+            item.payments.forEach { payment ->
+                val paymentDateStr = dateFormat.format(payment.date)
+                eventMap.getOrPut(paymentDateStr) { mutableListOf() }.add(
+                    CalendarEvent(
+                        type = CalendarEventType.PARTIAL_PAYMENT,
+                        date = payment.date,
+                        amount = payment.amount,
+                        personName = loan.personName,
+                        loanId = loan.id,
+                        loanType = loan.type,
+                        paymentId = payment.id
+                    )
+                )
+            }
+
+            // Skip forgiven and fully paid loans for balance calculations
             if (loan.status == LoanStatus.FORGIVEN || loan.status == LoanStatus.FULLY_PAID) return@forEach
 
             val totalLoan = loan.amount + item.loanItems.sumOf { it.amount }
@@ -117,9 +169,9 @@ class HomeViewModel @Inject constructor(
                 val paid = item.payments.sumOf { it.amount }
                 val balance = (totalLoan - paid).coerceAtLeast(0.0)
                 
-                // Show all future loans for the calendar, or recent overdue
                 balance > 0 && loan.promisedReturnDate.before(thirtyDaysFromNow)
-            }.sortedBy { it.loan.promisedReturnDate }
+            }.sortedBy { it.loan.promisedReturnDate },
+            allEvents = eventMap.mapValues { it.value.sortedBy { event -> event.date } }
         )
     }
 

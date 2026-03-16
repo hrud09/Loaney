@@ -67,11 +67,11 @@ fun ShopScreen(
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = Color(0xFF1E293B)
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = SoftSlate
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -277,8 +277,8 @@ fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
                         .shadow(8.dp, CircleShape, spotColor = CyberIndigo.copy(alpha = 0.4f))
                 } else {
                     Modifier
-                        .background(Color.White.copy(alpha = 0.8f), CircleShape)
-                        .border(0.5.dp, Color.Black.copy(alpha = 0.05f), CircleShape)
+                        .background(MaterialTheme.colorScheme.surface, CircleShape)
+                        .border(0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), CircleShape)
                 }
             )
             .padding(horizontal = 24.dp, vertical = 12.dp),
@@ -288,7 +288,7 @@ fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
             text = label,
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
-            color = if (isSelected) Color.White else Color(0xFF475569)
+            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -301,8 +301,8 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
             .alpha(if (canAfford) 1f else 0.6f)
             .glassCard(
                 shape = RoundedCornerShape(24.dp),
-                backgroundColor = Color.White,
-                borderColor = Color.Black.copy(alpha = 0.03f)
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                borderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)
             )
             .clickable(enabled = canAfford) { onClick() }
     ) {
@@ -343,20 +343,20 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = coupon.brandName.uppercase(),
-                    color = Color(0xFF64748B),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.labelSmall,
                     letterSpacing = 1.sp
                 )
                 Text(
                     text = coupon.discountTitle,
-                    color = Color(0xFF0F172A),
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Black,
                     fontSize = 18.sp
                 )
                 Text(
                     text = coupon.description,
-                    color = Color(0xFF64748B),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     lineHeight = 16.sp,
                     fontWeight = FontWeight.Medium

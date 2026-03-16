@@ -189,7 +189,7 @@ fun LoanTrackerScreen(
     }
 
     Scaffold(
-        containerColor = SoftSlate,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 title = { 
@@ -201,7 +201,7 @@ fun LoanTrackerScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = handleBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color(0xFF1E293B))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
                     }
                 },
                 actions = {
@@ -218,7 +218,7 @@ fun LoanTrackerScreen(
                                 )
                             }
                         }) {
-                            Icon(Icons.Default.Share, contentDescription = "Share Receipt", tint = Color(0xFF64748B))
+                            Icon(Icons.Default.Share, contentDescription = "Share Receipt", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         IconButton(onClick = { showEditLoanSheet = true }) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit", tint = CyberIndigo)
@@ -230,7 +230,7 @@ fun LoanTrackerScreen(
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = Color(0xFF1E293B)
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
@@ -274,9 +274,9 @@ fun LoanTrackerScreen(
                                  onClick = { showSettleConfirmation = true },
                                  modifier = Modifier.size(52.dp),
                                  shape = RoundedCornerShape(16.dp),
-                                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color.White.copy(alpha = 0.5f))
+                                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                              ) {
-                                 Icon(Icons.Default.CheckCircle, contentDescription = "Settle", tint = CyberIndigo)
+                                 Icon(Icons.Default.CheckCircle, contentDescription = "Settle", tint = MaterialTheme.colorScheme.primary)
                              }
                         }
                         Spacer(modifier = Modifier.height(8.dp))

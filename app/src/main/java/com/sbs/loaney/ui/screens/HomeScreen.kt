@@ -82,6 +82,7 @@ import com.sbs.loaney.ui.components.CustomLightTextField
 import com.sbs.loaney.ui.components.FullScreenImageViewer
 import com.sbs.loaney.ui.components.WalletCardHolder
 import com.sbs.loaney.ui.components.bounceClick
+import com.sbs.loaney.ui.components.FeaturedCalendarPopup
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.HomeViewModel
 import com.sbs.loaney.ui.viewmodel.HomeUiState
@@ -106,6 +107,7 @@ fun HomeScreen(
     var isImageExpanded by remember { mutableStateOf(false) }
     var showLentSummary by remember { mutableStateOf(false) }
     var showBorrowedSummary by remember { mutableStateOf(false) }
+    var showFeaturedCalendar by remember { mutableStateOf(false) }
 
     val balance = uiState.totalLent - uiState.totalBorrowed
     val bankAccounts = uiState.bankAccounts
@@ -126,6 +128,7 @@ fun HomeScreen(
                         uiState = uiState,
                         onNavigateToSettings = onNavigateToSettings,
                         onNotificationsClick = { showNotificationsSheet = true },
+                        onCalendarClick = { showFeaturedCalendar = true },
                         onNavigateToHistory = onNavigateToHistory,
                         onLongLentClick = { showLentSummary = true },
                         onLongBorrowedClick = { showBorrowedSummary = true }
@@ -398,6 +401,14 @@ fun HomeScreen(
             onDismiss = { showBorrowedSummary = false }
         )
     }
+
+    FeaturedCalendarPopup(
+        visible = showFeaturedCalendar,
+        onDismiss = { showFeaturedCalendar = false },
+        allEvents = uiState.allEvents,
+        currencySymbol = uiState.currencySymbol,
+        onNavigateToDetail = onNavigateToDetail
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -522,7 +533,7 @@ fun QuickActionItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
-                color = Color(0xFF475569),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold
             ),
             maxLines = 1
@@ -550,8 +561,8 @@ fun RecentActivityCard(
             .padding(vertical = 4.dp)
             .simpleGlass(
                 shape = RoundedCornerShape(24.dp),
-                backgroundColor = Color.White.copy(alpha = 0.8f),
-                borderColor = Color.Black.copy(alpha = 0.03f)
+                backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                borderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)
             )
             .clickable { onClick() }
             .padding(16.dp)
@@ -582,7 +593,7 @@ fun RecentActivityCard(
                     text = item.loan.personName,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E293B)
+                        color = MaterialTheme.colorScheme.onSurface
                     ),
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -1519,10 +1530,14 @@ fun UpcomingDeadlineCard(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
-        color = PureWhite,
+        color = MaterialTheme.colorScheme.surface,
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(elevation = 2.dp, shape = RoundedCornerShape(24.dp), spotColor = PureBlack.copy(alpha = 0.1f)),
+            .shadow(
+                elevation = 2.dp, 
+                shape = RoundedCornerShape(24.dp), 
+                spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            ),
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1545,7 +1560,7 @@ fun UpcomingDeadlineCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = item.loan.personName,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     )
                     Text(
                         text = urgencyLabel,
@@ -1555,7 +1570,7 @@ fun UpcomingDeadlineCard(
                 // Amount
                 Text(
                     text = "$currencySymbol${String.format("%,.0f", balance)}",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black, color = Color(0xFF0F172A))
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
                 )
             }
 
@@ -1568,7 +1583,7 @@ fun UpcomingDeadlineCard(
                     .height(6.dp)
                     .clip(CircleShape),
                 color = if (progressFraction >= 1f) VibrantTeal else accentColor,
-                trackColor = Color(0xFFF1F5F9)
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
         }
     }
@@ -1614,6 +1629,7 @@ fun HeroHeader(
     uiState: com.sbs.loaney.ui.viewmodel.HomeUiState,
     onNavigateToSettings: () -> Unit,
     onNotificationsClick: () -> Unit,
+    onCalendarClick: () -> Unit,
     onNavigateToHistory: (String) -> Unit,
     onLongLentClick: () -> Unit,
     onLongBorrowedClick: () -> Unit
@@ -1641,7 +1657,7 @@ fun HeroHeader(
             )
         }
 
-        Column(modifier = Modifier.padding(24.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             // Top row: Greeting + Settings
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1663,17 +1679,27 @@ fun HeroHeader(
                         )
                     )
                 }
-                IconButton(
-                    onClick = onNavigateToSettings,
-                    modifier = Modifier
-                        .background(PureWhite.copy(alpha = 0.1f), CircleShape)
-                        .size(36.dp)
-                ) {
-                    Icon(Icons.Outlined.Settings, null, tint = PureWhite, modifier = Modifier.size(18.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    IconButton(
+                        onClick = onCalendarClick,
+                        modifier = Modifier
+                            .background(PureWhite.copy(alpha = 0.1f), CircleShape)
+                            .size(36.dp)
+                    ) {
+                        Icon(Icons.Default.CalendarMonth, null, tint = PureWhite, modifier = Modifier.size(18.dp))
+                    }
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier
+                            .background(PureWhite.copy(alpha = 0.1f), CircleShape)
+                            .size(36.dp)
+                    ) {
+                        Icon(Icons.Outlined.Settings, null, tint = PureWhite, modifier = Modifier.size(18.dp))
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Main Balance
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -1696,7 +1722,7 @@ fun HeroHeader(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Quick Stats
             Row(
