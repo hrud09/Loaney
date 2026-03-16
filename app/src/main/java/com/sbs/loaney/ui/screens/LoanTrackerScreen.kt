@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -189,58 +190,62 @@ fun LoanTrackerScreen(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = AlimCream,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        stringResource(id = R.string.loan_details), 
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = (-0.5).sp
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = handleBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                },
-                actions = {
-                    if (uiState.selectedLoan != null) {
-                        // Share PDF receipt
-                        IconButton(onClick = {
-                            uiState.selectedLoan?.let { lwp ->
-                                PdfReceiptGenerator.generateAndShare(
-                                    context = context,
-                                    loan = lwp.loan,
-                                    payments = lwp.payments,
-                                    loanItems = lwp.loanItems,
-                                    currencySymbol = uiState.currencySymbol
-                                )
+            Column(modifier = Modifier.background(AlimDark)) {
+                CenterAlignedTopAppBar(
+                    title = { 
+                        Text(
+                            stringResource(id = R.string.loan_details), 
+                            fontWeight = FontWeight.SemiBold,
+                            color = AlimWhite
+                        ) 
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = handleBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack, 
+                                contentDescription = "Back", 
+                                tint = AlimWhite
+                            )
+                        }
+                    },
+                    actions = {
+                        if (uiState.selectedLoan != null) {
+                            IconButton(onClick = {
+                                uiState.selectedLoan?.let { lwp ->
+                                    PdfReceiptGenerator.generateAndShare(
+                                        context = context,
+                                        loan = lwp.loan,
+                                        payments = lwp.payments,
+                                        loanItems = lwp.loanItems,
+                                        currencySymbol = uiState.currencySymbol
+                                    )
+                                }
+                            }) {
+                                Icon(Icons.Default.Share, contentDescription = "Share Receipt", tint = AlimWhite)
                             }
-                        }) {
-                            Icon(Icons.Default.Share, contentDescription = "Share Receipt", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            IconButton(onClick = { showEditLoanSheet = true }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = AlimWhite)
+                            }
+                            IconButton(onClick = { showDeleteConfirmation = true }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = AlimWhite)
+                            }
                         }
-                        IconButton(onClick = { showEditLoanSheet = true }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = CyberIndigo)
-                        }
-                        IconButton(onClick = { showDeleteConfirmation = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = CoralRose)
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = AlimDark,
+                        titleContentColor = AlimWhite
+                    )
                 )
-            )
+            }
         },
         bottomBar = {
             if (!isNavigatingBack) {
             if (uiState.selectedLoan != null && uiState.selectedLoan?.loan?.status != LoanStatus.FULLY_PAID && uiState.selectedLoan?.loan?.status != LoanStatus.FORGIVEN) {
                 Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp,
-                    shadowElevation = 6.dp
+                    color = AlimWhite,
+                    shadowElevation = 8.dp
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
                         Row(
@@ -252,20 +257,21 @@ fun LoanTrackerScreen(
                                  modifier = Modifier
                                      .weight(1f)
                                      .height(52.dp)
-                                     .shadow(8.dp, RoundedCornerShape(16.dp), spotColor = CyberIndigo.copy(alpha = 0.3f)),
-                                 shape = RoundedCornerShape(16.dp),
-                                 colors = ButtonDefaults.buttonColors(containerColor = CyberIndigo, contentColor = Color.White)
+                                     .shadow(8.dp, CircleShape, spotColor = AlimGreen.copy(alpha = 0.3f)),
+                                 shape = CircleShape,
+                                 colors = ButtonDefaults.buttonColors(containerColor = AlimGreen, contentColor = AlimWhite)
                              ) {
                                  Text(stringResource(id = R.string.pay), fontWeight = FontWeight.Bold)
                              }
 
-                             Button(
+                             OutlinedButton(
                                  onClick = { showAddLoanSheet = true },
                                  modifier = Modifier
                                      .weight(1f)
                                      .height(52.dp),
-                                 shape = RoundedCornerShape(16.dp),
-                                 colors = ButtonDefaults.buttonColors(containerColor = VibrantTeal, contentColor = Color.White)
+                                 shape = CircleShape,
+                                 border = BorderStroke(1.dp, AlimGreen),
+                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AlimGreen)
                              ) {
                                  Text(stringResource(id = R.string.add_more), fontWeight = FontWeight.Bold)
                              }
@@ -273,10 +279,10 @@ fun LoanTrackerScreen(
                              FilledIconButton(
                                  onClick = { showSettleConfirmation = true },
                                  modifier = Modifier.size(52.dp),
-                                 shape = RoundedCornerShape(16.dp),
-                                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                                 shape = CircleShape,
+                                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = AlimGreen.copy(alpha = 0.1f))
                              ) {
-                                 Icon(Icons.Default.CheckCircle, contentDescription = "Settle", tint = MaterialTheme.colorScheme.primary)
+                                 Icon(Icons.Default.CheckCircle, contentDescription = "Settle", tint = AlimGreen)
                              }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
@@ -310,7 +316,7 @@ fun LoanTrackerScreen(
                                         )
                                     }
                                 },
-                                colors = ButtonDefaults.textButtonColors(contentColor = CyberIndigo)
+                                 colors = ButtonDefaults.textButtonColors(contentColor = AlimGreen)
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -347,16 +353,17 @@ fun LoanTrackerScreen(
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize()
+                    .background(AlimCream)
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp), // Denser padding
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 // Header Card - Clean White Card
-                Card(
-                    modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    color = AlimWhite,
+                    shadowElevation = 2.dp
                 ) {
                      Row(
                         modifier = Modifier
@@ -388,21 +395,21 @@ fun LoanTrackerScreen(
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
-                                val isLent = loan.type == LoanType.LEND
-                                val bgColor = if (isLent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
-                                val textColor = if (isLent) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
-                                Box(
-                                    modifier = Modifier.fillMaxSize().background(bgColor, CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = loan.personName.firstOrNull()?.toString()?.uppercase() ?: "",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = textColor
-                                    )
-                                }
-                            }
+                                 val isLent = loan.type == LoanType.LEND
+                                 val bgColor = AlimGreen.copy(alpha = 0.1f)
+                                 val textColor = AlimGreen
+                                 Box(
+                                     modifier = Modifier.fillMaxSize().background(bgColor, CircleShape),
+                                     contentAlignment = Alignment.Center
+                                 ) {
+                                     Text(
+                                         text = loan.personName.firstOrNull()?.toString()?.uppercase() ?: "",
+                                         style = MaterialTheme.typography.titleMedium,
+                                         fontWeight = FontWeight.Bold,
+                                         color = textColor
+                                     )
+                                 }
+                             }
                         }
 
                         Column(modifier = Modifier.weight(1f)) {
@@ -418,7 +425,7 @@ fun LoanTrackerScreen(
                             Text(
                                 text = stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = AlimDark.copy(alpha = 0.6f)
                             )
                         }
 
@@ -426,8 +433,8 @@ fun LoanTrackerScreen(
                             Text(
                                 text = "${uiState.currencySymbol}${String.format("%.0f", remaining)}",
                                 style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onBackground,
+                                fontWeight = FontWeight.Bold,
+                                color = AlimDark,
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
@@ -440,10 +447,10 @@ fun LoanTrackerScreen(
                                              context.startActivity(intent)
                                         },
                                         modifier = Modifier.size(27.dp), // 36.dp * 0.75
-                                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                                    ) {
-                                        Icon(Icons.Default.Email, contentDescription = "Email", tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(14.dp)) // 18.dp * 0.75
-                                    }
+                                     colors = IconButtonDefaults.filledIconButtonColors(containerColor = AlimGreen.copy(alpha = 0.1f))
+                                 ) {
+                                     Icon(Icons.Default.Email, contentDescription = "Email", tint = AlimGreen, modifier = Modifier.size(14.dp)) // 18.dp * 0.75
+                                 }
                                 }
                                 FilledIconButton(
                                     onClick = {
@@ -475,11 +482,11 @@ fun LoanTrackerScreen(
                 }
 
                 // Detailed Information
-                Card(
-                    modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    color = AlimWhite,
+                    shadowElevation = 2.dp
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
@@ -495,9 +502,9 @@ fun LoanTrackerScreen(
                         DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes ?: stringResource(id = R.string.no_notes))
 
                         val statusColor = when (loan.status) {
-                            LoanStatus.OVERDUE -> MaterialTheme.colorScheme.error
-                            LoanStatus.FULLY_PAID -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.onBackground
+                            LoanStatus.OVERDUE -> CoralRose
+                            LoanStatus.FULLY_PAID -> AlimGreen
+                            else -> AlimDark
                         }
                         DetailRow(icon = Icons.Default.CheckCircle, label = stringResource(id = R.string.status), value = loan.status?.name ?: "", highlightColor = statusColor)
                     }
@@ -508,7 +515,7 @@ fun LoanTrackerScreen(
                     text = stringResource(id = R.string.loan_history),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = AlimDark
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { // 16.dp * 0.75

@@ -10,6 +10,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -252,81 +255,74 @@ fun BkashBottomNavBar(
     val pink = MaterialTheme.colorScheme.primary
     val gray = MaterialTheme.colorScheme.onSurfaceVariant
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+    Surface(
+        color = AlimWhite,
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        shadowElevation = 24.dp,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        // Top divider line
-        HorizontalDivider(
-            modifier = Modifier.align(Alignment.TopCenter),
-            color = MaterialTheme.colorScheme.outlineVariant,
-            thickness = 0.8.dp
-        )
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)
+                .padding(horizontal = 16.dp)
+                .height(84.dp)
                 .navigationBarsPadding(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Home
             val homeSelected = currentDestination?.hierarchy?.any { it.route == Screen.Home.route } == true
             BkashNavBarItem(
-                icon = Icons.Default.Home,
+                icon = if (homeSelected) Icons.Default.Home else Icons.Outlined.Home,
                 label = stringResource(R.string.nav_home),
                 selected = homeSelected,
                 onClick = { onNavItemClick(Screen.Home.route) }
             )
 
-            // History
+            // Transactions (History)
             val historySelected = currentDestination?.hierarchy?.any { it.route == Screen.ManageLoans.route } == true
             BkashNavBarItem(
-                icon = Icons.AutoMirrored.Filled.List,
-                label = stringResource(R.string.nav_history),
+                icon = if (historySelected) Icons.Default.ReceiptLong else Icons.Outlined.ReceiptLong,
+                label = "Transaction",
                 selected = historySelected,
                 onClick = { onNavItemClick(Screen.ManageLoans.route) }
             )
 
-            // Center FAB — Add button
+            // Center FAB — Add button (Styled like Scanner in image)
             Box(
                 modifier = Modifier
-                    .size(68.dp)
-                    .then(Modifier.shadow(elevation = 12.dp, shape = CircleShape))
+                    .offset(y = (-10).dp)
+                    .size(64.dp)
+                    .then(Modifier.shadow(elevation = 16.dp, shape = CircleShape, spotColor = AlimGreen))
                     .clip(CircleShape)
-                    .background(
-                        androidx.compose.ui.graphics.Brush.linearGradient(
-                            colors = listOf(pink, pink.copy(alpha = 0.8f))
-                        )
-                    )
-                    .bounceClick { onCenterFabClick() }
-                    .then(Modifier.wrapContentSize()),
+                    .background(AlimGreen)
+                    .bounceClick { onCenterFabClick() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Default.Add,
+                    Icons.Default.QrCodeScanner, // Using QrCodeScanner to match visual style
                     contentDescription = "Add",
-                    tint = Color.White,
-                    modifier = Modifier.size(34.dp)
+                    tint = AlimWhite,
+                    modifier = Modifier.size(30.dp)
                 )
             }
 
-            // Shop
+            // Report (Shop)
             val shopSelected = currentDestination?.hierarchy?.any { it.route == Screen.Shop.route } == true
             BkashNavBarItem(
-                icon = Icons.Default.ShoppingBag,
-                label = "Shop",
+                icon = if (shopSelected) Icons.Default.Analytics else Icons.Outlined.Analytics,
+                label = "Report",
                 selected = shopSelected,
                 onClick = onShopClick
             )
 
-            // Profile
+            // Settings (Profile)
+            val settingsSelected = currentDestination?.hierarchy?.any { it.route == Screen.Settings.route } == true
             BkashNavBarItem(
-                icon = Icons.Default.AccountCircle,
-                label = "Profile",
-                selected = false,
+                icon = if (settingsSelected) Icons.Default.Settings else Icons.Outlined.Settings,
+                label = "Settings",
+                selected = settingsSelected,
                 onClick = onProfileClick
             )
         }
@@ -340,26 +336,24 @@ private fun BkashNavBarItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val pink = MaterialTheme.colorScheme.primary
-    val gray = MaterialTheme.colorScheme.onSurfaceVariant
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     
     val color by animateColorAsState(
-        targetValue = if (selected) pink else gray,
+        targetValue = if (selected) AlimGreen else AlimDark.copy(alpha = 0.4f),
         animationSpec = tween(300),
         label = "item_color"
     )
     
     val scale by animateFloatAsState(
-        targetValue = if (selected) 1.1f else 1.0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        targetValue = if (selected) 1.05f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),
         label = "item_scale"
     )
 
     Box(
         modifier = Modifier
-            .width(72.dp)
-            .height(80.dp)
+            .width(68.dp)
+            .height(84.dp)
             .clickable(
                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                 indication = null,
@@ -375,27 +369,19 @@ private fun BkashNavBarItem(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.then(Modifier.graphicsLayer(scaleX = scale, scaleY = scale))
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(if (selected) pink.copy(alpha = 0.1f) else Color.Transparent)
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = label,
-                    tint = color,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = color,
+                modifier = Modifier.size(24.dp)
+            )
             Text(
                 text = label,
                 color = color,
-                fontSize = 12.sp,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                fontSize = 11.sp,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                 maxLines = 1,
-                modifier = Modifier.padding(top = 2.dp)
+                modifier = Modifier.padding(top = 6.dp)
             )
         }
     }

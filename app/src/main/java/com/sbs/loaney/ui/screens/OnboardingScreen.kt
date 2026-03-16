@@ -81,7 +81,7 @@ fun OnboardingScreen(
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        containerColor = DeepDarkBg
+        containerColor = AlimCream
     ) { paddingValues ->
         if (showProfileSetup) {
             Column(
@@ -110,8 +110,8 @@ fun OnboardingScreen(
                     shape = RoundedCornerShape(16.dp),
                     enabled = userName.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = SoftViolet,
-                        contentColor = Color.White
+                        containerColor = AlimGreen,
+                        contentColor = AlimWhite
                     )
                 ) {
                     Text("Get Started", fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -146,7 +146,7 @@ fun OnboardingScreen(
                                 modifier = Modifier
                                     .size(width = if (isSelected) 24.dp else 8.dp, height = 8.dp)
                                     .clip(CircleShape)
-                                    .background(if (isSelected) SoftViolet else MutedText.copy(alpha = 0.3f))
+                                    .background(if (isSelected) AlimGreen else AlimDark.copy(alpha = 0.1f))
                             )
                         }
                     }
@@ -162,7 +162,7 @@ fun OnboardingScreen(
                             }
                         },
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = SoftViolet)
+                        colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
                     ) {
                         Text(if (pagerState.currentPage == pages.size - 1) "Finish" else "Next", fontWeight = FontWeight.SemiBold)
                     }
@@ -193,7 +193,7 @@ fun ProfileSetupPage(
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = onSkip) {
-                Text("Skip for now", color = MutedText)
+                Text("Skip for now", color = AlimDark.copy(alpha = 0.4f))
             }
         }
         
@@ -203,14 +203,14 @@ fun ProfileSetupPage(
         Box(
             modifier = Modifier
                 .size(120.dp)
-                .background(DarkSurface, CircleShape)
-                .border(2.dp, SoftViolet.copy(alpha = 0.3f), CircleShape),
+                .background(AlimWhite, CircleShape)
+                .border(2.dp, AlimGreen.copy(alpha = 0.3f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.Person,
                 contentDescription = null,
-                tint = SoftViolet,
+                tint = AlimGreen,
                 modifier = Modifier.size(64.dp)
             )
         }
@@ -220,8 +220,8 @@ fun ProfileSetupPage(
         Text(
             text = "Nearly There!",
             style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White
+                fontWeight = FontWeight.Bold,
+                color = AlimDark
             ),
             textAlign = TextAlign.Center
         )
@@ -231,7 +231,7 @@ fun ProfileSetupPage(
         Text(
             text = "Tell us your name and preferred currency to personalize your experience.",
             style = MaterialTheme.typography.bodyLarge.copy(
-                color = MutedText,
+                color = AlimDark.copy(alpha = 0.6f),
                 lineHeight = 24.sp
             ),
             textAlign = TextAlign.Center
@@ -243,17 +243,19 @@ fun ProfileSetupPage(
         OutlinedTextField(
             value = userName,
             onValueChange = onNameChange,
-            label = { Text("Your Name", color = MutedText) },
-            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = SoftViolet) },
+            label = { Text("Your Name", color = AlimDark.copy(alpha = 0.4f)) },
+            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AlimGreen) },
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedBorderColor = SoftViolet,
-                unfocusedBorderColor = DarkOutline,
-                cursorColor = SoftViolet
+                focusedTextColor = AlimDark,
+                unfocusedTextColor = AlimDark,
+                focusedBorderColor = AlimGreen,
+                unfocusedBorderColor = AlimDark.copy(alpha = 0.1f),
+                cursorColor = AlimGreen,
+                focusedContainerColor = AlimWhite,
+                unfocusedContainerColor = AlimWhite
             )
         )
 
@@ -264,7 +266,7 @@ fun ProfileSetupPage(
             text = "Local Currency",
             style = MaterialTheme.typography.titleSmall.copy(
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = AlimDark
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -278,15 +280,15 @@ fun ProfileSetupPage(
             currencies.forEach { (symbol, code) ->
                 val isSelected = selectedCurrency == symbol
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (isSelected) SoftViolet.copy(alpha = 0.15f) else DarkSurface,
+                    shape = RoundedCornerShape(24.dp),
+                    color = if (isSelected) AlimGreen.copy(alpha = 0.05f) else AlimWhite,
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onCurrencySelect(symbol) }
                         .border(
                             width = if (isSelected) 2.dp else 1.dp,
-                            color = if (isSelected) SoftViolet else DarkOutline,
-                            shape = RoundedCornerShape(16.dp)
+                            color = if (isSelected) AlimGreen else AlimDark.copy(alpha = 0.05f),
+                            shape = RoundedCornerShape(24.dp)
                         )
                 ) {
                     Column(
@@ -297,14 +299,14 @@ fun ProfileSetupPage(
                             text = symbol,
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) SoftViolet else Color.White
+                                color = if (isSelected) AlimGreen else AlimDark
                             )
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = code,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = if (isSelected) SoftViolet else MutedText,
+                                color = if (isSelected) AlimGreen else AlimDark.copy(alpha = 0.4f),
                                 fontSize = 10.sp
                             )
                         )
@@ -331,8 +333,8 @@ fun OnboardingPageContent(page: OnboardingPage) {
         Text(
             text = page.title,
             style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                color = AlimDark,
                 fontSize = 32.sp
             ),
             textAlign = TextAlign.Center
@@ -343,7 +345,7 @@ fun OnboardingPageContent(page: OnboardingPage) {
         Text(
             text = page.description,
             style = MaterialTheme.typography.bodyLarge.copy(
-                color = MutedText,
+                color = AlimDark.copy(alpha = 0.6f),
                 lineHeight = 26.sp,
                 fontSize = 18.sp
             ),

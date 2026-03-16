@@ -11,25 +11,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-// ─── Cyber-Vibrant Light Theme ───────────────────────────────────────────────
-private val CyberLightColorScheme = lightColorScheme(
-    primary             = CyberIndigo,
+// ─── Alim Inspired Light Theme ───────────────────────────────────────────────
+private val AlimLightColorScheme = lightColorScheme(
+    primary             = AlimDark,
     onPrimary           = PureWhite,
-    primaryContainer    = CyberIndigo.copy(alpha = 0.1f),
-    onPrimaryContainer  = CyberIndigo,
-    secondary           = VibrantTeal,
+    primaryContainer    = AlimDark.copy(alpha = 0.1f),
+    onPrimaryContainer  = AlimDark,
+    secondary           = AlimGreen,
     onSecondary         = PureWhite,
-    secondaryContainer  = VibrantTeal.copy(alpha = 0.1f),
-    onSecondaryContainer = VibrantTeal,
+    secondaryContainer  = AlimGreen.copy(alpha = 0.1f),
+    onSecondaryContainer = AlimGreen,
     tertiary            = CoralRose,
     onTertiary          = PureWhite,
-    background          = SoftSlate,
-    onBackground        = PureBlack,
-    surface             = PureWhite,
-    onSurface           = PureBlack,
-    surfaceVariant      = Color(0xFFF1F5F9),
-    onSurfaceVariant    = Color(0xFF475569),
-    outline             = Color(0xFFE2E8F0),
+    background          = AlimCream,
+    onBackground        = AlimDark,
+    surface             = AlimWhite,
+    onSurface           = AlimDark,
+    surfaceVariant      = AlimGray,
+    onSurfaceVariant    = AlimDark.copy(alpha = 0.6f),
+    outline             = AlimGray,
     outlineVariant      = Color(0xFFCBD5E1),
     error               = CoralRose,
     onError             = PureWhite,
@@ -37,21 +37,21 @@ private val CyberLightColorScheme = lightColorScheme(
     onErrorContainer    = CoralRose
 )
 
-// ─── Cyber-Vibrant Dark Theme ────────────────────────────────────────────────
-private val CyberDarkColorScheme = darkColorScheme(
-    primary             = CyberIndigo,
-    onPrimary           = PureWhite,
-    primaryContainer    = Color(0xFF312E81),
-    onPrimaryContainer  = Color(0xFFC7D2FE),
-    secondary           = VibrantTeal,
-    onSecondary         = PureWhite,
-    background          = Color(0xFF0F172A), // Deep Slate
-    onBackground        = Color(0xFFF8FAFC),
-    surface             = Color(0xFF1E293B),
-    onSurface           = Color(0xFFF1F5F9),
-    surfaceVariant      = Color(0xFF334155),
-    onSurfaceVariant    = Color(0xFF94A3B8),
-    outline             = Color(0xFF475569),
+// ─── Alim Inspired Dark Theme ────────────────────────────────────────────────
+private val AlimDarkColorScheme = darkColorScheme(
+    primary             = AlimGreen,
+    onPrimary           = AlimDark,
+    primaryContainer    = AlimGreen.copy(alpha = 0.2f),
+    onPrimaryContainer  = AlimGreen,
+    secondary           = AlimGreen,
+    onSecondary         = AlimDark,
+    background          = Color(0xFF0D0D12), // Deeper Black
+    onBackground        = AlimCream,
+    surface             = Color(0xFF16161E),  // Slightly lighter dark
+    onSurface           = AlimCream,
+    surfaceVariant      = Color(0xFF23232E),
+    onSurfaceVariant    = AlimCream.copy(alpha = 0.6f),
+    outline             = Color(0xFF2D2D3A),
     error               = CoralRose,
     onError             = PureWhite
 )
@@ -67,8 +67,8 @@ fun LoaneyTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> CyberDarkColorScheme
-        else -> CyberLightColorScheme
+        darkTheme -> AlimDarkColorScheme
+        else -> AlimLightColorScheme
     }
 
     MaterialTheme(

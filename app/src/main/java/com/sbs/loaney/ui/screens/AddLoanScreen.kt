@@ -239,33 +239,71 @@ fun AddLoanScreen(
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = AlimCream,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title), 
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = (-0.5).sp
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back), tint = MaterialTheme.colorScheme.onSurface)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+            Column(modifier = Modifier.background(AlimDark)) {
+                CenterAlignedTopAppBar(
+                    title = { 
+                        Text(
+                            if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title), 
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = AlimWhite
+                        ) 
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack, 
+                                contentDescription = stringResource(id = R.string.back), 
+                                tint = AlimWhite
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = AlimDark,
+                        titleContentColor = AlimWhite
+                    )
                 )
-            )
+                
+                // Tab Row inside the dark header
+                TabRow(
+                    selectedTabIndex = pagerState.currentPage,
+                    containerColor = AlimDark,
+                    contentColor = AlimGreen,
+                    indicator = { tabPositions ->
+                        if (pagerState.currentPage < tabPositions.size) {
+                            TabRowDefaults.SecondaryIndicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                                color = AlimGreen,
+                                height = 3.dp
+                            )
+                        }
+                    },
+                    divider = {}
+                ) {
+                    listOf(0 to stringResource(id = R.string.lend), 1 to stringResource(id = R.string.borrow)).forEach { (pageIndex, text) ->
+                        val selected = pagerState.currentPage == pageIndex
+                        Tab(
+                            selected = selected,
+                            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(pageIndex) } },
+                            text = {
+                                Text(
+                                    text = text,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (selected) AlimGreen else AlimWhite.copy(alpha = 0.6f)
+                                )
+                            }
+                        )
+                    }
+                }
+            }
         },
         bottomBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.background,
-                shadowElevation = 8.dp
+                color = AlimCream,
+                shadowElevation = 0.dp
             ) {
                 Button(
                     onClick = {
@@ -304,10 +342,10 @@ fun AddLoanScreen(
                         .fillMaxWidth()
                         .padding(16.dp)
                         .height(56.dp)
-                        .shadow(12.dp, CircleShape, spotColor = CyberIndigo.copy(alpha = 0.4f)),
+                        .shadow(12.dp, CircleShape, spotColor = AlimGreen.copy(alpha = 0.4f)),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = CyberIndigo,
-                        contentColor = Color.White
+                        containerColor = AlimGreen,
+                        contentColor = AlimWhite
                     ),
                     shape = CircleShape
                 ) {
@@ -321,55 +359,8 @@ fun AddLoanScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .pointerInput(Unit) {
-                    var totalDrag = 0f
-                    detectHorizontalDragGestures(
-                        onDragStart = { totalDrag = 0f },
-                        onHorizontalDrag = { _, dragAmount ->
-                            totalDrag += dragAmount
-                        },
-                        onDragEnd = {
-                            if (totalDrag > 100f) {
-                                onNavigateBack()
-                            }
-                        }
-                    )
-                }
+                .background(AlimCream)
         ) {
-            // Tab Row
-            TabRow(
-                selectedTabIndex = pagerState.currentPage,
-                containerColor = MaterialTheme.colorScheme.background,
-                contentColor = MaterialTheme.colorScheme.primary,
-                indicator = { tabPositions ->
-                    if (pagerState.currentPage < tabPositions.size) {
-                        TabRowDefaults.SecondaryIndicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
-                            color = MaterialTheme.colorScheme.primary,
-                            height = 3.dp
-                        )
-                    }
-                },
-                divider = {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-                }
-            ) {
-                listOf(0 to stringResource(id = R.string.lend), 1 to stringResource(id = R.string.borrow)).forEach { (pageIndex, text) ->
-                    val selected = pagerState.currentPage == pageIndex
-                    Tab(
-                        selected = selected,
-                        onClick = { coroutineScope.launch { pagerState.animateScrollToPage(pageIndex) } },
-                        text = {
-                            Text(
-                                text = text,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    )
-                }
-            }
-
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
@@ -383,161 +374,162 @@ fun AddLoanScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Big Amount Input
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = stringResource(id = R.string.amount), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.height(0.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "${uiState.currencySymbol} ",
-                        style = MaterialTheme.typography.displayMedium,
-                        color = if (amountError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold
-                    )
-                    BasicTextField(
-                        value = amount,
-                        onValueChange = { 
-                            if (it.isEmpty() || it.all { char -> char.isDigit() || char == '.' }) {
-                                amount = if (it.startsWith("0") && it.length > 1 && !it.startsWith("0.")) it.substring(1) else it
-                                if (amount.isEmpty()) amount = "0"
-                            }
-                        },
-                        textStyle = MaterialTheme.typography.displayMedium.copy(
-                            color = if (amountError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.width(IntrinsicSize.Min)
-                    )
-                }
-
-                // Quick amount pills
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    quickAmounts.forEach { quickVal ->
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.clickable { 
-                                val curr = amount.toDoubleOrNull() ?: 0.0
-                                amount = (curr + quickVal).toLong().toString() 
-                            }
-                        ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = stringResource(id = R.string.amount), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
+                        Spacer(modifier = Modifier.height(0.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "+$quickVal",
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface
+                                text = "${uiState.currencySymbol} ",
+                                style = MaterialTheme.typography.displayMedium,
+                                color = if (amountError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
+                                fontWeight = FontWeight.Bold
+                            )
+                            BasicTextField(
+                                value = amount,
+                                onValueChange = { 
+                                    if (it.isEmpty() || it.all { char -> char.isDigit() || char == '.' }) {
+                                        amount = if (it.startsWith("0") && it.length > 1 && !it.startsWith("0.")) it.substring(1) else it
+                                        if (amount.isEmpty()) amount = "0"
+                                    }
+                                },
+                                textStyle = MaterialTheme.typography.displayMedium.copy(
+                                    color = if (amountError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                modifier = Modifier.width(IntrinsicSize.Min)
                             )
                         }
-                    }
-                }
-            }
 
-            // Core Recipient Card
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    // Profile Photo Picker
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 0.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable { profilePhotoLauncher.launch(arrayOf("image/*")) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (profilePhotoUri != null) {
-                                AsyncImage(
-                                    model = profilePhotoUri,
-                                    contentDescription = "Profile Photo",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Icon(Icons.Default.AddAPhoto, contentDescription = "Add Profile Photo", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
-                            }
-                        }
-                             Box(modifier = Modifier.fillMaxWidth()) {
-                        CustomLightTextField(
-                            value = name,
-                            onValueChange = { 
-                                name = it
-                                showSuggestions = true 
-                                if (it.isNotBlank()) nameError = false
-                            },
-                            label = stringResource(id = R.string.recipient_name),
-                            leadingIcon = Icons.Default.Person,
-                            trailingIcon = Icons.Default.ContactPhone,
-                            isError = nameError,
-                            onTrailingIconClick = { 
-                                val intent = android.content.Intent(android.content.Intent.ACTION_PICK).apply {
-                                    type = ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE
-                                }
-                                contactLauncher.launch(intent) 
-                            }
-                        )
-                        
-                        if (showSuggestions && nameSuggestions.isNotEmpty()) {
-                            DropdownMenu(
-                                expanded = true,
-                                onDismissRequest = { showSuggestions = false },
-                                properties = PopupProperties(focusable = false),
-                                modifier = Modifier.fillMaxWidth(0.8f).background(MaterialTheme.colorScheme.surfaceVariant)
-                            ) {
-                                nameSuggestions.forEach { suggestion ->
-                                    DropdownMenuItem(
-                                        text = { Text(suggestion, color = MaterialTheme.colorScheme.onBackground) },
-                                        onClick = {
-                                            name = suggestion
-                                            showSuggestions = false
-                                        }
+                        // Quick amount pills
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            quickAmounts.forEach { quickVal ->
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    modifier = Modifier.clickable { 
+                                        val curr = amount.toDoubleOrNull() ?: 0.0
+                                        amount = (curr + quickVal).toLong().toString() 
+                                    }
+                                ) {
+                                    Text(
+                                        text = "+$quickVal",
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
                         }
                     }
-                }
 
-                CustomLightTextField(
-                        value = phone,
-                        onValueChange = { phone = it },
-                        label = stringResource(id = R.string.phone_optional),
-                        leadingIcon = Icons.Default.Phone,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-                    )
+                    // Core Recipient Card
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            // Profile Photo Picker
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 0.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .clickable { profilePhotoLauncher.launch(arrayOf("image/*")) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (profilePhotoUri != null) {
+                                        AsyncImage(
+                                            model = profilePhotoUri,
+                                            contentDescription = "Profile Photo",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Icon(Icons.Default.AddAPhoto, contentDescription = "Add Profile Photo", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
+                                    }
+                                }
+                            }
+                            
+                            CustomLightTextField(
+                                value = name,
+                                onValueChange = { 
+                                    name = it
+                                    showSuggestions = true 
+                                    if (it.isNotBlank()) nameError = false
+                                },
+                                label = stringResource(id = R.string.recipient_name),
+                                leadingIcon = Icons.Default.Person,
+                                trailingIcon = Icons.Default.ContactPhone,
+                                isError = nameError,
+                                onTrailingIconClick = { 
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_PICK).apply {
+                                        type = ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE
+                                    }
+                                    contactLauncher.launch(intent) 
+                                }
+                            )
+                            
+                            if (showSuggestions && nameSuggestions.isNotEmpty()) {
+                                DropdownMenu(
+                                    expanded = true,
+                                    onDismissRequest = { showSuggestions = false },
+                                    properties = PopupProperties(focusable = false),
+                                    modifier = Modifier.fillMaxWidth(0.8f).background(MaterialTheme.colorScheme.surfaceVariant)
+                                ) {
+                                    nameSuggestions.forEach { suggestion ->
+                                        DropdownMenuItem(
+                                            text = { Text(suggestion, color = MaterialTheme.colorScheme.onBackground) },
+                                            onClick = {
+                                                name = suggestion
+                                                showSuggestions = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Box(modifier = Modifier.weight(1f).clickable { showLoanDatePicker = true }) {
                             CustomLightTextField(
-                                value = dateFormat.format(Date(loanDate)),
-                                onValueChange = {},
-                                label = stringResource(id = R.string.loan_date),
-                                readOnly = true,
-                                enabled = false,
-                                leadingIcon = Icons.Default.CalendarToday,
-                                modifier = Modifier.fillMaxWidth()
+                                value = phone,
+                                onValueChange = { phone = it },
+                                label = stringResource(id = R.string.phone_optional),
+                                leadingIcon = Icons.Default.Phone,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                             )
-                        }
-                        Box(modifier = Modifier.weight(1f).clickable { showReturnDatePicker = true }) {
-                            CustomLightTextField(
-                                value = dateFormat.format(Date(returnDate)),
-                                onValueChange = {},
-                                label = stringResource(id = R.string.due_date),
-                                readOnly = true,
-                                enabled = false,
-                                leadingIcon = Icons.Default.Event,
-                                modifier = Modifier.fillMaxWidth()
-                            )
+
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(modifier = Modifier.weight(1f).clickable { showLoanDatePicker = true }) {
+                                    CustomLightTextField(
+                                        value = dateFormat.format(Date(loanDate)),
+                                        onValueChange = {},
+                                        label = stringResource(id = R.string.loan_date),
+                                        readOnly = true,
+                                        enabled = false,
+                                        leadingIcon = Icons.Default.CalendarToday,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                                Box(modifier = Modifier.weight(1f).clickable { showReturnDatePicker = true }) {
+                                    CustomLightTextField(
+                                        value = dateFormat.format(Date(returnDate)),
+                                        onValueChange = {},
+                                        label = stringResource(id = R.string.due_date),
+                                        readOnly = true,
+                                        enabled = false,
+                                        leadingIcon = Icons.Default.Event,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -598,7 +590,8 @@ fun AddLoanScreen(
                             }
                         }
                     }
-                       // Extra Details Toggle
+
+                    // Extra Details Toggle
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -726,9 +719,7 @@ fun AddLoanScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
         }
-        }
     }
-}
 }
 
 @Composable
@@ -759,13 +750,13 @@ fun CustomLightTextField(
         shape = RoundedCornerShape(12.dp),
         enabled = enabled,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            focusedBorderColor = AlimGreen,
             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            focusedTextColor = MaterialTheme.colorScheme.onBackground,
-            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-            cursorColor = MaterialTheme.colorScheme.primary
+            focusedContainerColor = AlimWhite,
+            unfocusedContainerColor = AlimWhite,
+            focusedTextColor = AlimDark,
+            unfocusedTextColor = AlimDark,
+            cursorColor = AlimGreen
         ),
         leadingIcon = leadingIcon?.let {
             { Icon(it, contentDescription = null, tint = if (value.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant) }

@@ -2,9 +2,17 @@ package com.sbs.loaney.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── Cyber-Vibrant Core Palette ───────────────────────────────────────────────
+// ── AlimBank Inspired Palette ────────────────────────────────────────────────
+val AlimDark      = Color(0xFF101116)   // Primary / Header
+val AlimGreen     = Color(0xFF00A86B)   // Accent / FAB
+val AlimGreenAlpha = Color(0x3300A86B)  // Accent Surface
+val AlimCream     = Color(0xFFF5F5F0)   // Content Area Background
+val AlimWhite     = Color(0xFFFFFFFF)
+val AlimGray      = Color(0xFFE8E8E1)   // Dividers/Subtle
+
+// ── Cyber-Vibrant Core Palette (Legacy Support) ──────────────────────────────
 val CyberIndigo   = Color(0xFF6366F1)   // Primary
-val VibrantTeal   = Color(0xFF2DD4BF)   // Secondary
+val VibrantTeal   = AlimGreen           // Map to AlimGreen
 val CoralRose     = Color(0xFFFB7185)   // Accent / Debt
 val SoftSlate     = Color(0xFFF8FAFC)   // Background
 val PureWhite     = Color(0xFFFFFFFF)

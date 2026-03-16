@@ -26,8 +26,8 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import com.sbs.loaney.ui.components.OnboardingIllustration
 import com.sbs.loaney.ui.components.OnboardingIllustrationType
@@ -116,22 +116,26 @@ fun HomeScreen(
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = AlimCream,
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding).background(AlimCream)) {
             if (uiState.isLoading) {
                 com.sbs.loaney.ui.components.AnimatedLoadingScreen()
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    // HERO HEADER (FIXED)
-                    HeroHeader(
-                        uiState = uiState,
-                        onNavigateToSettings = onNavigateToSettings,
+                    // NEW ALIMBANK STYLE HEADER
+                    AlimHeader(
+                        userName = uiState.userName,
                         onNotificationsClick = { showNotificationsSheet = true },
-                        onCalendarClick = { showFeaturedCalendar = true },
+                        onProfileClick = onNavigateToSettings
+                    )
+                    
+                    AlimBalanceCard(
+                        balance = uiState.totalLent - uiState.totalBorrowed,
+                        currencySymbol = uiState.currencySymbol,
+                        onNavigateToAddLoan = onNavigateToAddLoan,
                         onNavigateToHistory = onNavigateToHistory,
-                        onLongLentClick = { showLentSummary = true },
-                        onLongBorrowedClick = { showBorrowedSummary = true }
+                        onReportClick = { onNavigateToHistory(null) }
                     )
 
                     // SCROLLABLE CONTENT
@@ -141,84 +145,45 @@ fun HomeScreen(
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
+                        Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+                    if (allLoans.isEmpty()) {
+                        Box(modifier = Modifier.padding(horizontal = 20.dp)) {
+                            HomeZeroState(onNavigateToAddLoan = { onNavigateToAddLoan("LEND") })
+                        }
+                    } else {
+                        // ── PROMOS & REMINDERS (Horizontal) ─────────────────────────
+                        AlimPromoSection()
 
-            if (allLoans.isEmpty()) {
-                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    HomeZeroState(onNavigateToAddLoan = { onNavigateToAddLoan("LEND") })
-                }
-            } else {
-                // ── QUICK ACTION GRID ──────────────────────────────────────────────
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .simpleGlass(
-                            shape = RoundedCornerShape(24.dp),
-                            backgroundColor = PureWhite.copy(alpha = 0.9f)
-                        )
-                        .padding(vertical = 16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        QuickActionItem(
-                            icon = Icons.AutoMirrored.Filled.CallMade,
-                            label = stringResource(R.string.lend),
-                            color = CyberIndigo,
-                            onClick = { onNavigateToAddLoan("LEND") }
-                        )
-                        QuickActionItem(
-                            icon = Icons.AutoMirrored.Filled.CallReceived,
-                            label = stringResource(R.string.borrow),
-                            color = CoralRose,
-                            onClick = { onNavigateToAddLoan("BORROW") }
-                        )
-                        QuickActionItem(
-                            icon = Icons.Default.Payments,
-                            label = stringResource(R.string.pay),
-                            color = VibrantTeal,
-                            onClick = { onNavigateToHistory(null) }
-                        )
-                        QuickActionItem(
-                            icon = Icons.AutoMirrored.Filled.FormatListBulleted,
-                            label = "All",
-                            color = Color(0xFF64748B),
-                            onClick = { onNavigateToHistory(null) }
-                        )
-                    }
-                }
+                        Spacer(modifier = Modifier.height(28.dp))
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // ── RECENT TRANSACTIONS ────────────────────────────────────────
-                Column(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Recent Activity",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E293B)
-                            )
-                        )
-                        Text(
-                            text = "See All",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = CyberIndigo,
-                                fontWeight = FontWeight.Bold
-                            ),
-                            modifier = Modifier.clickable { onNavigateToHistory(null) }
-                        )
-                    }
+                        // ── UPCOMING ACTIVITIES / RECENT ACTIVITY ───────────────────
+                        Column(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Upcoming Activities",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = AlimDark,
+                                        fontSize = 18.sp
+                                    )
+                                )
+                                Text(
+                                    text = "See All",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        color = AlimGreen,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    modifier = Modifier.clickable { onNavigateToHistory(null) }
+                                )
+                            }
 
                     // Show up to 5 most recent
                     allLoans.take(5).forEach { item ->
@@ -555,18 +520,19 @@ fun RecentActivityCard(
     val paid = item.payments.sumOf { it.amount }
     val balance = totalLoan - paid
 
-    Box(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .simpleGlass(
-                shape = RoundedCornerShape(24.dp),
-                backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                borderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)
-            )
-            .clickable { onClick() }
-            .padding(16.dp)
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = AlimWhite,
+        shadowElevation = 2.dp
     ) {
+        Box(
+            modifier = Modifier
+                .clickable { onClick() }
+                .padding(16.dp)
+        ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -619,6 +585,7 @@ fun RecentActivityCard(
             }
         }
     }
+}
 }
 
 // --- BANK ACCOUNTS COMPONENTS ---
@@ -1623,125 +1590,250 @@ class CardNumberVisualTransformation : VisualTransformation {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HeroHeader(
-    uiState: com.sbs.loaney.ui.viewmodel.HomeUiState,
-    onNavigateToSettings: () -> Unit,
+fun AlimHeader(
+    userName: String,
     onNotificationsClick: () -> Unit,
-    onCalendarClick: () -> Unit,
-    onNavigateToHistory: (String) -> Unit,
-    onLongLentClick: () -> Unit,
-    onLongBorrowedClick: () -> Unit
+    onProfileClick: () -> Unit
 ) {
-    val balance = uiState.totalLent - uiState.totalBorrowed
-    
+    val greeting = remember {
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        when (hour) {
+            in 0..11 -> "Good Morning,"
+            in 12..16 -> "Good Afternoon,"
+            else -> "Good Evening,"
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .glassCard(
-                shape = RoundedCornerShape(32.dp),
-                backgroundColor = CyberIndigo.copy(alpha = 0.9f),
-                borderColor = Color.White.copy(alpha = 0.2f)
-            )
+            .background(AlimDark)
+            .padding(top = 16.dp, start = 20.dp, end = 20.dp, bottom = 24.dp)
     ) {
-        // Decorative Gradients for Cyber-Vibrant feel
-        Canvas(modifier = Modifier.matchParentSize()) {
-            drawCircle(
-                brush = androidx.compose.ui.graphics.Brush.radialGradient(
-                    colors = listOf(VibrantTeal.copy(alpha = 0.4f), Color.Transparent),
-                    center = this.center.copy(x = this.size.width * 0.8f, y = this.size.height * 0.2f),
-                    radius = this.size.width * 0.6f
-                )
-            )
-        }
-
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Top row: Greeting + Settings
+        Column {
+            // Top Row: App Name + Icons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Hello, ${uiState.userName}",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = PureWhite
-                        )
+                Text(
+                    text = "Loaney",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        color = AlimWhite,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.5.sp
                     )
-                    Text(
-                        text = "Your money is safe",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = PureWhite.copy(alpha = 0.7f)
-                        )
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    IconButton(
-                        onClick = onCalendarClick,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
                         modifier = Modifier
-                            .background(PureWhite.copy(alpha = 0.1f), CircleShape)
                             .size(36.dp)
+                            .background(AlimWhite.copy(alpha = 0.1f), CircleShape)
+                            .clickable { onNotificationsClick() },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.CalendarMonth, null, tint = PureWhite, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = "Notifications",
+                            tint = AlimWhite,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
-                    IconButton(
-                        onClick = onNavigateToSettings,
+                    Box(
                         modifier = Modifier
-                            .background(PureWhite.copy(alpha = 0.1f), CircleShape)
                             .size(36.dp)
+                            .background(AlimWhite.copy(alpha = 0.1f), CircleShape)
+                            .clickable { onProfileClick() },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Outlined.Settings, null, tint = PureWhite, modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = "Profile",
+                            tint = AlimWhite,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Main Balance
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "NET POSITION",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = PureWhite.copy(alpha = 0.6f),
-                        letterSpacing = 2.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+            // Greeting
+            Text(
+                text = "$greeting",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = AlimWhite.copy(alpha = 0.7f),
+                    fontWeight = FontWeight.Medium
                 )
+            )
+            Text(
+                text = userName,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    color = AlimWhite,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun AlimBalanceCard(
+    balance: Double,
+    currencySymbol: String,
+    onNavigateToAddLoan: (String) -> Unit,
+    onNavigateToHistory: (String?) -> Unit,
+    onReportClick: () -> Unit
+) {
+    var isBalanceVisible by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(AlimDark)
+            .padding(horizontal = 20.dp)
+    ) {
+        // The Emerald Card
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(AlimGreen, RoundedCornerShape(24.dp))
+                .padding(20.dp)
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Current Balance",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                color = AlimWhite.copy(alpha = 0.8f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            if (isBalanceVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = "Toggle Balance",
+                            tint = AlimWhite.copy(alpha = 0.8f),
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clickable { isBalanceVisible = !isBalanceVisible }
+                        )
+                    }
+                    Icon(
+                        Icons.Default.ArrowForwardIos,
+                        contentDescription = "More",
+                        tint = AlimWhite,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
-                    text = "${uiState.currencySymbol}${String.format("%,.0f", balance)}",
+                    text = if (isBalanceVisible) "$currencySymbol${String.format("%,.0f", balance)}" else "****",
                     style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Black,
-                        color = PureWhite,
-                        fontSize = 40.sp,
-                        letterSpacing = (-1).sp
+                        color = AlimWhite,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 32.sp
                     )
                 )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Quick Actions Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    AlimCardAction(Icons.Default.Add, "Lend", onClick = { onNavigateToAddLoan("LEND") })
+                    AlimCardAction(Icons.Default.Remove, "Borrow", onClick = { onNavigateToAddLoan("BORROW") })
+                    AlimCardAction(Icons.Default.History, "History", onClick = { onNavigateToHistory(null) })
+                    AlimCardAction(Icons.Default.BarChart, "Report", onClick = onReportClick)
+                }
             }
+        }
+        
+        // Overflow background to create the "top dark, bottom light" split effect
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+        )
+    }
+}
 
-            Spacer(modifier = Modifier.height(16.dp))
+@Composable
+fun AlimCardAction(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .bounceClick { onClick() }
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .background(AlimWhite.copy(alpha = 0.15f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = AlimWhite,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                color = AlimWhite,
+                fontWeight = FontWeight.Medium
+            )
+        )
+    }
+}
 
-            // Quick Stats
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Lent
-                StatChip(
-                    label = "Lent",
-                    amount = "${uiState.currencySymbol}${String.format("%,.0f", uiState.totalLent)}",
-                    color = VibrantTeal,
-                    onClick = { onNavigateToHistory("LEND") }
+@Composable
+fun AlimPromoSection() {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = "Promos & Reminders",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                        color = AlimDark,
+                fontSize = 18.sp
+            ),
+            modifier = Modifier.padding(horizontal = 20.dp)
+        )
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            item {
+                AlimPromoCard(
+                    title = "Keep your credit",
+                    subtitle = "Always pay on time",
+                    buttonLabel = "Apply",
+                    color = Color(0xFFFFFBEB) // Light yellow
                 )
-                // Debt
-                StatChip(
-                    label = "Debt",
-                    amount = "${uiState.currencySymbol}${String.format("%,.0f", uiState.totalBorrowed)}",
-                    color = CoralRose,
-                    onClick = { onNavigateToHistory("BORROW") }
+            }
+            item {
+                AlimPromoCard(
+                    title = "Refer a Friend",
+                    subtitle = "Get rewards instantly",
+                    buttonLabel = "Refer",
+                    color = Color(0xFFF0FDF4) // Light green
                 )
             }
         }
@@ -1749,17 +1841,44 @@ fun HeroHeader(
 }
 
 @Composable
-fun RowScope.StatChip(label: String, amount: String, color: Color, onClick: () -> Unit) {
+fun AlimPromoCard(
+    title: String,
+    subtitle: String,
+    buttonLabel: String,
+    color: Color
+) {
     Box(
         modifier = Modifier
-            .weight(1f)
-            .background(PureWhite.copy(alpha = 0.1f), RoundedCornerShape(20.dp))
-            .clickable { onClick() }
-            .padding(16.dp)
+            .width(280.dp)
+            .height(140.dp)
+            .background(color, RoundedCornerShape(24.dp))
+            .padding(20.dp)
     ) {
-        Column {
-            Text(label, color = PureWhite.copy(alpha = 0.6f), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-            Text(amount, color = color, fontSize = 16.sp, fontWeight = FontWeight.Black)
+        Column(verticalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxHeight()) {
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = AlimDark
+                    )
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = AlimDark.copy(alpha = 0.6f)
+                    )
+                )
+            }
+            Button(
+                onClick = { },
+                colors = ButtonDefaults.buttonColors(containerColor = AlimGreen),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                modifier = Modifier.height(32.dp),
+                shape = CircleShape
+            ) {
+                Text(buttonLabel, style = MaterialTheme.typography.labelSmall, color = AlimWhite)
+            }
         }
     }
 }

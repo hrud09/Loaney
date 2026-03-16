@@ -56,21 +56,32 @@ fun SettingsScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(stringResource(id = R.string.settings), fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
+            Column(modifier = Modifier.background(AlimDark)) {
+                CenterAlignedTopAppBar(
+                    title = { 
+                        Text(
+                            stringResource(id = R.string.settings), 
+                            fontWeight = FontWeight.SemiBold,
+                            color = AlimWhite
+                        ) 
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack, 
+                                contentDescription = stringResource(id = R.string.back),
+                                tint = AlimWhite
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = AlimDark,
+                        titleContentColor = AlimWhite
+                    )
                 )
-            )
+            }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = AlimCream
     ) { paddingValues ->
         if (isLoading) {
             com.sbs.loaney.ui.components.AnimatedLoadingScreen(modifier = Modifier.padding(paddingValues))
@@ -79,9 +90,10 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
+                    .background(AlimCream)
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // -- GROUP 1: PROFILE --
             SettingsGroup(title = stringResource(id = R.string.profile)) {
@@ -272,17 +284,17 @@ fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
         Text(
             text = title.uppercase(Locale.getDefault()),
             style = MaterialTheme.typography.labelLarge.copy(
-                color = MaterialTheme.colorScheme.primary, 
+                color = AlimGreen, 
                 letterSpacing = 1.sp, 
                 fontWeight = FontWeight.Bold
             ),
             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
         )
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            modifier = Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = AlimWhite,
+            shadowElevation = 2.dp,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Column(content = content)
         }
@@ -301,19 +313,19 @@ fun SettingsItem(icon: ImageVector, title: String, subtitle: String? = null, onC
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp)),
+                .background(AlimGreen.copy(alpha = 0.1f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = title, tint = MaterialTheme.colorScheme.primary)
+            Icon(icon, contentDescription = title, tint = AlimGreen)
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold))
+            Text(title, style = MaterialTheme.typography.bodyLarge.copy(color = AlimDark, fontWeight = FontWeight.SemiBold))
             if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium.copy(color = AlimDark.copy(alpha = 0.6f)))
             }
         }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = AlimDark.copy(alpha = 0.4f))
     }
 }
 
@@ -329,17 +341,17 @@ fun SettingsToggleItem(icon: ImageVector, title: String, isChecked: Boolean, onT
         Box(
             modifier = Modifier
                 .size(36.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp)),
+                .background(AlimGreen.copy(alpha = 0.1f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, contentDescription = title, tint = MaterialTheme.colorScheme.primary)
+            Icon(icon, contentDescription = title, tint = AlimGreen)
         }
         Spacer(modifier = Modifier.width(16.dp))
-        Text(title, style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold), modifier = Modifier.weight(1f))
+        Text(title, style = MaterialTheme.typography.bodyLarge.copy(color = AlimDark, fontWeight = FontWeight.SemiBold), modifier = Modifier.weight(1f))
         Switch(
             checked = isChecked,
             onCheckedChange = onToggle,
-            colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.surface, checkedTrackColor = MaterialTheme.colorScheme.primary)
+            colors = SwitchDefaults.colors(checkedThumbColor = AlimWhite, checkedTrackColor = AlimGreen)
         )
     }
 }

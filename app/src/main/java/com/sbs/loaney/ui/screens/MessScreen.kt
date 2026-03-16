@@ -2,6 +2,8 @@ package com.sbs.loaney.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Construction
@@ -25,15 +27,23 @@ fun MessScreen(
     onNavigateToTracker: () -> Unit
 ) {
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = AlimCream,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(id = R.string.mess_title), fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+            Column(modifier = Modifier.background(AlimDark)) {
+                CenterAlignedTopAppBar(
+                    title = { 
+                        Text(
+                            stringResource(id = R.string.mess_title), 
+                            fontWeight = FontWeight.SemiBold,
+                            color = AlimWhite
+                        ) 
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = AlimDark,
+                        titleContentColor = AlimWhite
+                    )
                 )
-            )
+            }
         }
     ) { padding ->
         Column(
@@ -46,7 +56,7 @@ fun MessScreen(
             Text(
                 text = stringResource(id = R.string.available_tools),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = AlimDark,
                 fontWeight = FontWeight.Bold
             )
 
@@ -54,7 +64,7 @@ fun MessScreen(
                 title = stringResource(id = R.string.tool_tracker_title),
                 description = stringResource(id = R.string.tool_tracker_desc),
                 icon = Icons.Default.Info,
-                backgroundColor = SoftViolet,
+                accentColor = AlimGreen,
                 onClick = onNavigateToTracker
             )
             
@@ -62,7 +72,7 @@ fun MessScreen(
                 title = stringResource(id = R.string.tool_settings_title),
                 description = stringResource(id = R.string.tool_settings_desc),
                 icon = Icons.Default.Settings,
-                backgroundColor = SecondaryOrange,
+                accentColor = AlimGreen,
                 onClick = {}
             )
 
@@ -70,7 +80,7 @@ fun MessScreen(
                 title = stringResource(id = R.string.tool_coming_soon_title),
                 description = stringResource(id = R.string.tool_coming_soon_desc),
                 icon = Icons.Default.Construction,
-                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                accentColor = AlimDark.copy(alpha = 0.4f),
                 onClick = {}
             )
         }
@@ -83,37 +93,45 @@ fun ToolCard(
     title: String, 
     description: String, 
     icon: ImageVector, 
-    backgroundColor: Color,
+    accentColor: Color,
     onClick: () -> Unit
 ) {
-    Card(
+    Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = CardShape,
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+        shape = RoundedCornerShape(24.dp),
+        color = AlimWhite,
+        shadowElevation = 2.dp
     ) {
         Row(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                modifier = Modifier.size(40.dp),
-                tint = Color.White
-            )
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(accentColor.copy(alpha = 0.1f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = accentColor
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
                     text = title, 
                     style = MaterialTheme.typography.titleMedium, 
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = AlimDark
                 )
                 Text(
                     text = description, 
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.7f)
+                    color = AlimDark.copy(alpha = 0.6f)
                 )
             }
         }

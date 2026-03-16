@@ -56,92 +56,94 @@ fun ShopScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        "Shop Rewards", 
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = (-0.5).sp
-                    ) 
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+            Column(modifier = Modifier.background(AlimDark)) {
+                CenterAlignedTopAppBar(
+                    title = { 
+                        Text(
+                            "Financial Report", 
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = AlimWhite
+                        ) 
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack, 
+                                contentDescription = "Back", 
+                                tint = AlimWhite
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = AlimDark,
+                        titleContentColor = AlimWhite
+                    )
                 )
-            )
+            }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = AlimCream
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
+                .background(AlimCream)
         ) {
-            // --- Pie Balance Header ---
+            // --- Pie Balance Header (Re-styled as Report Summary) ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .glassCard(
-                        shape = RoundedCornerShape(24.dp),
-                        backgroundColor = CyberIndigo.copy(alpha = 0.9f),
-                        borderColor = Color.White.copy(alpha = 0.2f)
-                    )
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
+                    .background(AlimDark)
+                    .padding(horizontal = 20.dp, vertical = 24.dp)
             ) {
-                // Background Glow
-                Canvas(modifier = Modifier.matchParentSize()) {
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(VibrantTeal.copy(alpha = 0.3f), Color.Transparent),
-                            center = Offset(size.width * 0.8f, size.height * 0.2f)
-                        ),
-                        radius = size.width * 0.6f
-                    )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(AlimGreen, RoundedCornerShape(24.dp))
+                        .padding(24.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(20.dp)),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        Icon(
-                            Icons.Default.Stars,
-                            contentDescription = null,
-                            tint = Color(0xFFFFD700),
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                    Column {
-                        Text(
-                            text = "CURRENT BALANCE",
-                            color = Color.White.copy(alpha = 0.6f),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp
-                        )
-                        Row(verticalAlignment = Alignment.Bottom) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .background(AlimWhite.copy(alpha = 0.15f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Stars,
+                                contentDescription = null,
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                        Column {
                             Text(
-                                text = "${uiState.totalPies}",
-                                style = MaterialTheme.typography.headlineLarge.copy(
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White,
-                                    fontSize = 36.sp
+                                text = "TOTAL REWARDS",
+                                color = AlimWhite.copy(alpha = 0.7f),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 2.sp
+                            )
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text(
+                                    text = "${uiState.totalPies}",
+                                    style = MaterialTheme.typography.headlineLarge.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = AlimWhite,
+                                        fontSize = 36.sp
+                                    )
                                 )
-                            )
-                            Text(
-                                text = " PIES",
-                                color = Color.White.copy(alpha = 0.6f),
-                                style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
-                            )
+                                Text(
+                                    text = " PIES",
+                                    color = AlimWhite.copy(alpha = 0.6f),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -273,12 +275,11 @@ fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
             .then(
                 if (isSelected) {
                     Modifier
-                        .background(CyberIndigo, CircleShape)
-                        .shadow(8.dp, CircleShape, spotColor = CyberIndigo.copy(alpha = 0.4f))
+                        .background(AlimGreen, CircleShape)
                 } else {
                     Modifier
-                        .background(MaterialTheme.colorScheme.surface, CircleShape)
-                        .border(0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), CircleShape)
+                        .background(AlimWhite, CircleShape)
+                        .border(1.dp, AlimDark.copy(alpha = 0.1f), CircleShape)
                 }
             )
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -295,17 +296,18 @@ fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
-    Box(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(if (canAfford) 1f else 0.6f)
-            .glassCard(
-                shape = RoundedCornerShape(16.dp),
-                backgroundColor = MaterialTheme.colorScheme.surface,
-                borderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)
-            )
-            .clickable(enabled = canAfford) { onClick() }
+            .alpha(if (canAfford) 1f else 0.6f),
+        shape = RoundedCornerShape(24.dp),
+        color = AlimWhite,
+        shadowElevation = 2.dp
     ) {
+        Box(
+            modifier = Modifier
+                .clickable(enabled = canAfford) { onClick() }
+        ) {
         // Brand Accent (Modern Gradient)
         Box(
             modifier = Modifier
@@ -396,6 +398,7 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
                     )
                 }
             }
+        }
         }
     }
 }
