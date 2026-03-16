@@ -100,6 +100,9 @@ fun AddLoanScreen(
     var showSuggestions by remember { mutableStateOf(false) }
     var showExtraDetails by remember { mutableStateOf(false) }
     
+    var nameError by remember { mutableStateOf(false) }
+    var amountError by remember { mutableStateOf(false) }
+    
     val nameSuggestions = remember(name, uiState.lentLoans, uiState.borrowedLoans) {
         if (name.isBlank()) emptyList()
         else (uiState.lentLoans + uiState.borrowedLoans).map { it.loan.personName }.distinct()
@@ -257,6 +260,61 @@ fun AddLoanScreen(
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
+        },
+        bottomBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.background,
+                shadowElevation = 8.dp
+            ) {
+                Button(
+                    onClick = {
+                        val isNameValid = name.isNotBlank()
+                        val isAmountValid = (amount.toDoubleOrNull() ?: 0.0) > 0
+                        
+                        nameError = !isNameValid
+                        amountError = !isAmountValid
+                        
+                        if (isNameValid && isAmountValid) {
+                            viewModel.addLoan(
+                                type = selectedLoanType, name = name, phone = phone, 
+                                email = email.ifBlank { null }, address = address.ifBlank { null },
+                                amount = amount.toDoubleOrNull() ?: 0.0,
+                                loanDate = Date(loanDate), returnDate = Date(returnDate),
+                                purpose = purpose.ifBlank { null }, notes = notes.ifBlank { null },
+                                interest = interestRate.toDoubleOrNull(), relationshipType = selectedRelationship,
+                                witness = witness.ifBlank { null },
+                                proofUri = proofUri?.toString(),
+                                profilePhotoUri = profilePhotoUri?.toString()
+                            )
+                            onNavigateBack()
+                        } else {
+                            val emptyFields = mutableListOf<String>()
+                            if (!isNameValid) emptyFields.add("Name")
+                            if (!isAmountValid) emptyFields.add("Amount")
+                            
+                            Toast.makeText(
+                                context, 
+                                "Please fill mandatory fields: ${emptyFields.joinToString(", ")}", 
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(56.dp)
+                        .shadow(12.dp, CircleShape, spotColor = CyberIndigo.copy(alpha = 0.4f)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = CyberIndigo,
+                        contentColor = Color.White
+                    ),
+                    shape = CircleShape
+                ) {
+                    val actionText = if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title)
+                    Text(actionText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                }
+            }
         }
     ) { padding ->
         Column(
@@ -322,17 +380,17 @@ fun AddLoanScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Big Amount Input
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = stringResource(id = R.string.amount), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(0.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "${uiState.currencySymbol} ",
                         style = MaterialTheme.typography.displayMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = if (amountError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold
                     )
                     BasicTextField(
@@ -344,7 +402,7 @@ fun AddLoanScreen(
                             }
                         },
                         textStyle = MaterialTheme.typography.displayMedium.copy(
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = if (amountError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.Bold
                         ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -354,7 +412,7 @@ fun AddLoanScreen(
                 }
 
                 // Quick amount pills
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     quickAmounts.forEach { quickVal ->
                         Surface(
@@ -387,7 +445,7 @@ fun AddLoanScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 8.dp),
+                            .padding(bottom = 0.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
@@ -409,18 +467,18 @@ fun AddLoanScreen(
                                 Icon(Icons.Default.AddAPhoto, contentDescription = "Add Profile Photo", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
                             }
                         }
-                    }
-
-                    Box(modifier = Modifier.fillMaxWidth()) {
+                             Box(modifier = Modifier.fillMaxWidth()) {
                         CustomLightTextField(
                             value = name,
                             onValueChange = { 
                                 name = it
                                 showSuggestions = true 
+                                if (it.isNotBlank()) nameError = false
                             },
                             label = stringResource(id = R.string.recipient_name),
                             leadingIcon = Icons.Default.Person,
                             trailingIcon = Icons.Default.ContactPhone,
+                            isError = nameError,
                             onTrailingIconClick = { 
                                 val intent = android.content.Intent(android.content.Intent.ACTION_PICK).apply {
                                     type = ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE
@@ -448,16 +506,113 @@ fun AddLoanScreen(
                             }
                         }
                     }
+                }
 
-                    // Extra Details Toggle
+                CustomLightTextField(
+                        value = phone,
+                        onValueChange = { phone = it },
+                        label = stringResource(id = R.string.phone_optional),
+                        leadingIcon = Icons.Default.Phone,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                    )
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Box(modifier = Modifier.weight(1f).clickable { showLoanDatePicker = true }) {
+                            CustomLightTextField(
+                                value = dateFormat.format(Date(loanDate)),
+                                onValueChange = {},
+                                label = stringResource(id = R.string.loan_date),
+                                readOnly = true,
+                                enabled = false,
+                                leadingIcon = Icons.Default.CalendarToday,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f).clickable { showReturnDatePicker = true }) {
+                            CustomLightTextField(
+                                value = dateFormat.format(Date(returnDate)),
+                                onValueChange = {},
+                                label = stringResource(id = R.string.due_date),
+                                readOnly = true,
+                                enabled = false,
+                                leadingIcon = Icons.Default.Event,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    // Reason for Loan
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(id = R.string.reason_for_loan), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            items(loanReasons) { r ->
+                                val isSelected = purpose == r
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { purpose = if (isSelected) "" else r },
+                                    label = { Text(r, style = MaterialTheme.typography.labelSmall) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                        selectedLabelColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        borderColor = Color.Transparent,
+                                        selectedBorderColor = MaterialTheme.colorScheme.primary,
+                                        enabled = true,
+                                        selected = isSelected
+                                    ),
+                                    shape = CircleShape,
+                                    modifier = Modifier.height(32.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Relationship Picker
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(id = R.string.relationship), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            items(relationships) { (label, value) ->
+                                val isSelected = selectedRelationship == value
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { selectedRelationship = value },
+                                    label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                        selectedLabelColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        borderColor = Color.Transparent,
+                                        selectedBorderColor = MaterialTheme.colorScheme.primary,
+                                        enabled = true,
+                                        selected = isSelected
+                                    ),
+                                    shape = CircleShape,
+                                    modifier = Modifier.height(32.dp)
+                                )
+                            }
+                        }
+                    }
+                       // Extra Details Toggle
                     Row(
-                        modifier = Modifier.fillMaxWidth().clickable { showExtraDetails = !showExtraDetails }.padding(vertical = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showExtraDetails = !showExtraDetails }
+                            .padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (showExtraDetails) stringResource(id = R.string.hide_extra_details) else stringResource(id = R.string.add_extra_details),
-                            style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
+                            text = if (showExtraDetails) stringResource(id = R.string.hide_extra_details) else "Add More Details",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontWeight = FontWeight.Bold
+                            )
                         )
                         Icon(
                             imageVector = if (showExtraDetails) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
@@ -468,72 +623,10 @@ fun AddLoanScreen(
 
                     AnimatedVisibility(
                         visible = showExtraDetails,
-                        enter = androidx.compose.animation.expandVertically(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.fadeIn(animationSpec = androidx.compose.animation.core.tween(300)),
-                        exit = androidx.compose.animation.shrinkVertically(animationSpec = androidx.compose.animation.core.tween(300)) + androidx.compose.animation.fadeOut(animationSpec = androidx.compose.animation.core.tween(300))
+                        enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+                        exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Box(modifier = Modifier.weight(1f).clickable { showLoanDatePicker = true }) {
-                                    CustomLightTextField(
-                                        value = dateFormat.format(Date(loanDate)),
-                                        onValueChange = {},
-                                        label = stringResource(id = R.string.loan_date),
-                                        readOnly = true,
-                                        enabled = false,
-                                        leadingIcon = Icons.Default.CalendarToday,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                                Box(modifier = Modifier.weight(1f).clickable { showReturnDatePicker = true }) {
-                                    CustomLightTextField(
-                                        value = dateFormat.format(Date(returnDate)),
-                                        onValueChange = {},
-                                        label = stringResource(id = R.string.due_date),
-                                        readOnly = true,
-                                        enabled = false,
-                                        leadingIcon = Icons.Default.Event,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                            }
-
-                            // Reason for Loan
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(stringResource(id = R.string.reason_for_loan), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    items(loanReasons) { r ->
-                                        val isSelected = purpose == r
-                                        FilterChip(
-                                            selected = isSelected,
-                                            onClick = { purpose = if (isSelected) "" else r },
-                                            label = { Text(r) },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                                            ),
-                                            border = FilterChipDefaults.filterChipBorder(
-                                                borderColor = Color.Transparent,
-                                                selectedBorderColor = MaterialTheme.colorScheme.primary,
-                                                enabled = true,
-                                                selected = isSelected
-                                            ),
-                                            shape = CircleShape
-                                        )
-                                    }
-                                }
-                            }
-
-                            CustomLightTextField(
-                                value = phone,
-                                onValueChange = { phone = it },
-                                label = stringResource(id = R.string.phone_optional),
-                                leadingIcon = Icons.Default.Phone,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-                            )
-
                             CustomLightTextField(
                                 value = email,
                                 onValueChange = { email = it },
@@ -541,34 +634,6 @@ fun AddLoanScreen(
                                 leadingIcon = Icons.Default.Email,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                             )
-
-                            // Relationship Picker
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(stringResource(id = R.string.relationship), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    items(relationships) { (label, value) ->
-                                        val isSelected = selectedRelationship == value
-                                        FilterChip(
-                                            selected = isSelected,
-                                            onClick = { selectedRelationship = value },
-                                            label = { Text(label) },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                                            ),
-                                            border = FilterChipDefaults.filterChipBorder(
-                                                borderColor = Color.Transparent,
-                                                selectedBorderColor = MaterialTheme.colorScheme.primary,
-                                                enabled = true,
-                                                selected = isSelected
-                                            ),
-                                            shape = CircleShape
-                                        )
-                                    }
-                                }
-                            }
 
                             CustomLightTextField(
                                 value = address,
@@ -594,13 +659,16 @@ fun AddLoanScreen(
 
                             // Attachments
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(stringResource(id = R.string.attachment), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    stringResource(id = R.string.attachment),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    // Upload Button
                                     Box(
                                         modifier = Modifier
                                             .size(60.dp)
@@ -609,86 +677,58 @@ fun AddLoanScreen(
                                             .clickable { imageLauncher.launch(arrayOf("image/*")) },
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.add_attachment), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = stringResource(id = R.string.add_attachment),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
 
-                                    // Preview Section
                                     if (proofUri != null) {
-                                        Column(
-                                            modifier = Modifier.weight(1f).padding(start = 16.dp),
-                                            horizontalAlignment = Alignment.Start
+                                        Box(
+                                            modifier = Modifier
+                                                .size(60.dp)
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(Color.LightGray)
                                         ) {
-                                            Box(
+                                            AsyncImage(
+                                                model = proofUri,
+                                                contentDescription = stringResource(id = R.string.preview),
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                            IconButton(
+                                                onClick = {
+                                                    proofUri = null
+                                                    proofFileName = null
+                                                },
                                                 modifier = Modifier
-                                                    .size(60.dp)
-                                                    .clip(RoundedCornerShape(16.dp))
-                                                    .background(Color.LightGray)
+                                                    .align(Alignment.TopEnd)
+                                                    .size(20.dp)
+                                                    .padding(2.dp)
+                                                    .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                                             ) {
-                                                AsyncImage(
-                                                    model = proofUri,
-                                                    contentDescription = stringResource(id = R.string.preview),
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentScale = ContentScale.Crop
+                                                Icon(
+                                                    Icons.Default.Close,
+                                                    contentDescription = "Remove",
+                                                    tint = PureWhite,
+                                                    modifier = Modifier.size(10.dp)
                                                 )
-                                                IconButton(
-                                                    onClick = { 
-                                                        proofUri = null
-                                                        proofFileName = null
-                                                    },
-                                                    modifier = Modifier
-                                                        .align(Alignment.TopEnd)
-                                                        .size(20.dp)
-                                                        .padding(2.dp)
-                                                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                                                ) {
-                                                    Icon(Icons.Default.Close, contentDescription = "Remove", tint = PureWhite, modifier = Modifier.size(10.dp))
-                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    } // end animated visibility
+                    }
                 }
             }
 
-            // Action Button
-            Button(
-                onClick = {
-                    viewModel.addLoan(
-                        type = selectedLoanType, name = name, phone = phone, 
-                        email = email.ifBlank { null }, address = address.ifBlank { null },
-                        amount = amount.toDoubleOrNull() ?: 0.0,
-                        loanDate = Date(loanDate), returnDate = Date(returnDate),
-                        purpose = purpose.ifBlank { null }, notes = notes.ifBlank { null },
-                        interest = interestRate.toDoubleOrNull(), relationshipType = selectedRelationship,
-                        witness = witness.ifBlank { null },
-                        proofUri = proofUri?.toString(),
-                        profilePhotoUri = profilePhotoUri?.toString()
-                    )
-                    onNavigateBack()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-                    .shadow(12.dp, CircleShape, spotColor = CyberIndigo.copy(alpha = 0.4f)),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = CyberIndigo,
-                    contentColor = Color.White
-                ),
-                shape = CircleShape,
-                enabled = name.isNotBlank() && (amount.toDoubleOrNull() ?: 0.0) > 0
-            ) {
-                val actionText = if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title)
-                Text(actionText, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
-            }
-            
             Spacer(modifier = Modifier.height(20.dp))
-                }
-            }
+        }
         }
     }
+}
 }
 
 @Composable
@@ -707,11 +747,13 @@ fun CustomLightTextField(
     leadingIcon: ImageVector? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     trailingIcon: ImageVector? = null,
-    onTrailingIconClick: (() -> Unit)? = null
+    onTrailingIconClick: (() -> Unit)? = null,
+    isError: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
+        isError = isError,
         label = { Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium) },
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),

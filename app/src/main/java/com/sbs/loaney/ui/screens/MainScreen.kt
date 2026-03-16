@@ -21,6 +21,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.clickable
+import com.sbs.loaney.ui.components.bounceClick
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -260,7 +267,7 @@ fun BkashBottomNavBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
+                .height(80.dp)
                 .navigationBarsPadding(),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
@@ -286,24 +293,24 @@ fun BkashBottomNavBar(
             // Center FAB — Add button
             Box(
                 modifier = Modifier
-                    .size(56.dp)
-                    .shadow(8.dp, CircleShape)
+                    .size(68.dp)
+                    .then(Modifier.shadow(elevation = 12.dp, shape = CircleShape))
                     .clip(CircleShape)
-                    .background(pink)
+                    .background(
+                        androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(pink, pink.copy(alpha = 0.8f))
+                        )
+                    )
+                    .bounceClick { onCenterFabClick() }
                     .then(Modifier.wrapContentSize()),
                 contentAlignment = Alignment.Center
             ) {
-                IconButton(
-                    onClick = onCenterFabClick,
-                    modifier = Modifier.size(56.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Add",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add",
+                    tint = Color.White,
+                    modifier = Modifier.size(34.dp)
+                )
             }
 
             // Shop
@@ -335,28 +342,60 @@ private fun BkashNavBarItem(
 ) {
     val pink = MaterialTheme.colorScheme.primary
     val gray = MaterialTheme.colorScheme.onSurfaceVariant
-    val color = if (selected) pink else gray
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    
+    val color by animateColorAsState(
+        targetValue = if (selected) pink else gray,
+        animationSpec = tween(300),
+        label = "item_color"
+    )
+    
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.1f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "item_scale"
+    )
 
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier.width(60.dp)
+    Box(
+        modifier = Modifier
+            .width(72.dp)
+            .height(80.dp)
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                    onClick()
+                }
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.then(Modifier.graphicsLayer(scaleX = scale, scaleY = scale))
         ) {
-            Icon(
-                icon,
-                contentDescription = label,
-                tint = color,
-                modifier = Modifier.size(24.dp)
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(if (selected) pink.copy(alpha = 0.1f) else Color.Transparent)
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = label,
+                    tint = color,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
             Text(
                 text = label,
                 color = color,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                maxLines = 1
+                maxLines = 1,
+                modifier = Modifier.padding(top = 2.dp)
             )
         }
     }

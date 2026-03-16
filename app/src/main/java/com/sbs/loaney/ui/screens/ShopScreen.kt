@@ -60,8 +60,8 @@ fun ShopScreen(
                 title = { 
                     Text(
                         "Shop Rewards", 
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black,
-                        style = MaterialTheme.typography.headlineSmall,
                         letterSpacing = (-0.5).sp
                     ) 
                 },
@@ -82,13 +82,13 @@ fun ShopScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp)
+                    .padding(16.dp)
                     .glassCard(
-                        shape = RoundedCornerShape(32.dp),
+                        shape = RoundedCornerShape(24.dp),
                         backgroundColor = CyberIndigo.copy(alpha = 0.9f),
                         borderColor = Color.White.copy(alpha = 0.2f)
                     )
-                    .padding(28.dp),
+                    .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 // Background Glow
@@ -179,8 +179,8 @@ fun ShopScreen(
             // --- Coupons Grid ---
             LazyVerticalGrid(
                 columns = GridCells.Fixed(1),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 40.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 40.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(uiState.filteredCoupons) { coupon ->
@@ -281,13 +281,13 @@ fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
                         .border(0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), CircleShape)
                 }
             )
-            .padding(horizontal = 24.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -300,7 +300,7 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
             .fillMaxWidth()
             .alpha(if (canAfford) 1f else 0.6f)
             .glassCard(
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(16.dp),
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 borderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)
             )
@@ -320,7 +320,7 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
 
         Row(
             modifier = Modifier
-                .padding(20.dp)
+                .padding(16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
