@@ -118,7 +118,7 @@ fun MainScreen(
                             }
                         },
                         onCenterFabClick = { navController.navigate(Screen.AddLoan.createRoute("LEND")) },
-                        onProfileClick = { scope.launch { drawerState.open() } },
+                        onProfileClick = { navController.navigate(Screen.Settings.route) },
                         onShopClick = { 
                             navController.navigate(Screen.Shop.route) {
                                 popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -133,7 +133,7 @@ fun MainScreen(
             NavHost(
                 navController = navController,
                 startDestination = startDestination,
-                modifier = Modifier.padding(innerPadding),
+                modifier = Modifier, // Padding removed so content can go behind nav bar
                 enterTransition = {
                     slideIntoContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Start,
@@ -183,7 +183,7 @@ fun MainScreen(
                                 restoreState = true
                             }
                         },
-                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                        onProfileClick = { scope.launch { drawerState.open() } }
                     )
                 }
                 composable(
@@ -255,75 +255,82 @@ fun BkashBottomNavBar(
     val pink = MaterialTheme.colorScheme.primary
     val gray = MaterialTheme.colorScheme.onSurfaceVariant
 
-    Surface(
-        color = AlimWhite,
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-        shadowElevation = 24.dp,
-        modifier = Modifier.fillMaxWidth()
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.BottomCenter
     ) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .height(84.dp)
-                .navigationBarsPadding(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Surface(
+            color = AlimWhite,
+            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            shadowElevation = 24.dp,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // Home
-            val homeSelected = currentDestination?.hierarchy?.any { it.route == Screen.Home.route } == true
-            BkashNavBarItem(
-                icon = if (homeSelected) Icons.Default.Home else Icons.Outlined.Home,
-                label = stringResource(R.string.nav_home),
-                selected = homeSelected,
-                onClick = { onNavItemClick(Screen.Home.route) }
-            )
-
-            // Transactions (History)
-            val historySelected = currentDestination?.hierarchy?.any { it.route == Screen.ManageLoans.route } == true
-            BkashNavBarItem(
-                icon = if (historySelected) Icons.Default.ReceiptLong else Icons.Outlined.ReceiptLong,
-                label = "Transaction",
-                selected = historySelected,
-                onClick = { onNavItemClick(Screen.ManageLoans.route) }
-            )
-
-            // Center FAB — Add button (Styled like Scanner in image)
-            Box(
+            Row(
                 modifier = Modifier
-                    .offset(y = (-10).dp)
-                    .size(64.dp)
-                    .then(Modifier.shadow(elevation = 16.dp, shape = CircleShape, spotColor = AlimGreen))
-                    .clip(CircleShape)
-                    .background(AlimGreen)
-                    .bounceClick { onCenterFabClick() },
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(84.dp)
+                    .navigationBarsPadding(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    Icons.Default.QrCodeScanner, // Using QrCodeScanner to match visual style
-                    contentDescription = "Add",
-                    tint = AlimWhite,
-                    modifier = Modifier.size(30.dp)
+                // Home
+                val homeSelected = currentDestination?.hierarchy?.any { it.route == Screen.Home.route } == true
+                BkashNavBarItem(
+                    icon = if (homeSelected) Icons.Default.Home else Icons.Outlined.Home,
+                    label = stringResource(R.string.nav_home),
+                    selected = homeSelected,
+                    onClick = { onNavItemClick(Screen.Home.route) }
+                )
+
+                // Transactions (History)
+                val historySelected = currentDestination?.hierarchy?.any { it.route == Screen.ManageLoans.route } == true
+                BkashNavBarItem(
+                    icon = if (historySelected) Icons.Default.ReceiptLong else Icons.Outlined.ReceiptLong,
+                    label = "Transaction",
+                    selected = historySelected,
+                    onClick = { onNavItemClick(Screen.ManageLoans.route) }
+                )
+
+                // Placeholder for center FAB space
+                Spacer(modifier = Modifier.size(64.dp))
+
+                // Report (Shop)
+                val shopSelected = currentDestination?.hierarchy?.any { it.route == Screen.Shop.route } == true
+                BkashNavBarItem(
+                    icon = if (shopSelected) Icons.Default.ShoppingBag else Icons.Outlined.ShoppingBag,
+                    label = "Shop",
+                    selected = shopSelected,
+                    onClick = onShopClick
+                )
+
+                // Settings (Profile)
+                val settingsSelected = currentDestination?.hierarchy?.any { it.route == Screen.Settings.route } == true
+                BkashNavBarItem(
+                    icon = if (settingsSelected) Icons.Default.Settings else Icons.Outlined.Settings,
+                    label = "Settings",
+                    selected = settingsSelected,
+                    onClick = onProfileClick
                 )
             }
+        }
 
-            // Report (Shop)
-            val shopSelected = currentDestination?.hierarchy?.any { it.route == Screen.Shop.route } == true
-            BkashNavBarItem(
-                icon = if (shopSelected) Icons.Default.Analytics else Icons.Outlined.Analytics,
-                label = "Report",
-                selected = shopSelected,
-                onClick = onShopClick
-            )
-
-            // Settings (Profile)
-            val settingsSelected = currentDestination?.hierarchy?.any { it.route == Screen.Settings.route } == true
-            BkashNavBarItem(
-                icon = if (settingsSelected) Icons.Default.Settings else Icons.Outlined.Settings,
-                label = "Settings",
-                selected = settingsSelected,
-                onClick = onProfileClick
+        // Center FAB — Moved outside Surface to prevent clipping
+        Box(
+            modifier = Modifier
+                .offset(y = (-32).dp) // Adjust offset to center it over navbar edge
+                .size(64.dp)
+                .then(Modifier.shadow(elevation = 16.dp, shape = CircleShape, spotColor = AlimGreen))
+                .clip(CircleShape)
+                .background(AlimGreen)
+                .bounceClick { onCenterFabClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = "Add",
+                tint = AlimWhite,
+                modifier = Modifier.size(30.dp)
             )
         }
     }

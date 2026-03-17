@@ -206,7 +206,7 @@ fun ManageLoansScreen(
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 100.dp),
+                        contentPadding = PaddingValues(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 130.dp), // Increased padding
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(loans, key = { it.loan.id }) { item ->

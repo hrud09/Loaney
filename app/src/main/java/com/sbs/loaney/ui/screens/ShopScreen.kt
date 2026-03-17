@@ -60,7 +60,7 @@ fun ShopScreen(
                 CenterAlignedTopAppBar(
                     title = { 
                         Text(
-                            "Financial Report", 
+                            "Shop", 
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = AlimWhite
@@ -181,7 +181,7 @@ fun ShopScreen(
             // --- Coupons Grid ---
             LazyVerticalGrid(
                 columns = GridCells.Fixed(1),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 40.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 130.dp), // Increased padding
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {

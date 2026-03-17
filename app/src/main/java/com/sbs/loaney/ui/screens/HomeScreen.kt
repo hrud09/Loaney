@@ -94,8 +94,8 @@ import java.util.*
 fun HomeScreen(
     onNavigateToAddLoan: (String) -> Unit,
     onNavigateToDetail: (Long) -> Unit,
-    onNavigateToHistory: (String?) -> Unit, // Replaces Manage navigation
-    onNavigateToSettings: () -> Unit, // New
+    onNavigateToHistory: (String?) -> Unit,
+    onProfileClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -127,7 +127,7 @@ fun HomeScreen(
                     AlimHeader(
                         userName = uiState.userName,
                         onNotificationsClick = { showNotificationsSheet = true },
-                        onProfileClick = onNavigateToSettings
+                        onProfileClick = onProfileClick
                     )
                     
                     AlimBalanceCard(
@@ -135,7 +135,8 @@ fun HomeScreen(
                         currencySymbol = uiState.currencySymbol,
                         onNavigateToAddLoan = onNavigateToAddLoan,
                         onNavigateToHistory = onNavigateToHistory,
-                        onReportClick = { onNavigateToHistory(null) }
+                        onReportClick = { onNavigateToHistory(null) },
+                        onCalendarClick = { showFeaturedCalendar = true }
                     )
 
                     // SCROLLABLE CONTENT
@@ -306,7 +307,7 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(130.dp)) // Increased padding to avoid overlapping with bottom bar
         }
         }
         }
@@ -1609,7 +1610,7 @@ fun AlimHeader(
         modifier = Modifier
             .fillMaxWidth()
             .background(AlimDark)
-            .padding(top = 16.dp, start = 20.dp, end = 20.dp, bottom = 24.dp)
+            .padding(top = 16.dp, start = 20.dp, end = 20.dp, bottom = 12.dp) // Reduced padding
     ) {
         Column {
             // Top Row: App Name + Icons
@@ -1618,14 +1619,23 @@ fun AlimHeader(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Loaney",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        color = AlimWhite,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.5.sp
+                Column {
+                    Text(
+                        text = "$greeting",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = AlimWhite.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Medium
+                        )
                     )
-                )
+                    Text(
+                        text = userName,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            color = AlimWhite,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 0.5.sp
+                        )
+                    )
+                }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -1663,21 +1673,7 @@ fun AlimHeader(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Greeting
-            Text(
-                text = "$greeting",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = AlimWhite.copy(alpha = 0.7f),
-                    fontWeight = FontWeight.Medium
-                )
-            )
-            Text(
-                text = userName,
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    color = AlimWhite,
-                    fontWeight = FontWeight.Bold
-                )
-            )
+            // Removed old greeting location
         }
     }
 }
@@ -1688,7 +1684,8 @@ fun AlimBalanceCard(
     currencySymbol: String,
     onNavigateToAddLoan: (String) -> Unit,
     onNavigateToHistory: (String?) -> Unit,
-    onReportClick: () -> Unit
+    onReportClick: () -> Unit,
+    onCalendarClick: () -> Unit
 ) {
     var isBalanceVisible by remember { mutableStateOf(true) }
 
@@ -1730,10 +1727,12 @@ fun AlimBalanceCard(
                         )
                     }
                     Icon(
-                        Icons.Default.ArrowForwardIos,
-                        contentDescription = "More",
+                        Icons.Default.CalendarMonth, // Replaced arrow with Calendar
+                        contentDescription = "Calendar",
                         tint = AlimWhite,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable { onCalendarClick() } // Added click handler
                     )
                 }
 
@@ -1767,7 +1766,7 @@ fun AlimBalanceCard(
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(40.dp)
+                .height(24.dp) // Reduced height from 40.dp
         )
     }
 }
