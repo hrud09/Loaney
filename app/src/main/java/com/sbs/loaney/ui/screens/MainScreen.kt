@@ -111,19 +111,27 @@ fun MainScreen(
                         navItems = navItems,
                         currentDestination = currentDestination,
                         onNavItemClick = { route ->
-                            navController.navigate(route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (navController.currentDestination?.route != route) {
+                                navController.navigate(route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         onCenterFabClick = { navController.navigate(Screen.AddLoan.createRoute("LEND")) },
-                        onProfileClick = { navController.navigate(Screen.Settings.route) },
+                        onProfileClick = { 
+                            if (navController.currentDestination?.route != Screen.Settings.route) {
+                                navController.navigate(Screen.Settings.route) 
+                            }
+                        },
                         onShopClick = { 
-                            navController.navigate(Screen.Shop.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (navController.currentDestination?.route != Screen.Shop.route) {
+                                navController.navigate(Screen.Shop.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         }
                     )

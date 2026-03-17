@@ -89,7 +89,7 @@ import com.sbs.loaney.ui.viewmodel.HomeUiState
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     onNavigateToAddLoan: (String) -> Unit,
@@ -117,6 +117,48 @@ fun HomeScreen(
 
     Scaffold(
         containerColor = AlimCream,
+        topBar = {
+            Column(modifier = Modifier.background(AlimDark)) {
+                CenterAlignedTopAppBar(
+                    title = { 
+                        Text(
+                            "Loaney", 
+                            fontWeight = FontWeight.SemiBold,
+                            color = AlimWhite
+                        ) 
+                    },
+                    actions = {
+                        IconButton(onClick = { showNotificationsSheet = true }) {
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = "Notifications",
+                                tint = AlimWhite
+                            )
+                        }
+                        IconButton(onClick = onProfileClick) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(AlimWhite.copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = "Profile",
+                                    tint = AlimWhite,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = AlimDark,
+                        titleContentColor = AlimWhite
+                    )
+                )
+            }
+        }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding).background(AlimCream)) {
             if (uiState.isLoading) {
@@ -125,9 +167,7 @@ fun HomeScreen(
                 Column(modifier = Modifier.fillMaxSize()) {
                     // NEW ALIMBANK STYLE HEADER
                     AlimHeader(
-                        userName = uiState.userName,
-                        onNotificationsClick = { showNotificationsSheet = true },
-                        onProfileClick = onProfileClick
+                        userName = uiState.userName
                     )
                     
                     AlimBalanceCard(
@@ -152,50 +192,7 @@ fun HomeScreen(
                         Box(modifier = Modifier.padding(horizontal = 20.dp)) {
                             HomeZeroState(onNavigateToAddLoan = { onNavigateToAddLoan("LEND") })
                         }
-                    } else {
-                        // ── PROMOS & REMINDERS (Horizontal) ─────────────────────────
-                        AlimPromoSection()
-
-                        Spacer(modifier = Modifier.height(28.dp))
-
-                        // ── UPCOMING ACTIVITIES / RECENT ACTIVITY ───────────────────
-                        Column(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Upcoming Activities",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = AlimDark,
-                                        fontSize = 18.sp
-                                    )
-                                )
-                                Text(
-                                    text = "See All",
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        color = AlimGreen,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    modifier = Modifier.clickable { onNavigateToHistory(null) }
-                                )
-                            }
-
-                    // Show up to 5 most recent
-                    allLoans.take(5).forEach { item ->
-                        RecentActivityCard(
-                            item = item,
-                            currencySymbol = uiState.currencySymbol,
-                            onClick = { onNavigateToDetail(item.loan.id) }
-                        )
-                    }
-                }
-// ... (rest of the file update)
+                     }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -304,16 +301,13 @@ fun HomeScreen(
                             }
                         }
                     }
-                }
-            }
 
-            Spacer(modifier = Modifier.height(130.dp)) // Increased padding to avoid overlapping with bottom bar
-        }
-        }
-        }
-        }
-    }
-
+                    Spacer(modifier = Modifier.height(130.dp))
+                } // Column at 222
+            } // Column at 183
+        } // Column at 167
+    } // else/isLoading
+} // Box/Scaffold content
 
     if (showAddBankSheet) {
         AddBankAccountBottomSheet(
@@ -376,6 +370,7 @@ fun HomeScreen(
         onNavigateToDetail = onNavigateToDetail
     )
 }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -435,159 +430,6 @@ fun NotificationsBottomSheet(onDismiss: () -> Unit) {
     }
 }
 
-@Composable
-fun ActionButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.bounceClick(onClick)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(68.dp)
-                .background(MaterialTheme.colorScheme.surface, CircleShape)
-                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = label,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(30.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
-        )
-    }
-}
-
-@Composable
-fun QuickActionItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    color: Color = CyberIndigo,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .width(72.dp)
-            .bounceClick(onClick)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .background(color.copy(alpha = 0.1f), RoundedCornerShape(20.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = label,
-                tint = color,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold
-            ),
-            maxLines = 1
-        )
-    }
-}
-
-// ── bKash Transaction Row item ───────────────────────────────────────────────
-@Composable
-fun RecentActivityCard(
-    item: com.sbs.loaney.data.local.dao.LoanWithPayments,
-    currencySymbol: String,
-    onClick: () -> Unit
-) {
-    val isLent = item.loan.type == com.sbs.loaney.data.model.LoanType.LEND
-    val accentColor = if (isLent) VibrantTeal else CoralRose
-    
-    val totalLoan = item.loan.amount + item.loanItems.sumOf { it.amount }
-    val paid = item.payments.sumOf { it.amount }
-    val balance = totalLoan - paid
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        shape = RoundedCornerShape(24.dp),
-        color = AlimWhite,
-        shadowElevation = 2.dp
-    ) {
-        Box(
-            modifier = Modifier
-                .clickable { onClick() }
-                .padding(16.dp)
-        ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Avatar
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(accentColor.copy(alpha = 0.1f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = item.loan.personName.firstOrNull()?.toString()?.uppercase() ?: "",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = accentColor,
-                        fontWeight = FontWeight.Black
-                    )
-                )
-            }
-
-            // Info
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.loan.personName,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-                Text(
-                    text = if (isLent) "Lent • In Progress" else "Borrowed • Unpaid",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color(0xFF64748B),
-                        fontWeight = FontWeight.Medium
-                    )
-                )
-            }
-
-            // Amount
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "${if (isLent) "+" else "-"}$currencySymbol${String.format("%,.0f", balance)}",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        color = if (isLent) Color(0xFF10B981) else Color(0xFFF43F5E),
-                        fontWeight = FontWeight.Black
-                    )
-                )
-            }
-        }
-    }
-}
-}
 
 // --- BANK ACCOUNTS COMPONENTS ---
 
@@ -1249,7 +1091,6 @@ fun LoanSummaryDialog(
         }
     )
 }
-
 @Composable
 fun UpcomingDeadlineSection(
     deadlines: List<LoanWithPayments>,
@@ -1593,9 +1434,7 @@ class CardNumberVisualTransformation : VisualTransformation {
 
 @Composable
 fun AlimHeader(
-    userName: String,
-    onNotificationsClick: () -> Unit,
-    onProfileClick: () -> Unit
+    userName: String
 ) {
     val greeting = remember {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -1610,70 +1449,24 @@ fun AlimHeader(
         modifier = Modifier
             .fillMaxWidth()
             .background(AlimDark)
-            .padding(top = 16.dp, start = 20.dp, end = 20.dp, bottom = 12.dp) // Reduced padding
+            .padding(top = 0.dp, start = 20.dp, end = 20.dp, bottom = 8.dp) // Adjusted padding for new layout
     ) {
         Column {
-            // Top Row: App Name + Icons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "$greeting",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = AlimWhite.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
-                    Text(
-                        text = userName,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            color = AlimWhite,
-                            fontWeight = FontWeight.SemiBold,
-                            letterSpacing = 0.5.sp
-                        )
-                    )
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(AlimWhite.copy(alpha = 0.1f), CircleShape)
-                            .clickable { onNotificationsClick() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.Notifications,
-                            contentDescription = "Notifications",
-                            tint = AlimWhite,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(AlimWhite.copy(alpha = 0.1f), CircleShape)
-                            .clickable { onProfileClick() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = "Profile",
-                            tint = AlimWhite,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Removed old greeting location
+            Text(
+                text = greeting,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = AlimWhite.copy(alpha = 0.7f),
+                    fontWeight = FontWeight.Medium
+                )
+            )
+            Text(
+                text = userName,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = AlimWhite,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.5.sp
+                )
+            )
         }
     }
 }
@@ -1689,85 +1482,89 @@ fun AlimBalanceCard(
 ) {
     var isBalanceVisible by remember { mutableStateOf(true) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AlimDark)
-            .padding(horizontal = 20.dp)
-    ) {
-        // The Emerald Card
-        Box(
+    Box(modifier = Modifier.fillMaxWidth()) {
+        // Background Split Layer: Top half black (AlimDark), bottom half cream (AlimCream)
+        Column(modifier = Modifier.matchParentSize()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth().background(AlimDark))
+            Box(modifier = Modifier.weight(1f).fillMaxWidth().background(AlimCream))
+        }
+
+        // Foreground Content Layer
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(AlimGreen, RoundedCornerShape(24.dp))
-                .padding(20.dp)
+                .padding(horizontal = 20.dp)
         ) {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "Current Balance",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = AlimWhite.copy(alpha = 0.8f),
-                                fontWeight = FontWeight.Medium
+            // The Emerald Card
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(AlimGreen, RoundedCornerShape(24.dp))
+                    .padding(20.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Current Balance",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    color = AlimWhite.copy(alpha = 0.8f),
+                                    fontWeight = FontWeight.Medium
+                                )
                             )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                if (isBalanceVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = "Toggle Balance",
+                                tint = AlimWhite.copy(alpha = 0.8f),
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clickable { isBalanceVisible = !isBalanceVisible }
+                            )
+                        }
                         Icon(
-                            if (isBalanceVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = "Toggle Balance",
-                            tint = AlimWhite.copy(alpha = 0.8f),
+                            Icons.Default.CalendarMonth,
+                            contentDescription = "Calendar",
+                            tint = AlimWhite,
                             modifier = Modifier
-                                .size(18.dp)
-                                .clickable { isBalanceVisible = !isBalanceVisible }
+                                .size(24.dp)
+                                .clickable { onCalendarClick() }
                         )
                     }
-                    Icon(
-                        Icons.Default.CalendarMonth, // Replaced arrow with Calendar
-                        contentDescription = "Calendar",
-                        tint = AlimWhite,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable { onCalendarClick() } // Added click handler
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = if (isBalanceVisible) "$currencySymbol${String.format("%,.0f", balance)}" else "****",
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            color = AlimWhite,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 32.sp
+                        )
                     )
-                }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
-                Text(
-                    text = if (isBalanceVisible) "$currencySymbol${String.format("%,.0f", balance)}" else "****",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        color = AlimWhite,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 32.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Quick Actions Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    AlimCardAction(Icons.Default.Add, "Lend", onClick = { onNavigateToAddLoan("LEND") })
-                    AlimCardAction(Icons.Default.Remove, "Borrow", onClick = { onNavigateToAddLoan("BORROW") })
-                    AlimCardAction(Icons.Default.History, "History", onClick = { onNavigateToHistory(null) })
-                    AlimCardAction(Icons.Default.BarChart, "Report", onClick = onReportClick)
+                    // Quick Actions Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        AlimCardAction(Icons.Default.Add, "Lend", onClick = { onNavigateToAddLoan("LEND") })
+                        AlimCardAction(Icons.Default.Remove, "Borrow", onClick = { onNavigateToAddLoan("BORROW") })
+                        AlimCardAction(Icons.Default.History, "History", onClick = { onNavigateToHistory(null) })
+                        AlimCardAction(Icons.Default.BarChart, "Report", onClick = onReportClick)
+                    }
                 }
             }
+            
+            // Bottom spacing on the cream background
+            Spacer(modifier = Modifier.height(24.dp))
         }
-        
-        // Overflow background to create the "top dark, bottom light" split effect
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(24.dp) // Reduced height from 40.dp
-        )
     }
 }
 
@@ -1799,85 +1596,5 @@ fun AlimCardAction(icon: ImageVector, label: String, onClick: () -> Unit) {
                 fontWeight = FontWeight.Medium
             )
         )
-    }
-}
-
-@Composable
-fun AlimPromoSection() {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(
-            text = "Promos & Reminders",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                        color = AlimDark,
-                fontSize = 18.sp
-            ),
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            item {
-                AlimPromoCard(
-                    title = "Keep your credit",
-                    subtitle = "Always pay on time",
-                    buttonLabel = "Apply",
-                    color = Color(0xFFFFFBEB) // Light yellow
-                )
-            }
-            item {
-                AlimPromoCard(
-                    title = "Refer a Friend",
-                    subtitle = "Get rewards instantly",
-                    buttonLabel = "Refer",
-                    color = Color(0xFFF0FDF4) // Light green
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun AlimPromoCard(
-    title: String,
-    subtitle: String,
-    buttonLabel: String,
-    color: Color
-) {
-    Box(
-        modifier = Modifier
-            .width(280.dp)
-            .height(140.dp)
-            .background(color, RoundedCornerShape(24.dp))
-            .padding(20.dp)
-    ) {
-        Column(verticalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxHeight()) {
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = AlimDark
-                    )
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = AlimDark.copy(alpha = 0.6f)
-                    )
-                )
-            }
-            Button(
-                onClick = { },
-                colors = ButtonDefaults.buttonColors(containerColor = AlimGreen),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                modifier = Modifier.height(32.dp),
-                shape = CircleShape
-            ) {
-                Text(buttonLabel, style = MaterialTheme.typography.labelSmall, color = AlimWhite)
-            }
-        }
     }
 }

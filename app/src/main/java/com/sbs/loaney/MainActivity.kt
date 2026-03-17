@@ -65,12 +65,14 @@ class MainActivity : ComponentActivity() {
 
             LoaneyTheme(darkTheme = isDarkTheme) {
                 if (onboardingCompleted != null) {
-                    val startDest = if (onboardingCompleted == true) {
-                        com.sbs.loaney.ui.navigation.Screen.Home.route
-                    } else {
-                        com.sbs.loaney.ui.navigation.Screen.Onboarding.route
-                    }
-                    MainScreen(startDestination = startDest)
+            val startDest = androidx.compose.runtime.remember(onboardingCompleted == null) {
+                if (onboardingCompleted == true) {
+                    com.sbs.loaney.ui.navigation.Screen.Home.route
+                } else {
+                    com.sbs.loaney.ui.navigation.Screen.Onboarding.route
+                }
+            }
+            MainScreen(startDestination = startDest)
                 }
             }
         }

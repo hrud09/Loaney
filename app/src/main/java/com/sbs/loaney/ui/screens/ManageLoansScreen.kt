@@ -110,17 +110,6 @@ fun ManageLoansScreen(
                     )
                 )
             }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onNavigateToAddLoan(currentType.name) },
-                containerColor = AlimGreen,
-                contentColor = AlimWhite,
-                shape = CircleShape,
-                modifier = Modifier.shadow(12.dp, CircleShape, spotColor = AlimGreen.copy(alpha = 0.4f))
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add New Loan")
-            }
         }
     ) { padding ->
         if (uiState.isLoading) {
