@@ -108,6 +108,9 @@ fun HomeScreen(
     var showLentSummary by remember { mutableStateOf(false) }
     var showBorrowedSummary by remember { mutableStateOf(false) }
     var showFeaturedCalendar by remember { mutableStateOf(false) }
+    
+    var accountToDelete by remember { mutableStateOf<BankAccountEntity?>(null) }
+    var accountToEdit by remember { mutableStateOf<BankAccountEntity?>(null) }
 
     val balance = uiState.totalLent - uiState.totalBorrowed
     val bankAccounts = uiState.bankAccounts
@@ -296,7 +299,11 @@ fun HomeScreen(
                                 BankAccountCard(
                                     account = account,
                                     context = context,
-                                    onDelete = { viewModel.deleteBankAccount(it) }
+                                    onDelete = { accountToDelete = it },
+                                    onEdit = { 
+                                        accountToEdit = it
+                                        showAddBankSheet = true
+                                    }
                                 )
                             }
                         }
@@ -311,21 +318,68 @@ fun HomeScreen(
 
     if (showAddBankSheet) {
         AddBankAccountBottomSheet(
-            onDismiss = { showAddBankSheet = false },
-            onAdd = { request ->
-                viewModel.addBankAccount(
-                    accountName = request.accountName,
-                    accountNumber = request.accountNumber,
-                    bankName = request.bankName,
-                    branchName = request.branchName,
-                    swiftCode = request.swiftCode,
-                    coverImageUri = request.coverImageUri,
-                    isCard = request.isCard,
-                    isMfs = request.isMfs,
-                    mfsProvider = request.mfsProvider,
-                    qrCodeUri = request.qrCodeUri
-                )
+            editingAccount = accountToEdit,
+            onDismiss = { 
                 showAddBankSheet = false
+                accountToEdit = null
+            },
+            onAdd = { request ->
+                if (accountToEdit != null) {
+                    viewModel.updateBankAccount(
+                        BankAccountEntity(
+                            id = accountToEdit!!.id,
+                            accountName = request.accountName,
+                            accountNumber = request.accountNumber,
+                            bankName = request.bankName,
+                            branchName = request.branchName,
+                            swiftCode = request.swiftCode,
+                            coverImageUri = request.coverImageUri,
+                            isCard = request.isCard,
+                            isMfs = request.isMfs,
+                            mfsProvider = request.mfsProvider,
+                            qrCodeUri = request.qrCodeUri
+                        )
+                    )
+                } else {
+                    viewModel.addBankAccount(
+                        accountName = request.accountName,
+                        accountNumber = request.accountNumber,
+                        bankName = request.bankName,
+                        branchName = request.branchName,
+                        swiftCode = request.swiftCode,
+                        coverImageUri = request.coverImageUri,
+                        isCard = request.isCard,
+                        isMfs = request.isMfs,
+                        mfsProvider = request.mfsProvider,
+                        qrCodeUri = request.qrCodeUri
+                    )
+                }
+                showAddBankSheet = false
+                accountToEdit = null
+            }
+        )
+    }
+
+    if (accountToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { accountToDelete = null },
+            title = { Text("Delete Bank Account") },
+            text = { Text("Are you sure you want to delete this bank account? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        accountToDelete?.let { viewModel.deleteBankAccount(it) }
+                        accountToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { accountToDelete = null }) {
+                    Text("Cancel")
+                }
             }
         )
     }
@@ -437,7 +491,8 @@ fun NotificationsBottomSheet(onDismiss: () -> Unit) {
 fun BankAccountCard(
     account: BankAccountEntity,
     context: Context,
-    onDelete: (BankAccountEntity) -> Unit
+    onDelete: (BankAccountEntity) -> Unit,
+    onEdit: (BankAccountEntity) -> Unit
 ) {
     val clipboardManager = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -504,13 +559,26 @@ fun BankAccountCard(
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(10.dp)
+                        .padding(top = 10.dp, start = 10.dp)
                         .size(28.dp)
                         .background(Color.Black.copy(alpha = 0.4f), CircleShape)
                         .clickable { onDelete(account) },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White, modifier = Modifier.size(16.dp))
+                }
+
+                // Edit overlay
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(top = 10.dp, start = 44.dp) // Offset from Delete
+                        .size(28.dp)
+                        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                        .clickable { onEdit(account) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.White, modifier = Modifier.size(16.dp))
                 }
 
                 // Copy All overlay
@@ -690,18 +758,27 @@ data class AddBankAccountRequest(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddBankAccountBottomSheet(
+    editingAccount: BankAccountEntity? = null,
     onDismiss: () -> Unit,
     onAdd: (AddBankAccountRequest) -> Unit
 ) {
-    var accountName by remember { mutableStateOf("") }
-    var accountNumber by remember { mutableStateOf("") }
-    var bankName by remember { mutableStateOf("") }
-    var branchName by remember { mutableStateOf("") }
-    var swiftCode by remember { mutableStateOf("") }
-    var proofUri by remember { mutableStateOf<Uri?>(null) }
-    var selectedTab by remember { mutableIntStateOf(0) } // 0: Bank, 1: Card, 2: MFS
-    var mfsProvider by remember { mutableStateOf("bKash") }
-    var qrCodeUri by remember { mutableStateOf<Uri?>(null) }
+    var accountName by remember { mutableStateOf(editingAccount?.accountName ?: "") }
+    var accountNumber by remember { mutableStateOf(editingAccount?.accountNumber ?: "") }
+    var bankName by remember { mutableStateOf(editingAccount?.bankName ?: "") }
+    var branchName by remember { mutableStateOf(editingAccount?.branchName ?: "") }
+    var swiftCode by remember { mutableStateOf(editingAccount?.swiftCode ?: "") }
+    var proofUri by remember { mutableStateOf<Uri?>(editingAccount?.coverImageUri?.let { Uri.parse(it) }) }
+    var selectedTab by remember { 
+        mutableIntStateOf(
+            when {
+                editingAccount?.isMfs == true -> 2
+                editingAccount?.isCard == true -> 1
+                else -> 0
+            }
+        ) 
+    } // 0: Bank, 1: Card, 2: MFS
+    var mfsProvider by remember { mutableStateOf(editingAccount?.mfsProvider ?: "bKash") }
+    var qrCodeUri by remember { mutableStateOf<Uri?>(editingAccount?.qrCodeUri?.let { Uri.parse(it) }) }
     
     val mfsProviders = listOf("bKash", "Nagad", "Rocket", "Upay")
 
@@ -757,7 +834,7 @@ fun AddBankAccountBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                stringResource(id = R.string.add_bank_account), 
+                if (editingAccount != null) "Edit Bank Account" else stringResource(id = R.string.add_bank_account), 
                 style = MaterialTheme.typography.headlineSmall, 
                 fontWeight = FontWeight.Bold, 
                 color = MaterialTheme.colorScheme.onBackground
@@ -957,10 +1034,14 @@ fun AddBankAccountBottomSheet(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 enabled = accountName.isNotBlank() && accountNumber.isNotBlank() && (selectedTab == 2 || bankName.isNotBlank())
             ) {
-                val actionLabel = when (selectedTab) {
-                    1 -> "Save Card"
-                    2 -> "Save MFS Account"
-                    else -> stringResource(id = R.string.save_bank_account)
+                val actionLabel = if (editingAccount != null) {
+                    "Update Account"
+                } else {
+                    when (selectedTab) {
+                        1 -> "Save Card"
+                        2 -> "Save MFS Account"
+                        else -> stringResource(id = R.string.save_bank_account)
+                    }
                 }
                 Text(actionLabel, fontWeight = FontWeight.Bold)
             }
@@ -1171,12 +1252,6 @@ fun UpcomingDeadlineSection(
                     }
                 }
             }
-            Icon(
-                Icons.Default.CalendarMonth,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
         }
 
         // Month label for the visible range

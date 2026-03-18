@@ -209,4 +209,10 @@ class HomeViewModel @Inject constructor(
             repository.deleteBankAccount(account)
         }
     }
+
+    fun updateBankAccount(account: BankAccountEntity) {
+        viewModelScope.launch {
+            repository.updateBankAccount(account)
+        }
+    }
 }
