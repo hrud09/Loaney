@@ -143,30 +143,57 @@ fun MainScreen(
                 startDestination = startDestination,
                 modifier = Modifier.padding(innerPadding),
                 enterTransition = {
+                    val initialIndex = getRoutePosition(initialState.destination.route)
+                    val targetIndex = getRoutePosition(targetState.destination.route)
+                    
+                    if (targetIndex > initialIndex) {
+                        // Slide in from right (forward)
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                        ) + fadeIn(animationSpec = tween(300))
+                    } else if (targetIndex < initialIndex) {
+                        // Slide in from left (back)
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                        ) + fadeIn(animationSpec = tween(300))
+                    } else {
+                        // Neutral (e.g. same screen or non-nav item)
+                        fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.95f)
+                    }
+                },
+                exitTransition = {
+                    val initialIndex = getRoutePosition(initialState.destination.route)
+                    val targetIndex = getRoutePosition(targetState.destination.route)
+                    
+                    if (targetIndex > initialIndex) {
+                        // Slide out to left
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                        ) + fadeOut(animationSpec = tween(300))
+                    } else if (targetIndex < initialIndex) {
+                        // Slide out to right
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                        ) + fadeOut(animationSpec = tween(300))
+                    } else {
+                        fadeOut(animationSpec = tween(300))
+                    }
+                },
+                popEnterTransition = {
                     slideInHorizontally(
-                        initialOffsetX = { it },
+                        initialOffsetX = { -it },
                         animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
                     ) + fadeIn(animationSpec = tween(300))
                 },
-                exitTransition = {
-                    slideOutOfContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                        animationSpec = tween(350, easing = FastOutSlowInEasing),
-                        targetOffset = { it / 4 }
-                    ) + fadeOut(animationSpec = tween(350))
-                },
-                popEnterTransition = {
-                    slideIntoContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.End,
-                        animationSpec = tween(350, easing = FastOutSlowInEasing),
-                        initialOffset = { it / 4 }
-                    ) + fadeIn(animationSpec = tween(250, delayMillis = 100))
-                },
                 popExitTransition = {
-                    slideOutOfContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.End,
-                        animationSpec = tween(350, easing = FastOutSlowInEasing)
-                    ) + fadeOut(animationSpec = tween(150))
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    ) + fadeOut(animationSpec = tween(300))
                 }
             ) {
                 composable(Screen.Onboarding.route) {
@@ -415,3 +442,15 @@ private fun BkashNavBarItem(
 
 data class BkashNavItem(val label: String, val route: String, val icon: ImageVector)
 data class NavigationItem(val label: String, val route: String, val icon: ImageVector)
+
+private fun getRoutePosition(route: String?): Int {
+    return when {
+        route?.startsWith(Screen.Home.route) == true -> 0
+        route?.startsWith("history") == true -> 1
+        route?.startsWith("manage_loans") == true -> 2
+        route?.startsWith("add_loan") == true -> 3
+        route?.startsWith(Screen.Shop.route) == true -> 4
+        route?.startsWith(Screen.Settings.route) == true -> 5
+        else -> 10
+    }
+}
