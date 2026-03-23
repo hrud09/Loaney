@@ -112,7 +112,14 @@ fun AddLoanScreen(
     var showLoanDatePicker by remember { mutableStateOf(false) }
     var showReturnDatePicker by remember { mutableStateOf(false) }
 
-    val loanReasons = listOf("🍔 Food", "🚑 Emergency", "🛍️ Shopping", "🚌 Travel", "Bills", "Other")
+    val loanReasons = listOf(
+        R.string.reason_food,
+        R.string.reason_emergency,
+        R.string.reason_shopping,
+        R.string.reason_travel,
+        R.string.reason_bills,
+        R.string.reason_other
+    )
     val relationships = listOf(
         stringResource(R.string.relationship_friend) to "Friend",
         stringResource(R.string.relationship_family) to "Family",
@@ -244,12 +251,19 @@ fun AddLoanScreen(
             Column(modifier = Modifier.background(AlimDark)) {
                 CenterAlignedTopAppBar(
                     title = { 
-                        Text(
-                            if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title), 
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = AlimWhite
-                        ) 
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                if (selectedLoanType == LoanType.LEND) stringResource(id = R.string.send_loan_title) else stringResource(id = R.string.request_loan_title), 
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = AlimWhite
+                            )
+                            Text(
+                                if (selectedLoanType == LoanType.LEND) "(${stringResource(id = R.string.given)})" else "(${stringResource(id = R.string.taken)})",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = AlimWhite.copy(alpha = 0.7f)
+                            )
+                        }
                     },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
@@ -441,9 +455,10 @@ fun AddLoanScreen(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(80.dp)
+                                        .size(100.dp)
                                         .clip(CircleShape)
                                         .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .border(2.dp, AlimGreen.copy(alpha = 0.5f), CircleShape)
                                         .clickable { profilePhotoLauncher.launch(arrayOf("image/*")) },
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -454,8 +469,23 @@ fun AddLoanScreen(
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = ContentScale.Crop
                                         )
+                                        // Camera overlay
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black.copy(alpha = 0.15f)),
+                                            contentAlignment = Alignment.BottomCenter
+                                        ) {
+                                             Box(modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.4f)).padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
+                                                 Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                             }
+                                        }
                                     } else {
-                                        Icon(Icons.Default.AddAPhoto, contentDescription = "Add Profile Photo", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(32.dp))
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Icon(Icons.Default.AddAPhoto, contentDescription = "Add Profile Photo", tint = AlimGreen, modifier = Modifier.size(32.dp))
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(stringResource(id = R.string.add_photo), style = MaterialTheme.typography.labelSmall, color = AlimGreen)
+                                        }
                                     }
                                 }
                             }
@@ -537,7 +567,8 @@ fun AddLoanScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(stringResource(id = R.string.reason_for_loan), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            items(loanReasons) { r ->
+                            items(loanReasons) { rRes ->
+                                val r = stringResource(id = rRes)
                                 val isSelected = purpose == r
                                 FilterChip(
                                     selected = isSelected,

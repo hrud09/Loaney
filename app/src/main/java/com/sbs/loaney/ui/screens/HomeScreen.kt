@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import com.sbs.loaney.ui.components.OnboardingIllustration
 import com.sbs.loaney.ui.components.OnboardingIllustrationType
 import androidx.compose.foundation.Canvas
@@ -133,31 +134,6 @@ fun HomeScreen(
                             color = AlimWhite
                         ) 
                     },
-                    actions = {
-                        IconButton(onClick = { showNotificationsSheet = true }) {
-                            Icon(
-                                Icons.Default.Notifications,
-                                contentDescription = "Notifications",
-                                tint = AlimWhite
-                            )
-                        }
-                        IconButton(onClick = onProfileClick) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(AlimWhite.copy(alpha = 0.1f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = "Profile",
-                                    tint = AlimWhite,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = AlimDark,
                         titleContentColor = AlimWhite
@@ -173,7 +149,10 @@ fun HomeScreen(
                 Column(modifier = Modifier.fillMaxSize()) {
                     // NEW ALIMBANK STYLE HEADER
                     AlimHeader(
-                        userName = uiState.userName
+                        userName = uiState.userName,
+                        userProfilePhoto = uiState.userProfilePhoto,
+                        onProfileClick = onProfileClick,
+                        onNotificationsClick = { showNotificationsSheet = true }
                     )
                     
                     AlimBalanceCard(
@@ -402,7 +381,7 @@ fun HomeScreen(
 
     if (showLentSummary) {
         LoanSummaryDialog(
-            title = stringResource(id = R.string.total_lent),
+            title = stringResource(id = R.string.total_given),
             loans = uiState.lentLoans,
             currencySymbol = uiState.currencySymbol,
             accentColor = MaterialTheme.colorScheme.primary,
@@ -412,7 +391,7 @@ fun HomeScreen(
 
     if (showBorrowedSummary) {
         LoanSummaryDialog(
-            title = stringResource(id = R.string.total_borrowed),
+            title = stringResource(id = R.string.total_taken),
             loans = uiState.borrowedLoans,
             currencySymbol = uiState.currencySymbol,
             accentColor = MaterialTheme.colorScheme.error,
@@ -1523,24 +1502,25 @@ class CardNumberVisualTransformation : VisualTransformation {
 
 @Composable
 fun AlimHeader(
-    userName: String
+    userName: String,
+    userProfilePhoto: String? = null,
+    onProfileClick: () -> Unit,
+    onNotificationsClick: () -> Unit
 ) {
-    val greeting = remember {
-        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        when (hour) {
-            in 0..11 -> "Good Morning,"
-            in 12..16 -> "Good Afternoon,"
-            else -> "Good Evening,"
-        }
+    val greeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+        in 0..11 -> stringResource(id = R.string.good_morning)
+        in 12..16 -> stringResource(id = R.string.good_afternoon)
+        else -> stringResource(id = R.string.good_evening)
     }
 
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(AlimDark)
-            .padding(top = 0.dp, start = 20.dp, end = 20.dp, bottom = 8.dp) // Adjusted padding for new layout
+            .padding(top = 0.dp, start = 20.dp, end = 20.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = greeting,
                 style = MaterialTheme.typography.bodyMedium.copy(
@@ -1556,6 +1536,42 @@ fun AlimHeader(
                     letterSpacing = 0.5.sp
                 )
             )
+        }
+
+        // Notifications Button
+        IconButton(onClick = onNotificationsClick) {
+            Icon(
+                Icons.Default.Notifications,
+                contentDescription = "Notifications",
+                tint = AlimWhite
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Profile Photo
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(AlimWhite.copy(alpha = 0.15f))
+                .clickable { onProfileClick() }
+        ) {
+            if (userProfilePhoto != null) {
+                AsyncImage(
+                    model = userProfilePhoto,
+                    contentDescription = "Profile Photo",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    Icons.Default.Person, 
+                    contentDescription = null, 
+                    tint = AlimWhite,
+                    modifier = Modifier.fillMaxSize().padding(8.dp)
+                )
+            }
         }
     }
 }
@@ -1600,7 +1616,7 @@ fun AlimBalanceCard(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "Current Balance",
+                                text = stringResource(id = R.string.current_balance),
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     color = AlimWhite.copy(alpha = 0.8f),
                                     fontWeight = FontWeight.Medium
@@ -1643,7 +1659,10 @@ fun AlimBalanceCard(
                                 color = AlimWhite,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 32.sp
-                            )
+                            ),
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -1654,10 +1673,10 @@ fun AlimBalanceCard(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        AlimCardAction(Icons.Default.Add, "Lend", onClick = { onNavigateToAddLoan("LEND") })
-                        AlimCardAction(Icons.Default.Remove, "Borrow", onClick = { onNavigateToAddLoan("BORROW") })
-                        AlimCardAction(Icons.Default.History, "History", onClick = onNavigateToHistoryScreen)
-                        AlimCardAction(Icons.Default.BarChart, "Report", onClick = onReportClick)
+                        AlimCardAction(Icons.Default.Add, stringResource(id = R.string.lend), onClick = { onNavigateToAddLoan("LEND") })
+                        AlimCardAction(Icons.Default.Remove, stringResource(id = R.string.borrow), onClick = { onNavigateToAddLoan("BORROW") })
+                        AlimCardAction(Icons.Default.History, stringResource(id = R.string.history), onClick = onNavigateToHistoryScreen)
+                        AlimCardAction(Icons.Default.BarChart, stringResource(id = R.string.report), onClick = onReportClick)
                     }
                 }
             }

@@ -17,7 +17,8 @@ data class SettingsUiState(
     val currencySymbol: String = "৳",
     val appLanguage: String = "en",
     val notificationsEnabled: Boolean = true,
-    val userName: String = "Sajibur"
+    val userName: String = "Sajibur",
+    val userProfilePhoto: String? = null
 )
 
 @HiltViewModel
@@ -31,7 +32,8 @@ class SettingsViewModel @Inject constructor(
         settingsRepository.currencySymbolFlow,
         settingsRepository.appLanguageFlow,
         settingsRepository.notificationsEnabledFlow,
-        settingsRepository.userNameFlow
+        settingsRepository.userNameFlow,
+        settingsRepository.userProfilePhotoFlow
     ) { values ->
         SettingsUiState(
             themeMode = values[0] as Int,
@@ -39,7 +41,8 @@ class SettingsViewModel @Inject constructor(
             currencySymbol = values[2] as String,
             appLanguage = values[3] as String,
             notificationsEnabled = values[4] as Boolean,
-            userName = values[5] as String
+            userName = values[5] as String,
+            userProfilePhoto = values[6] as String?
         )
     }.stateIn(
         scope = viewModelScope,
@@ -80,6 +83,12 @@ class SettingsViewModel @Inject constructor(
     fun setUserName(name: String) {
         viewModelScope.launch {
             settingsRepository.setUserName(name)
+        }
+    }
+
+    fun setUserProfilePhoto(uri: String?) {
+        viewModelScope.launch {
+            settingsRepository.setUserProfilePhoto(uri)
         }
     }
 

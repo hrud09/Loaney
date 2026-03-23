@@ -383,6 +383,8 @@ fun LoanTrackerScreen(
                                     if (loan.profilePhotoUri != null) {
                                         expandedImageUri = loan.profilePhotoUri
                                         isImageExpanded = true
+                                    } else {
+                                        showEditLoanSheet = true
                                     }
                                 },
                             contentAlignment = Alignment.Center
@@ -423,10 +425,10 @@ fun LoanTrackerScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = AlimDark.copy(alpha = 0.6f)
-                            )
+                                 text = if (loan.type == LoanType.LEND) stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)) else stringResource(id = R.string.repay_by, dateFormat.format(loan.promisedReturnDate)),
+                                 style = MaterialTheme.typography.labelMedium,
+                                 color = AlimDark.copy(alpha = 0.6f)
+                             )
                         }
 
                         Column(horizontalAlignment = Alignment.End) {
@@ -476,7 +478,7 @@ fun LoanTrackerScreen(
                     )
                     InfoTile(
                         title = stringResource(id = R.string.loan_type),
-                        value = if (loan.type.name == "LEND") stringResource(id = R.string.lent) else stringResource(id = R.string.borrowed),
+                        value = if (loan.type == LoanType.LEND) stringResource(id = R.string.given) else stringResource(id = R.string.taken),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -490,7 +492,15 @@ fun LoanTrackerScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
-                        DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = loan.relationshipType ?: stringResource(id = R.string.not_specified))
+                        val localizedRelationship = when (loan.relationshipType) {
+                            "Friend" -> stringResource(id = R.string.relationship_friend)
+                            "Family" -> stringResource(id = R.string.relationship_family)
+                            "Colleague" -> stringResource(id = R.string.relationship_colleague)
+                            "Neighbor" -> stringResource(id = R.string.relationship_neighbor)
+                            "Other" -> stringResource(id = R.string.relationship_other)
+                            else -> loan.relationshipType ?: stringResource(id = R.string.not_specified)
+                        }
+                        DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = localizedRelationship)
                         if (!loan.email.isNullOrBlank()) {
                             DetailRow(icon = Icons.Default.Email, label = stringResource(id = R.string.email_optional), value = loan.email)
                         }
@@ -630,7 +640,14 @@ fun EditLoanBottomSheet(
     var showLoanDatePicker by remember { mutableStateOf(false) }
     var showReturnDatePicker by remember { mutableStateOf(false) }
 
-    val loanReasons = listOf("🍔 Food", "🚑 Emergency", "🛍️ Shopping", "🚌 Travel", "Bills", "Other")
+    val loanReasons = listOf(
+        R.string.reason_food,
+        R.string.reason_emergency,
+        R.string.reason_shopping,
+        R.string.reason_travel,
+        R.string.reason_bills,
+        R.string.reason_other
+    )
     val relationships = listOf(
         stringResource(R.string.relationship_friend) to "Friend",
         stringResource(R.string.relationship_family) to "Family",
@@ -721,7 +738,7 @@ fun EditLoanBottomSheet(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(15.dp)
         ) {
-            Text("Edit Loan Details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(id = R.string.edit_loan_details), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
             // Name & Phone using CustomLightTextField for consistency and contact selection
             CustomLightTextField(
@@ -756,9 +773,10 @@ fun EditLoanBottomSheet(
 
             // Purpose / Reason for Loan
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Reason for Loan", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(id = R.string.reason_for_loan), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(loanReasons) { r ->
+                    items(loanReasons) { rRes ->
+                        val r = stringResource(id = rRes)
                         val isSelected = purpose == r
                         FilterChip(
                             selected = isSelected,

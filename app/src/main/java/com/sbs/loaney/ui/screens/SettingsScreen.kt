@@ -1,9 +1,13 @@
 package com.sbs.loaney.ui.screens
 
-import android.app.LocaleManager
 import android.content.Context
+import android.app.LocaleManager
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.LocaleList
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 import java.util.Locale
 import kotlinx.coroutines.launch
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +59,18 @@ fun SettingsScreen(
     var showLanguageSheet by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    val profilePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? -> 
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
+        viewModel.setUserProfilePhoto(uri?.toString())
+    }
 
     Scaffold(
         topBar = {
@@ -97,6 +115,46 @@ fun SettingsScreen(
         ) {
             // -- GROUP 1: PROFILE --
             SettingsGroup(title = stringResource(id = R.string.profile)) {
+                // Profile Photo Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .background(AlimGreen.copy(alpha = 0.1f), CircleShape)
+                            .border(2.dp, AlimGreen.copy(alpha = 0.5f), CircleShape)
+                            .clickable { profilePhotoLauncher.launch(arrayOf("image/*")) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (uiState.userProfilePhoto != null) {
+                            AsyncImage(
+                                model = uiState.userProfilePhoto,
+                                contentDescription = "Profile Photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(Icons.Default.Person, contentDescription = null, tint = AlimGreen, modifier = Modifier.size(48.dp))
+                        }
+                        // Camera overlay
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+                             Box(modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.4f)).padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
+                                 Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                             }
+                        }
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+
                 SettingsItem(
                     icon = Icons.Default.Person,
                     title = stringResource(id = R.string.display_name),

@@ -23,6 +23,17 @@ class HistoryViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
+    init {
+        cleanupOldHistory()
+    }
+
+    private fun cleanupOldHistory() {
+        viewModelScope.launch {
+            val ninetyDaysAgo = System.currentTimeMillis() - (90L * 24 * 60 * 60 * 1000)
+            repository.deleteExpiredLoans(ninetyDaysAgo)
+        }
+    }
+
     val uiState: StateFlow<HistoryUiState> = combine(
         repository.getDeletedLoans(),
         settingsRepository.currencySymbolFlow

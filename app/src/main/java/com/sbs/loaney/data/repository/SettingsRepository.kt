@@ -22,6 +22,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val APP_LANGUAGE = stringPreferencesKey("app_language")
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val USER_NAME = stringPreferencesKey("user_name")
+        val USER_PROFILE_PHOTO = stringPreferencesKey("user_profile_photo")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     }
 
@@ -74,6 +75,14 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.USER_NAME] ?: "Sajibur"
         }
 
+    val userProfilePhotoFlow: Flow<String?> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_PROFILE_PHOTO]
+        }
+
     val onboardingCompletedFlow: Flow<Boolean> = dataStore.data
         .catch { exception ->
             if (exception is IOException) emit(emptyPreferences()) else throw exception
@@ -116,6 +125,16 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setUserName(name: String) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.USER_NAME] = name
+        }
+    }
+
+    suspend fun setUserProfilePhoto(uri: String?) {
+        dataStore.edit { preferences ->
+            if (uri == null) {
+                preferences.remove(PreferencesKeys.USER_PROFILE_PHOTO)
+            } else {
+                preferences[PreferencesKeys.USER_PROFILE_PHOTO] = uri
+            }
         }
     }
 

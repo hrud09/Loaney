@@ -136,7 +136,7 @@ fun ManageLoansScreen(
                 },
                 divider = {}
             ) {
-                listOf(0 to stringResource(id = R.string.lent), 1 to stringResource(id = R.string.borrowed)).forEach { (pageIndex, text) ->
+                listOf(0 to stringResource(id = R.string.given), 1 to stringResource(id = R.string.taken)).forEach { (pageIndex, text) ->
                     val selected = pagerState.currentPage == pageIndex
                     Tab(
                         selected = selected,
@@ -481,7 +481,7 @@ fun ManageLoanCard(
                                 modifier = Modifier.size(12.dp)
                             )
                             Text(
-                                text = "Due ${dateFormat.format(loan.promisedReturnDate)}",
+                                text = stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = CoralRose,
                                 fontWeight = FontWeight.Medium
@@ -489,7 +489,7 @@ fun ManageLoanCard(
                         }
                     } else {
                         Text(
-                            text = "Due ${dateFormat.format(loan.promisedReturnDate)}",
+                            text = stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)),
                             style = MaterialTheme.typography.bodySmall,
                             color = AlimDark.copy(alpha = 0.6f)
                         )

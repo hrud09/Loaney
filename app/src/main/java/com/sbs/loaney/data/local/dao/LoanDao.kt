@@ -24,15 +24,15 @@ data class LoanWithPayments(
 @Dao
 interface LoanDao {
     @Transaction
-    @Query("SELECT * FROM loans WHERE isDeleted = 0 ORDER BY createdAt DESC")
+    @Query("SELECT * FROM loans WHERE isDeleted = 0 AND status NOT IN ('FULLY_PAID', 'FORGIVEN') ORDER BY createdAt DESC")
     fun getAllLoans(): Flow<List<LoanWithPayments>>
 
     @Transaction
-    @Query("SELECT * FROM loans WHERE isDeleted = 0 ORDER BY createdAt DESC")
+    @Query("SELECT * FROM loans WHERE isDeleted = 0 AND status NOT IN ('FULLY_PAID', 'FORGIVEN') ORDER BY createdAt DESC")
     suspend fun getAllLoansOnce(): List<LoanWithPayments>
 
     @Transaction
-    @Query("SELECT * FROM loans WHERE type = :type AND isDeleted = 0 ORDER BY createdAt DESC")
+    @Query("SELECT * FROM loans WHERE type = :type AND isDeleted = 0 AND status NOT IN ('FULLY_PAID', 'FORGIVEN') ORDER BY createdAt DESC")
     fun getLoansByType(type: LoanType): Flow<List<LoanWithPayments>>
 
     @Transaction
@@ -40,7 +40,7 @@ interface LoanDao {
     fun getLoanById(loanId: Long): Flow<LoanWithPayments?>
 
     @Transaction
-    @Query("SELECT * FROM loans WHERE isDeleted = 1 ORDER BY createdAt DESC")
+    @Query("SELECT * FROM loans WHERE isDeleted = 1 OR status IN ('FULLY_PAID', 'FORGIVEN') ORDER BY removedAt DESC")
     fun getDeletedLoans(): Flow<List<LoanWithPayments>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -49,11 +49,14 @@ interface LoanDao {
     @Update
     suspend fun updateLoan(loan: LoanEntity)
 
-    @Query("UPDATE loans SET isDeleted = 1 WHERE id = :loanId")
-    suspend fun softDeleteLoan(loanId: Long)
+    @Query("UPDATE loans SET isDeleted = 1, removedAt = :timestamp WHERE id = :loanId")
+    suspend fun softDeleteLoan(loanId: Long, timestamp: Long = System.currentTimeMillis())
 
-    @Query("UPDATE loans SET isDeleted = 0 WHERE id = :loanId")
+    @Query("UPDATE loans SET isDeleted = 0, removedAt = NULL WHERE id = :loanId")
     suspend fun restoreLoan(loanId: Long)
+
+    @Query("DELETE FROM loans WHERE (isDeleted = 1 OR status IN ('FULLY_PAID', 'FORGIVEN')) AND removedAt IS NOT NULL AND removedAt < :threshold")
+    suspend fun deleteExpiredLoans(threshold: Long)
 
     @Delete
     suspend fun deleteLoan(loan: LoanEntity)

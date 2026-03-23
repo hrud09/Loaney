@@ -95,7 +95,10 @@ class LoanTrackerViewModel @Inject constructor(
                 // Add a final payment to settle
                 addPayment(balance, "Settled", "Final settlement")
             } else {
-                repository.updateLoan(loanWithPayments.loan.copy(status = LoanStatus.FULLY_PAID))
+                repository.updateLoan(loanWithPayments.loan.copy(
+                    status = LoanStatus.FULLY_PAID,
+                    removedAt = System.currentTimeMillis()
+                ))
             }
         }
     }
@@ -104,7 +107,10 @@ class LoanTrackerViewModel @Inject constructor(
         val loanId = _selectedLoanId.value ?: return
         viewModelScope.launch {
             val loanWithPayments = repository.getLoanById(loanId).firstOrNull() ?: return@launch
-            repository.updateLoan(loanWithPayments.loan.copy(status = LoanStatus.FORGIVEN))
+            repository.updateLoan(loanWithPayments.loan.copy(
+                status = LoanStatus.FORGIVEN,
+                removedAt = System.currentTimeMillis()
+            ))
         }
     }
 
@@ -162,7 +168,10 @@ class LoanTrackerViewModel @Inject constructor(
         }
 
         if (newStatus != loan.status) {
-            repository.updateLoan(loan.copy(status = newStatus))
+            repository.updateLoan(loan.copy(
+                status = newStatus,
+                removedAt = if (newStatus == LoanStatus.FULLY_PAID) System.currentTimeMillis() else null
+            ))
         }
     }
 }

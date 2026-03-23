@@ -36,7 +36,8 @@ data class HomeUiState(
     val allEvents: Map<String, List<CalendarEvent>> = emptyMap(),
     val bankAccounts: List<BankAccountEntity> = emptyList(),
     val userName: String = "Sajibur",
-    val currencySymbol: String = "৳"
+    val currencySymbol: String = "৳",
+    val userProfilePhoto: String? = null
 )
 
 @HiltViewModel
@@ -49,13 +50,15 @@ class HomeViewModel @Inject constructor(
         repository.getAllLoans(),
         repository.getAllBankAccounts(),
         settingsRepository.userNameFlow,
-        settingsRepository.currencySymbolFlow
-    ) { loansWithPayments, accounts, name, currency ->
+        settingsRepository.currencySymbolFlow,
+        settingsRepository.userProfilePhotoFlow
+    ) { loansWithPayments, accounts, name, currency, photo ->
         val summary = calculateSummary(loansWithPayments)
         summary.copy(
             bankAccounts = accounts,
             userName = name,
-            currencySymbol = currency
+            currencySymbol = currency,
+            userProfilePhoto = photo
         )
     }.stateIn(
             scope = viewModelScope,
