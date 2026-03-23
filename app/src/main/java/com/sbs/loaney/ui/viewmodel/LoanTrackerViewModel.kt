@@ -81,7 +81,7 @@ class LoanTrackerViewModel @Inject constructor(
 
     fun deleteLoan(loan: LoanEntity) {
         viewModelScope.launch {
-            repository.deleteLoan(loan)
+            repository.softDeleteLoan(loan.id)
         }
     }
 

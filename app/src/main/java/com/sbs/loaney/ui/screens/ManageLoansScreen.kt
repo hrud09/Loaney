@@ -1,6 +1,7 @@
 package com.sbs.loaney.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -157,65 +158,73 @@ fun ManageLoansScreen(
             ) { page ->
                 val loans = if (page == 0) uiState.lentLoans else uiState.borrowedLoans
                 
-                if (loans.isEmpty()) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(100.dp)
-                                .background(AlimWhite, CircleShape)
-                                .border(1.dp, AlimDark.copy(alpha = 0.1f), CircleShape),
-                            contentAlignment = Alignment.Center
+                AnimatedContent(
+                    targetState = loans.isEmpty(),
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                    },
+                    label = "ManageLoansContentAnimation"
+                ) { isEmpty ->
+                    if (isEmpty) {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.HourglassEmpty,
-                                contentDescription = "No loans",
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .background(AlimWhite, CircleShape)
+                                    .border(1.dp, AlimDark.copy(alpha = 0.1f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.HourglassEmpty,
+                                    contentDescription = "No loans",
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text(
+                                stringResource(id = R.string.no_transactions_yet),
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                stringResource(id = R.string.tap_to_start_tracking),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = AlimDark.copy(alpha = 0.6f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 32.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            stringResource(id = R.string.no_transactions_yet),
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            stringResource(id = R.string.tap_to_start_tracking),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = AlimDark.copy(alpha = 0.6f),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 32.dp)
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 130.dp), // Increased padding
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(loans, key = { it.loan.id }) { item ->
-                            SwipeableManageLoanCard(
-                                modifier = Modifier.animateItem(
-                                    fadeInSpec = null, 
-                                    placementSpec = androidx.compose.animation.core.tween(durationMillis = 300, easing = androidx.compose.animation.core.FastOutSlowInEasing), 
-                                    fadeOutSpec = null
-                                ),
-                                item = item,
-                                dateFormat = dateFormat,
-                                currencySymbol = uiState.currencySymbol,
-                                onClick = { onNavigateToDetail(item.loan.id) },
-                                onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
-                                onSwipeRight = { loanToDelete = item },
-                                onProfilePhotoClick = { uri ->
-                                    expandedImageUri = uri
-                                    isImageExpanded = true
-                                }
-                            )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 130.dp), // Increased padding
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(loans, key = { it.loan.id }) { item ->
+                                SwipeableManageLoanCard(
+                                    modifier = Modifier.animateItem(
+                                        fadeInSpec = null, 
+                                        placementSpec = androidx.compose.animation.core.tween(durationMillis = 300, easing = androidx.compose.animation.core.FastOutSlowInEasing), 
+                                        fadeOutSpec = null
+                                    ),
+                                    item = item,
+                                    dateFormat = dateFormat,
+                                    currencySymbol = uiState.currencySymbol,
+                                    onClick = { onNavigateToDetail(item.loan.id) },
+                                    onSwipeLeft = { selectedLoanIdForPayment = item.loan.id },
+                                    onSwipeRight = { loanToDelete = item },
+                                    onProfilePhotoClick = { uri ->
+                                        expandedImageUri = uri
+                                        isImageExpanded = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }

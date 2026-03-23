@@ -120,12 +120,12 @@ fun MainScreen(
                             }
                         },
                         onCenterFabClick = { navController.navigate(Screen.AddLoan.createRoute("LEND")) },
-                        onProfileClick = { 
+                        onProfileClick = {
                             if (navController.currentDestination?.route != Screen.Settings.route) {
-                                navController.navigate(Screen.Settings.route) 
+                                navController.navigate(Screen.Settings.route)
                             }
                         },
-                        onShopClick = { 
+                        onShopClick = {
                             if (navController.currentDestination?.route != Screen.Shop.route) {
                                 navController.navigate(Screen.Shop.route) {
                                     popUpTo(navController.graph.findStartDestination().id) { saveState = true }
@@ -141,12 +141,12 @@ fun MainScreen(
             NavHost(
                 navController = navController,
                 startDestination = startDestination,
-                modifier = Modifier, // Padding removed so content can go behind nav bar
+                modifier = Modifier.padding(innerPadding),
                 enterTransition = {
-                    slideIntoContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                        animationSpec = tween(350, easing = FastOutSlowInEasing)
-                    ) + fadeIn(animationSpec = tween(350))
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    ) + fadeIn(animationSpec = tween(300))
                 },
                 exitTransition = {
                     slideOutOfContainer(
@@ -190,6 +190,9 @@ fun MainScreen(
                                 launchSingleTop = true
                                 restoreState = true
                             }
+                        },
+                        onNavigateToHistoryScreen = {
+                            navController.navigate(Screen.History.route)
                         },
                         onProfileClick = { scope.launch { drawerState.open() } }
                     )
@@ -243,6 +246,14 @@ fun MainScreen(
                     LoanTrackerScreen(
                         loanId = loanId,
                         onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+                composable(Screen.History.route) {
+                    HistoryScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDetail = { loanId ->
+                            navController.navigate(Screen.LoanDetail.createRoute(loanId))
+                        }
                     )
                 }
             }

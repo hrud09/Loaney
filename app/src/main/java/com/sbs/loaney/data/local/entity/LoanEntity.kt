@@ -25,5 +25,6 @@ data class LoanEntity(
     val status: LoanStatus = LoanStatus.ACTIVE,
     val relationshipType: String? = null,
     val witness: String? = null,
+    val isDeleted: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )

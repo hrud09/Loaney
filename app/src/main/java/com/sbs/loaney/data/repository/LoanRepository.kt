@@ -24,6 +24,12 @@ class LoanRepository(
 
     suspend fun updateLoan(loan: LoanEntity) = loanDao.updateLoan(loan)
 
+    suspend fun softDeleteLoan(loanId: Long) = loanDao.softDeleteLoan(loanId)
+
+    suspend fun restoreLoan(loanId: Long) = loanDao.restoreLoan(loanId)
+
+    fun getDeletedLoans(): Flow<List<LoanWithPayments>> = loanDao.getDeletedLoans()
+
     suspend fun deleteLoan(loan: LoanEntity) = loanDao.deleteLoan(loan)
 
     suspend fun insertPayment(payment: PaymentEntity) = loanDao.insertPayment(payment)

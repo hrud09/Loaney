@@ -13,7 +13,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -95,6 +97,7 @@ fun HomeScreen(
     onNavigateToAddLoan: (String) -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToHistory: (String?) -> Unit,
+    onNavigateToHistoryScreen: () -> Unit,
     onProfileClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -178,6 +181,7 @@ fun HomeScreen(
                         currencySymbol = uiState.currencySymbol,
                         onNavigateToAddLoan = onNavigateToAddLoan,
                         onNavigateToHistory = onNavigateToHistory,
+                        onNavigateToHistoryScreen = onNavigateToHistoryScreen,
                         onReportClick = { onNavigateToHistory(null) },
                         onCalendarClick = { showFeaturedCalendar = true }
                     )
@@ -1335,41 +1339,51 @@ fun UpcomingDeadlineSection(
         }
 
         // Content for the selected date
-        if (filteredDeadlines.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
-                    .border(0.5.dp, Color.Black.copy(alpha = 0.05f), RoundedCornerShape(24.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+        AnimatedContent(
+            targetState = selectedDate to filteredDeadlines.isEmpty(),
+            transitionSpec = {
+                (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
+                    scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
+                    .togetherWith(fadeOut(animationSpec = tween(90)))
+            },
+            label = "DeadlineContentAnimation"
+        ) { (currentDate, isEmpty) ->
+            if (isEmpty) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
+                        .border(0.5.dp, Color.Black.copy(alpha = 0.05f), RoundedCornerShape(24.dp)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = EmeraldGreen.copy(alpha = 0.6f),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        "All clear — no deadlines here!",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = EmeraldGreen.copy(alpha = 0.6f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            "All clear — no deadlines here!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                filteredDeadlines.forEach { item ->
-                    UpcomingDeadlineCard(
-                        item = item,
-                        currencySymbol = currencySymbol,
-                        selectedDate = selectedDate,
-                        onClick = { onNavigateToDetail(item.loan.id) }
-                    )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    filteredDeadlines.forEach { item ->
+                        UpcomingDeadlineCard(
+                            item = item,
+                            currencySymbol = currencySymbol,
+                            selectedDate = currentDate,
+                            onClick = { onNavigateToDetail(item.loan.id) }
+                        )
+                    }
                 }
             }
         }
@@ -1552,6 +1566,7 @@ fun AlimBalanceCard(
     currencySymbol: String,
     onNavigateToAddLoan: (String) -> Unit,
     onNavigateToHistory: (String?) -> Unit,
+    onNavigateToHistoryScreen: () -> Unit,
     onReportClick: () -> Unit,
     onCalendarClick: () -> Unit
 ) {
@@ -1613,14 +1628,24 @@ fun AlimBalanceCard(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = if (isBalanceVisible) "$currencySymbol${String.format("%,.0f", balance)}" else "****",
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            color = AlimWhite,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 32.sp
+                    AnimatedContent(
+                        targetState = isBalanceVisible,
+                        transitionSpec = {
+                            (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
+                                scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
+                                .togetherWith(fadeOut(animationSpec = tween(90)))
+                        },
+                        label = "BalanceAnimation"
+                    ) { visible ->
+                        Text(
+                            text = if (visible) "$currencySymbol${String.format("%,.0f", balance)}" else "****",
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                color = AlimWhite,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 32.sp
+                            )
                         )
-                    )
+                    }
 
                     Spacer(modifier = Modifier.height(32.dp))
 
@@ -1631,7 +1656,7 @@ fun AlimBalanceCard(
                     ) {
                         AlimCardAction(Icons.Default.Add, "Lend", onClick = { onNavigateToAddLoan("LEND") })
                         AlimCardAction(Icons.Default.Remove, "Borrow", onClick = { onNavigateToAddLoan("BORROW") })
-                        AlimCardAction(Icons.Default.History, "History", onClick = { onNavigateToHistory(null) })
+                        AlimCardAction(Icons.Default.History, "History", onClick = onNavigateToHistoryScreen)
                         AlimCardAction(Icons.Default.BarChart, "Report", onClick = onReportClick)
                     }
                 }
