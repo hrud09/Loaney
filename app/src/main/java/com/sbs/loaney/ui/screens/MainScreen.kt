@@ -98,7 +98,7 @@ fun MainScreen(
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        gesturesEnabled = isTopLevel,
+        gesturesEnabled = true,
         drawerContent = {
             ProfileSidebarContent(
                 profile = userProfile,

@@ -8,7 +8,9 @@ data class UserProfile(
     val totalLoaneyPies: Int = 0,
     val xpLevel: Int = 1,
     val currentXp: Int = 0,
-    val profilePhotoUri: String? = null
+    val profilePhotoUri: String? = null,
+    val address: String? = null,
+    val dateOfBirth: String? = null
 ) {
     /** XP required to reach the next level (scales with level). */
     val xpToNextLevel: Int get() = xpLevel * 100

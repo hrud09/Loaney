@@ -59,25 +59,45 @@ fun ProfileSidebarContent(
                     ?: ""
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Avatar
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (profile.profilePhotoUri != null) {
-                            coil.compose.AsyncImage(
-                                model = profile.profilePhotoUri,
-                                contentDescription = "Profile Photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                            )
-                        } else {
-                            androidx.compose.material.icons.Icons.Default.Person.let {
-                                Icon(it, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(40.dp))
+                    // Avatar and Level Badge Container
+                    Box(modifier = Modifier.size(76.dp)) {
+                        // Avatar
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (profile.profilePhotoUri != null) {
+                                coil.compose.AsyncImage(
+                                    model = profile.profilePhotoUri,
+                                    contentDescription = "Profile Photo",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                )
+                            } else {
+                                androidx.compose.material.icons.Icons.Default.Person.let {
+                                    Icon(it, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(40.dp))
+                                }
                             }
+                        }
+
+                        // Level Badge
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .offset(y = 4.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.primary)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Lvl ${profile.xpLevel}",
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 11.sp
+                            )
                         }
                     }
                     Spacer(Modifier.width(16.dp))
@@ -89,28 +109,12 @@ fun ProfileSidebarContent(
                             fontSize = 20.sp
                         )
                         Spacer(Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.primary)
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "Lvl ${profile.xpLevel}",
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 11.sp
-                                )
-                            }
-                            Spacer(Modifier.width(8.dp))
-                            if (userInfo.isNotBlank()) {
-                                Text(
-                                    text = userInfo,
-                                    color = Color.White.copy(alpha = 0.7f),
-                                    fontSize = 13.sp
-                                )
-                            }
+                        if (userInfo.isNotBlank()) {
+                            Text(
+                                text = userInfo,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 13.sp
+                            )
                         }
                     }
                 }

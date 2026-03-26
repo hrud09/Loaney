@@ -23,6 +23,8 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val USER_NAME = stringPreferencesKey("user_name")
         val USER_PROFILE_PHOTO = stringPreferencesKey("user_profile_photo")
+        val USER_ADDRESS = stringPreferencesKey("user_address")
+        val USER_DOB = stringPreferencesKey("user_dob")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
     }
 
@@ -83,6 +85,22 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.USER_PROFILE_PHOTO]
         }
 
+    val userAddressFlow: Flow<String?> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_ADDRESS]
+        }
+
+    val userDobFlow: Flow<String?> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.USER_DOB]
+        }
+
     val onboardingCompletedFlow: Flow<Boolean> = dataStore.data
         .catch { exception ->
             if (exception is IOException) emit(emptyPreferences()) else throw exception
@@ -134,6 +152,26 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
                 preferences.remove(PreferencesKeys.USER_PROFILE_PHOTO)
             } else {
                 preferences[PreferencesKeys.USER_PROFILE_PHOTO] = uri
+            }
+        }
+    }
+
+    suspend fun setUserAddress(address: String?) {
+        dataStore.edit { preferences ->
+            if (address.isNullOrBlank()) {
+                preferences.remove(PreferencesKeys.USER_ADDRESS)
+            } else {
+                preferences[PreferencesKeys.USER_ADDRESS] = address
+            }
+        }
+    }
+
+    suspend fun setUserDob(dob: String?) {
+        dataStore.edit { preferences ->
+            if (dob.isNullOrBlank()) {
+                preferences.remove(PreferencesKeys.USER_DOB)
+            } else {
+                preferences[PreferencesKeys.USER_DOB] = dob
             }
         }
     }

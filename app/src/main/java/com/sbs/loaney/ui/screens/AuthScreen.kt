@@ -14,7 +14,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
@@ -73,6 +75,8 @@ fun AuthScreen(
     var otpCode by remember { mutableStateOf("") }
     var selectedCurrency by remember { mutableStateOf("৳") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var address by remember { mutableStateOf("") }
+    var dateOfBirth by remember { mutableStateOf("") }
 
     var verificationId by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf<String?>(null) }
@@ -170,6 +174,49 @@ fun AuthScreen(
             )
 
             Spacer(modifier = Modifier.height(32.dp))
+
+            // Profile Image Picker (Moved to top of form)
+            AnimatedVisibility(visible = isSignUp && !isOtpMode) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Profile Picture",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = AlimDark),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(AlimDark.copy(alpha = 0.1f))
+                            .clickable { imagePickerLauncher.launch("image/*") },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (profilePhotoUri != null) {
+                            AsyncImage(
+                                model = profilePhotoUri,
+                                contentDescription = "Profile Photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Dummy Avatar",
+                                tint = AlimDark.copy(alpha = 0.3f),
+                                modifier = Modifier.size(60.dp)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.AddAPhoto,
+                                contentDescription = "Add Photo",
+                                tint = AlimGreen,
+                                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).size(24.dp).background(AlimWhite, androidx.compose.foundation.shape.CircleShape).padding(4.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
 
             // Toggle Bar (Sign In / Sign Up)
             if (!isOtpMode) {
@@ -283,45 +330,6 @@ fun AuthScreen(
             // Profile Setup snippet for Sign Up
             AnimatedVisibility(visible = isSignUp && !isOtpMode) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Profile Image Picker
-                    Text(
-                        text = "Profile Picture",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = AlimDark),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(AlimDark.copy(alpha = 0.1f))
-                            .clickable { imagePickerLauncher.launch("image/*") },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (profilePhotoUri != null) {
-                            AsyncImage(
-                                model = profilePhotoUri,
-                                contentDescription = "Profile Photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Dummy Avatar",
-                                tint = AlimDark.copy(alpha = 0.3f),
-                                modifier = Modifier.size(60.dp)
-                            )
-                            Icon(
-                                imageVector = Icons.Default.AddAPhoto,
-                                contentDescription = "Add Photo",
-                                tint = AlimGreen,
-                                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).size(24.dp).background(AlimWhite, androidx.compose.foundation.shape.CircleShape).padding(4.dp)
-                            )
-                        }
-                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
@@ -365,6 +373,34 @@ fun AuthScreen(
                             )
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = address,
+                        onValueChange = { address = it; localError = null },
+                        label = { Text("Address (Optional)") },
+                        leadingIcon = { Icon(Icons.Default.Home, contentDescription = null, tint = AlimGreen) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = dateOfBirth,
+                        onValueChange = { dateOfBirth = it; localError = null },
+                        label = { Text("Date of Birth (Optional)") },
+                        leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null, tint = AlimGreen) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                        )
+                    )
 
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
@@ -422,7 +458,9 @@ fun AuthScreen(
                                 currency = selectedCurrency,
                                 email = email.takeIf { isSignUp },
                                 phone = phoneNumber.takeIf { isSignUp },
-                                profilePhotoUri = profilePhotoUri.takeIf { isSignUp }
+                                profilePhotoUri = profilePhotoUri.takeIf { isSignUp },
+                                address = address.takeIf { isSignUp },
+                                dateOfBirth = dateOfBirth.takeIf { isSignUp }
                             )
                         } catch (e: Exception) {
                             localError = "Invalid SMS code"
@@ -441,7 +479,7 @@ fun AuthScreen(
                         }
                     } else {
                         if (isSignUp) {
-                            authViewModel.signUp(email, password, name, selectedCurrency, phoneNumber, profilePhotoUri)
+                            authViewModel.signUp(email, password, name, selectedCurrency, phoneNumber, profilePhotoUri, address, dateOfBirth)
                         } else {
                             authViewModel.signIn(email, password)
                         }

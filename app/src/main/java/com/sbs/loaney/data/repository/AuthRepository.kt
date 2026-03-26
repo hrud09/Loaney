@@ -19,7 +19,8 @@ class AuthRepository @Inject constructor(
      */
     suspend fun signUp(
         email: String, password: String, name: String, currency: String, 
-        phone: String? = null, profilePhotoUri: String? = null
+        phone: String? = null, profilePhotoUri: String? = null,
+        address: String? = null, dateOfBirth: String? = null
     ): Result<Unit> {
         return try {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
@@ -37,6 +38,8 @@ class AuthRepository @Inject constructor(
             )
             if (!phone.isNullOrBlank()) userProfile["phone"] = phone
             if (!profilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = profilePhotoUri
+            if (!address.isNullOrBlank()) userProfile["address"] = address
+            if (!dateOfBirth.isNullOrBlank()) userProfile["dateOfBirth"] = dateOfBirth
 
             // Save to Firestore with a timeout to catch missing database issues
             try {
@@ -51,6 +54,8 @@ class AuthRepository @Inject constructor(
             settingsRepository.setUserName(name)
             settingsRepository.setCurrencySymbol(currency)
             settingsRepository.setUserProfilePhoto(profilePhotoUri)
+            settingsRepository.setUserAddress(address)
+            settingsRepository.setUserDob(dateOfBirth)
             settingsRepository.setOnboardingCompleted(true)
 
             Result.success(Unit)
@@ -83,10 +88,14 @@ class AuthRepository @Inject constructor(
                 val name = document.getString("name") ?: "User"
                 val currency = document.getString("currency") ?: "৳"
                 val profilePhotoUri = document.getString("profilePhotoUri")
+                val address = document.getString("address")
+                val dob = document.getString("dateOfBirth")
                 
                 settingsRepository.setUserName(name)
                 settingsRepository.setCurrencySymbol(currency)
                 settingsRepository.setUserProfilePhoto(profilePhotoUri)
+                settingsRepository.setUserAddress(address)
+                settingsRepository.setUserDob(dob)
             }
             settingsRepository.setOnboardingCompleted(true)
 
@@ -110,7 +119,9 @@ class AuthRepository @Inject constructor(
         currency: String? = null,
         email: String? = null,
         phone: String? = null,
-        profilePhotoUri: String? = null
+        profilePhotoUri: String? = null,
+        address: String? = null,
+        dateOfBirth: String? = null
     ): Result<Unit> {
         return try {
             val authResult = auth.signInWithCredential(credential).await()
@@ -141,6 +152,16 @@ class AuthRepository @Inject constructor(
                 finalProfilePhotoUri = document.getString("profilePhotoUri")
             }
 
+            var finalAddress = address
+            if (document != null && document.exists() && document.getString("address") != null) {
+                finalAddress = document.getString("address")
+            }
+
+            var finalDob = dateOfBirth
+            if (document != null && document.exists() && document.getString("dateOfBirth") != null) {
+                finalDob = document.getString("dateOfBirth")
+            }
+
             if (document == null || !document.exists()) {
                 val sdf = java.text.SimpleDateFormat("yyMMddHHmmss", java.util.Locale.getDefault())
                 val username = finalName.replace(" ", "").lowercase() + "_" + sdf.format(java.util.Date())
@@ -155,6 +176,8 @@ class AuthRepository @Inject constructor(
                 val finalPhone = phone ?: authResult.user?.phoneNumber ?: ""
                 if (finalPhone.isNotBlank()) userProfile["phone"] = finalPhone
                 if (!profilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = profilePhotoUri
+                if (!address.isNullOrBlank()) userProfile["address"] = address
+                if (!dateOfBirth.isNullOrBlank()) userProfile["dateOfBirth"] = dateOfBirth
 
                 try {
                     kotlinx.coroutines.withTimeout(8000L) {
@@ -168,6 +191,8 @@ class AuthRepository @Inject constructor(
             settingsRepository.setUserName(finalName)
             settingsRepository.setCurrencySymbol(finalCurrency)
             settingsRepository.setUserProfilePhoto(finalProfilePhotoUri)
+            settingsRepository.setUserAddress(finalAddress)
+            settingsRepository.setUserDob(finalDob)
             settingsRepository.setOnboardingCompleted(true)
 
             Result.success(Unit)

@@ -29,10 +29,10 @@ class AuthViewModel @Inject constructor(
         return authRepository.currentUser != null
     }
 
-    fun signUp(email: String, password: String, name: String, currency: String, phone: String? = null, profilePhotoUri: String? = null) {
+    fun signUp(email: String, password: String, name: String, currency: String, phone: String? = null, profilePhotoUri: String? = null, address: String? = null, dateOfBirth: String? = null) {
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            val result = authRepository.signUp(email, password, name, currency, phone, profilePhotoUri)
+            val result = authRepository.signUp(email, password, name, currency, phone, profilePhotoUri, address, dateOfBirth)
             result.onSuccess {
                 _authState.value = AuthState.Success
             }.onFailure { error ->
@@ -63,11 +63,13 @@ class AuthViewModel @Inject constructor(
         currency: String? = null,
         email: String? = null,
         phone: String? = null,
-        profilePhotoUri: String? = null
+        profilePhotoUri: String? = null,
+        address: String? = null,
+        dateOfBirth: String? = null
     ) {
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            val result = authRepository.signInWithCredential(credential, name, currency, email, phone, profilePhotoUri)
+            val result = authRepository.signInWithCredential(credential, name, currency, email, phone, profilePhotoUri, address, dateOfBirth)
             result.onSuccess {
                 _authState.value = AuthState.Success
             }.onFailure { error ->

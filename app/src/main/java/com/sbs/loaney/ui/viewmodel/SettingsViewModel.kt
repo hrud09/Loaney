@@ -18,7 +18,9 @@ data class SettingsUiState(
     val appLanguage: String = "en",
     val notificationsEnabled: Boolean = true,
     val userName: String = "Sajibur",
-    val userProfilePhoto: String? = null
+    val userProfilePhoto: String? = null,
+    val userAddress: String? = null,
+    val userDob: String? = null
 )
 
 @HiltViewModel
@@ -33,7 +35,9 @@ class SettingsViewModel @Inject constructor(
         settingsRepository.appLanguageFlow,
         settingsRepository.notificationsEnabledFlow,
         settingsRepository.userNameFlow,
-        settingsRepository.userProfilePhotoFlow
+        settingsRepository.userProfilePhotoFlow,
+        settingsRepository.userAddressFlow,
+        settingsRepository.userDobFlow
     ) { values ->
         SettingsUiState(
             themeMode = values[0] as Int,
@@ -42,7 +46,9 @@ class SettingsViewModel @Inject constructor(
             appLanguage = values[3] as String,
             notificationsEnabled = values[4] as Boolean,
             userName = values[5] as String,
-            userProfilePhoto = values[6] as String?
+            userProfilePhoto = values[6] as String?,
+            userAddress = values[7] as String?,
+            userDob = values[8] as String?
         )
     }.stateIn(
         scope = viewModelScope,
@@ -89,6 +95,40 @@ class SettingsViewModel @Inject constructor(
     fun setUserProfilePhoto(uri: String?) {
         viewModelScope.launch {
             settingsRepository.setUserProfilePhoto(uri)
+            
+            // Push the update to Firebase Cloud Firestore to maintain sync across devices
+            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+            if (userId != null && uri != null) {
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("users").document(userId)
+                    .update("profilePhotoUri", uri)
+            }
+        }
+    }
+
+    fun setUserAddress(address: String?) {
+        viewModelScope.launch {
+            settingsRepository.setUserAddress(address)
+            
+            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+            if (userId != null && address != null) {
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("users").document(userId)
+                    .update("address", address)
+            }
+        }
+    }
+
+    fun setUserDob(dob: String?) {
+        viewModelScope.launch {
+            settingsRepository.setUserDob(dob)
+            
+            val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+            if (userId != null && dob != null) {
+                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    .collection("users").document(userId)
+                    .update("dateOfBirth", dob)
+            }
         }
     }
 
