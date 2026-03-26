@@ -1514,11 +1514,6 @@ fun AlimHeader(
         else -> stringResource(id = R.string.good_evening)
     }
 
-    val authUser = FirebaseAuth.getInstance().currentUser
-    val userInfo = authUser?.email?.takeIf { it.isNotBlank() } 
-        ?: authUser?.phoneNumber?.takeIf { it.isNotBlank() } 
-        ?: ""
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1542,15 +1537,6 @@ fun AlimHeader(
                     letterSpacing = 0.5.sp
                 )
             )
-            if (userInfo.isNotBlank()) {
-                Text(
-                    text = userInfo,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        color = AlimWhite.copy(alpha = 0.7f),
-                        fontWeight = FontWeight.Normal
-                    )
-                )
-            }
         }
 
         // Notifications Button

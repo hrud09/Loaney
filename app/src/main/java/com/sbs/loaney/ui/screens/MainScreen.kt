@@ -65,7 +65,30 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
 
     val settingsState by settingsViewModel.uiState.collectAsState()
-    val userProfile = UserProfile(name = settingsState.userName)
+    val userProfile = UserProfile(name = settingsState.userName, profilePhotoUri = settingsState.userProfilePhoto)
+
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    if (showLogoutDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { androidx.compose.material3.Text("Sign Out") },
+            text = { androidx.compose.material3.Text("Are you sure you want to sign out?") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showLogoutDialog = false
+                    scope.launch { drawerState.close() }
+                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                }) { androidx.compose.material3.Text("Sign Out", color = androidx.compose.material3.MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showLogoutDialog = false }) { androidx.compose.material3.Text("Cancel") }
+            }
+        )
+    }
 
     // Bottom nav items (excluding center FAB)
     val navItems = listOf(
@@ -100,11 +123,7 @@ fun MainScreen(
                     }
                 },
                 onSignOutClick = {
-                    scope.launch { drawerState.close() }
-                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                    navController.navigate(Screen.Auth.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
+                    showLogoutDialog = true
                 }
             )
         }
@@ -216,7 +235,7 @@ fun MainScreen(
                     AuthScreen(
                         onAuthSuccess = {
                             navController.navigate(Screen.Home.route) {
-                                popUpTo(0) { inclusive = true }
+                                popUpTo(Screen.Auth.route) { inclusive = true }
                             }
                         }
                     )

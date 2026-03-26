@@ -12,7 +12,12 @@
           "package_name": "com.sbs.loaney"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "768292747056-p32lk2i0fmf8vvu5107jd8s0bs2tf81r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDGqwRW8uT6dKn8YVXY-sC52cB0sjYegGY"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "768292747056-p32lk2i0fmf8vvu5107jd8s0bs2tf81r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

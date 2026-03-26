@@ -1,5 +1,6 @@
 package com.sbs.loaney.data.repository
 
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.sbs.loaney.data.local.dao.LoanWithPayments
@@ -20,6 +21,7 @@ import javax.inject.Inject
 class FirebaseLoanRepository @Inject constructor() : ILoanRepository {
 
     private val firestore = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
     
     // Firestore Collection Names
     private val LOANS_COLLECTION = "loans"
@@ -27,22 +29,32 @@ class FirebaseLoanRepository @Inject constructor() : ILoanRepository {
     private val LOAN_ITEMS_COLLECTION = "loanItems"
     private val BANK_ACCOUNTS_COLLECTION = "bankAccounts"
 
-    // Helper to observe Firestore collections as Flow
-    private inline fun <reified T> Query.snapshotsFlow(): Flow<List<T>> = callbackFlow {
-        val listener = addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                close(error)
-                return@addSnapshotListener
-            }
-            val items = snapshot?.toObjects(T::class.java) ?: emptyList()
-            trySend(items)
+    private inline fun <reified T> getSubcollectionFlow(subcollectionName: String): Flow<List<T>> = callbackFlow {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
         }
+        val listener = firestore.collection("users").document(uid).collection(subcollectionName)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList()) // Safely fallback if network/permissions fail
+                    return@addSnapshotListener
+                }
+                val items = snapshot?.toObjects(T::class.java) ?: emptyList()
+                trySend(items)
+            }
         awaitClose { listener.remove() }
     }
 
-    private val allLoansBaseFlow = firestore.collection(LOANS_COLLECTION).snapshotsFlow<LoanEntity>()
-    private val allPaymentsBaseFlow = firestore.collectionGroup(PAYMENTS_COLLECTION).snapshotsFlow<PaymentEntity>()
-    private val allLoanItemsBaseFlow = firestore.collectionGroup(LOAN_ITEMS_COLLECTION).snapshotsFlow<LoanItemEntity>()
+    private fun getUserDocRef() = firestore.collection("users").document(
+        auth.currentUser?.uid ?: throw Exception("Unauthorized: Please log in again to sync data.")
+    )
+
+    private val allLoansBaseFlow = getSubcollectionFlow<LoanEntity>(LOANS_COLLECTION)
+    private val allPaymentsBaseFlow = getSubcollectionFlow<PaymentEntity>(PAYMENTS_COLLECTION)
+    private val allLoanItemsBaseFlow = getSubcollectionFlow<LoanItemEntity>(LOAN_ITEMS_COLLECTION)
 
     override fun getAllLoans(): Flow<List<LoanWithPayments>> {
         return combine(allLoansBaseFlow, allPaymentsBaseFlow, allLoanItemsBaseFlow) { loans, payments, items ->
@@ -78,12 +90,12 @@ class FirebaseLoanRepository @Inject constructor() : ILoanRepository {
     override suspend fun insertLoan(loan: LoanEntity): Long {
         val id = if (loan.id == 0L) System.currentTimeMillis() else loan.id
         val newLoan = loan.copy(id = id)
-        firestore.collection(LOANS_COLLECTION).document(id.toString()).set(newLoan).await()
+        getUserDocRef().collection(LOANS_COLLECTION).document(id.toString()).set(newLoan).await()
         return id
     }
 
     override suspend fun updateLoan(loan: LoanEntity) {
-        firestore.collection(LOANS_COLLECTION).document(loan.id.toString()).set(loan).await()
+        getUserDocRef().collection(LOANS_COLLECTION).document(loan.id.toString()).set(loan).await()
     }
 
     override suspend fun softDeleteLoan(loanId: Long, timestamp: Long) {
@@ -91,7 +103,7 @@ class FirebaseLoanRepository @Inject constructor() : ILoanRepository {
             "isDeleted" to true,
             "removedAt" to timestamp
         )
-        firestore.collection(LOANS_COLLECTION).document(loanId.toString()).update(updates).await()
+        getUserDocRef().collection(LOANS_COLLECTION).document(loanId.toString()).update(updates).await()
     }
 
     override suspend fun restoreLoan(loanId: Long) {
@@ -99,7 +111,7 @@ class FirebaseLoanRepository @Inject constructor() : ILoanRepository {
             "isDeleted" to false,
             "removedAt" to null
         )
-        firestore.collection(LOANS_COLLECTION).document(loanId.toString()).update(updates).await()
+        getUserDocRef().collection(LOANS_COLLECTION).document(loanId.toString()).update(updates).await()
     }
 
     override fun getDeletedLoans(): Flow<List<LoanWithPayments>> {
@@ -117,16 +129,16 @@ class FirebaseLoanRepository @Inject constructor() : ILoanRepository {
     }
 
     override suspend fun deleteLoan(loan: LoanEntity) {
-        firestore.collection(LOANS_COLLECTION).document(loan.id.toString()).delete().await()
+        getUserDocRef().collection(LOANS_COLLECTION).document(loan.id.toString()).delete().await()
     }
 
     override suspend fun deleteExpiredLoans(threshold: Long) {
-        val snapshot = firestore.collection(LOANS_COLLECTION).get().await()
+        val snapshot = getUserDocRef().collection(LOANS_COLLECTION).get().await()
         for (doc in snapshot.documents) {
             val loan = doc.toObject(LoanEntity::class.java) ?: continue
             if ((loan.isDeleted || loan.status == LoanStatus.FULLY_PAID || loan.status == LoanStatus.FORGIVEN) &&
                 loan.removedAt != null && loan.removedAt < threshold) {
-                firestore.collection(LOANS_COLLECTION).document(doc.id).delete().await()
+                getUserDocRef().collection(LOANS_COLLECTION).document(doc.id).delete().await()
             }
         }
     }
@@ -134,43 +146,39 @@ class FirebaseLoanRepository @Inject constructor() : ILoanRepository {
     override suspend fun insertPayment(payment: PaymentEntity) {
         val id = if (payment.id == 0L) System.currentTimeMillis() else payment.id
         val newPayment = payment.copy(id = id)
-        firestore.collection(LOANS_COLLECTION).document(newPayment.loanId.toString())
-                 .collection(PAYMENTS_COLLECTION).document(id.toString()).set(newPayment).await()
+        getUserDocRef().collection(PAYMENTS_COLLECTION).document(id.toString()).set(newPayment).await()
     }
 
     override suspend fun deletePayment(payment: PaymentEntity) {
-        firestore.collection(LOANS_COLLECTION).document(payment.loanId.toString())
-                 .collection(PAYMENTS_COLLECTION).document(payment.id.toString()).delete().await()
+        getUserDocRef().collection(PAYMENTS_COLLECTION).document(payment.id.toString()).delete().await()
     }
 
     override suspend fun insertLoanItem(loanItem: LoanItemEntity) {
         val id = if (loanItem.id == 0L) System.currentTimeMillis() else loanItem.id
         val newItem = loanItem.copy(id = id)
-        firestore.collection(LOANS_COLLECTION).document(newItem.loanId.toString())
-                 .collection(LOAN_ITEMS_COLLECTION).document(id.toString()).set(newItem).await()
+        getUserDocRef().collection(LOAN_ITEMS_COLLECTION).document(id.toString()).set(newItem).await()
     }
 
     override suspend fun deleteLoanItem(loanItem: LoanItemEntity) {
-        firestore.collection(LOANS_COLLECTION).document(loanItem.loanId.toString())
-                 .collection(LOAN_ITEMS_COLLECTION).document(loanItem.id.toString()).delete().await()
+        getUserDocRef().collection(LOAN_ITEMS_COLLECTION).document(loanItem.id.toString()).delete().await()
     }
 
     override fun getAllBankAccounts(): Flow<List<BankAccountEntity>> {
-        return firestore.collection(BANK_ACCOUNTS_COLLECTION).snapshotsFlow()
+        return getSubcollectionFlow<BankAccountEntity>(BANK_ACCOUNTS_COLLECTION)
     }
 
     override suspend fun insertBankAccount(account: BankAccountEntity): Long {
         val id = if (account.id == 0L) System.currentTimeMillis() else account.id
         val newAccount = account.copy(id = id)
-        firestore.collection(BANK_ACCOUNTS_COLLECTION).document(id.toString()).set(newAccount).await()
+        getUserDocRef().collection(BANK_ACCOUNTS_COLLECTION).document(id.toString()).set(newAccount).await()
         return id
     }
 
     override suspend fun updateBankAccount(account: BankAccountEntity) {
-        firestore.collection(BANK_ACCOUNTS_COLLECTION).document(account.id.toString()).set(account).await()
+        getUserDocRef().collection(BANK_ACCOUNTS_COLLECTION).document(account.id.toString()).set(account).await()
     }
 
     override suspend fun deleteBankAccount(account: BankAccountEntity) {
-        firestore.collection(BANK_ACCOUNTS_COLLECTION).document(account.id.toString()).delete().await()
+        getUserDocRef().collection(BANK_ACCOUNTS_COLLECTION).document(account.id.toString()).delete().await()
     }
 }

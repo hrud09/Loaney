@@ -18,8 +18,14 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import coil.compose.AsyncImage
+import android.net.Uri
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,6 +65,7 @@ fun AuthScreen(
     var isOtpMode by remember { mutableStateOf(false) }
     
     // Form States
+    var profilePhotoUri by remember { mutableStateOf<String?>(null) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
@@ -106,6 +113,13 @@ fun AuthScreen(
                 localError = "Google sign in failed: ${e.message}"
             }
         }
+    }
+
+    // --- Image Picker Setup ---
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        profilePhotoUri = uri?.toString()
     }
 
     // --- Phone Auth Callbacks ---
@@ -268,12 +282,52 @@ fun AuthScreen(
 
             // Profile Setup snippet for Sign Up
             AnimatedVisibility(visible = isSignUp && !isOtpMode) {
-                Column {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Profile Image Picker
+                    Text(
+                        text = "Profile Picture",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = AlimDark),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(AlimDark.copy(alpha = 0.1f))
+                            .clickable { imagePickerLauncher.launch("image/*") },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (profilePhotoUri != null) {
+                            AsyncImage(
+                                model = profilePhotoUri,
+                                contentDescription = "Profile Photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Dummy Avatar",
+                                tint = AlimDark.copy(alpha = 0.3f),
+                                modifier = Modifier.size(60.dp)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.AddAPhoto,
+                                contentDescription = "Add Photo",
+                                tint = AlimGreen,
+                                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).size(24.dp).background(AlimWhite, androidx.compose.foundation.shape.CircleShape).padding(4.dp)
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it; localError = null },
-                        label = { Text("Your Name") },
+                        label = { Text("Full Name") },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AlimGreen) },
                         singleLine = true,
                         shape = RoundedCornerShape(16.dp),
@@ -282,6 +336,36 @@ fun AuthScreen(
                             focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
                         )
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (!isPhoneMode) {
+                        OutlinedTextField(
+                            value = phoneNumber,
+                            onValueChange = { phoneNumber = it; localError = null },
+                            label = { Text("Phone Number (Optional)") },
+                            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AlimGreen) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                            )
+                        )
+                    } else {
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { email = it; localError = null },
+                            label = { Text("Email (Optional)") },
+                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AlimGreen) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                            )
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "Local Currency",
@@ -332,7 +416,14 @@ fun AuthScreen(
                     if (isOtpMode) {
                         try {
                             val credential = PhoneAuthProvider.getCredential(verificationId, otpCode)
-                            authViewModel.signInWithCredential(credential, name.takeIf { isSignUp }, selectedCurrency)
+                            authViewModel.signInWithCredential(
+                                credential = credential,
+                                name = name.takeIf { isSignUp },
+                                currency = selectedCurrency,
+                                email = email.takeIf { isSignUp },
+                                phone = phoneNumber.takeIf { isSignUp },
+                                profilePhotoUri = profilePhotoUri.takeIf { isSignUp }
+                            )
                         } catch (e: Exception) {
                             localError = "Invalid SMS code"
                         }
@@ -350,7 +441,7 @@ fun AuthScreen(
                         }
                     } else {
                         if (isSignUp) {
-                            authViewModel.signUp(email, password, name, selectedCurrency)
+                            authViewModel.signUp(email, password, name, selectedCurrency, phoneNumber, profilePhotoUri)
                         } else {
                             authViewModel.signIn(email, password)
                         }

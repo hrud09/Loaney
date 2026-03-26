@@ -42,59 +42,79 @@ fun ProfileSidebarContent(
             .fillMaxHeight()
             .width(300.dp)
             .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(bottom = 32.dp)
     ) {
-        // ── Header gradient banner ──────────────────────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(190.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary,
-                            Color(0xFFC01060) // BkashPinkDark roughly
-                        )
-                    )
-                )
+        Column(
+            modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
         ) {
-            Column(
+            // ── Header gradient banner ──────────────────────────────────
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(20.dp)
+                    .fillMaxWidth()
+                    .background(Color(0xFF1E1E2C))
+                    .padding(top = 40.dp, bottom = 24.dp, start = 20.dp, end = 20.dp)
             ) {
-                // Avatar
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = profile.name.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.ExtraBold
+                val authUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                val userInfo = authUser?.email?.takeIf { it.isNotBlank() } 
+                    ?: authUser?.phoneNumber?.takeIf { it.isNotBlank() } 
+                    ?: ""
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Avatar
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (profile.profilePhotoUri != null) {
+                            coil.compose.AsyncImage(
+                                model = profile.profilePhotoUri,
+                                contentDescription = "Profile Photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        } else {
+                            androidx.compose.material.icons.Icons.Default.Person.let {
+                                Icon(it, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(40.dp))
+                            }
+                        }
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = profile.name,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
                         )
-                    )
+                        Spacer(Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.primary)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "Lvl ${profile.xpLevel}",
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 11.sp
+                                )
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            if (userInfo.isNotBlank()) {
+                                Text(
+                                    text = userInfo,
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    }
                 }
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    text = profile.name,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-                Text(
-                    text = "Level ${profile.xpLevel}",
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 13.sp
-                )
             }
-        }
 
         // XP Progress bar
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
@@ -137,62 +157,44 @@ fun ProfileSidebarContent(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
+                .padding(horizontal = 20.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Stars,
-                        contentDescription = "Loaney Pie Vault",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Spacer(Modifier.width(10.dp))
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Stars,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(Modifier.width(12.dp))
+                Column {
                     Text(
                         text = "Loaney Pie Vault",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-                Spacer(Modifier.height(12.dp))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = "${profile.totalLoaneyPies}",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 40.sp,
-                        lineHeight = 40.sp
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = "pies",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-                }
-                Spacer(Modifier.height(14.dp))
-                Button(
-                    onClick = onNavigateToShop,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Icon(Icons.Default.Redeem, null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Redeem Pies",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
+                    Text(
+                        text = "${profile.totalLoaneyPies} pies",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                Button(
+                    onClick = onNavigateToShop,
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Text("Redeem", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }
@@ -215,11 +217,16 @@ fun ProfileSidebarContent(
             label = "Settings",
             onClick = onNavigateToSettings
         )
+        } // Close scrollable Column
+
+        // Pinned Bottom Section
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         SidebarMenuItem(
             icon = Icons.AutoMirrored.Filled.Logout,
             label = "Sign Out",
             onClick = onSignOutClick
         )
+        Spacer(Modifier.height(32.dp))
     }
 }
 

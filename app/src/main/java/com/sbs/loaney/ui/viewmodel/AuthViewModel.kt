@@ -29,10 +29,10 @@ class AuthViewModel @Inject constructor(
         return authRepository.currentUser != null
     }
 
-    fun signUp(email: String, password: String, name: String, currency: String) {
+    fun signUp(email: String, password: String, name: String, currency: String, phone: String? = null, profilePhotoUri: String? = null) {
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            val result = authRepository.signUp(email, password, name, currency)
+            val result = authRepository.signUp(email, password, name, currency, phone, profilePhotoUri)
             result.onSuccess {
                 _authState.value = AuthState.Success
             }.onFailure { error ->
@@ -57,10 +57,17 @@ class AuthViewModel @Inject constructor(
         _authState.value = AuthState.Idle
     }
 
-    fun signInWithCredential(credential: com.google.firebase.auth.AuthCredential, name: String? = null, currency: String? = null) {
+    fun signInWithCredential(
+        credential: com.google.firebase.auth.AuthCredential, 
+        name: String? = null, 
+        currency: String? = null,
+        email: String? = null,
+        phone: String? = null,
+        profilePhotoUri: String? = null
+    ) {
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            val result = authRepository.signInWithCredential(credential, name, currency)
+            val result = authRepository.signInWithCredential(credential, name, currency, email, phone, profilePhotoUri)
             result.onSuccess {
                 _authState.value = AuthState.Success
             }.onFailure { error ->

@@ -17,32 +17,40 @@ class AuthRepository @Inject constructor(
      * Signs up the user, saves their profile to Firestore, 
      * and updates the local settings state for seamless access.
      */
-    suspend fun signUp(email: String, password: String, name: String, currency: String): Result<Unit> {
+    suspend fun signUp(
+        email: String, password: String, name: String, currency: String, 
+        phone: String? = null, profilePhotoUri: String? = null
+    ): Result<Unit> {
         return try {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val userId = authResult.user?.uid ?: throw Exception("User creation failed")
 
-            val userProfile = mapOf(
+            val sdf = java.text.SimpleDateFormat("yyMMddHHmmss", java.util.Locale.getDefault())
+            val username = name.replace(" ", "").lowercase() + "_" + sdf.format(java.util.Date())
+
+            val userProfile = mutableMapOf<String, Any>(
                 "name" to name,
+                "username" to username,
                 "currency" to currency,
                 "email" to email,
                 "createdAt" to System.currentTimeMillis()
             )
+            if (!phone.isNullOrBlank()) userProfile["phone"] = phone
+            if (!profilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = profilePhotoUri
 
             // Save to Firestore with a timeout to catch missing database issues
             try {
                 kotlinx.coroutines.withTimeout(8000L) {
                     firestore.collection("users").document(userId).set(userProfile).await()
                 }
-            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                // Ignore the timeout so the user isn't stuck un-loggable. The user was created successfully in Auth.
-                // We will proceed to log them in, but they should check their Firestore configuration.
-                android.util.Log.e("Auth", "Firestore save timed out. Please ensure Cloud Firestore is enabled in Firebase Console.")
+            } catch (e: Exception) {
+                android.util.Log.e("Auth", "Firestore save failed/timed out: ${e.message}")
             }
 
             // Update local datastore
             settingsRepository.setUserName(name)
             settingsRepository.setCurrencySymbol(currency)
+            settingsRepository.setUserProfilePhoto(profilePhotoUri)
             settingsRepository.setOnboardingCompleted(true)
 
             Result.success(Unit)
@@ -65,16 +73,21 @@ class AuthRepository @Inject constructor(
                 kotlinx.coroutines.withTimeout(8000L) {
                     firestore.collection("users").document(userId).get().await()
                 }
-            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                null
+            } catch (e: Exception) {
+                null // Catch offline errors and timeouts securely
             }
             
-            val name = document?.getString("name") ?: "User"
-            val currency = document?.getString("currency") ?: "৳"
-
-            // Update local datastore
-            settingsRepository.setUserName(name)
-            settingsRepository.setCurrencySymbol(currency)
+            // Only update local datastore if we successfully pulled their profile from the cloud.
+            // If they logged in offline, we preserve their current local datastore settings.
+            if (document != null && document.exists()) {
+                val name = document.getString("name") ?: "User"
+                val currency = document.getString("currency") ?: "৳"
+                val profilePhotoUri = document.getString("profilePhotoUri")
+                
+                settingsRepository.setUserName(name)
+                settingsRepository.setCurrencySymbol(currency)
+                settingsRepository.setUserProfilePhoto(profilePhotoUri)
+            }
             settingsRepository.setOnboardingCompleted(true)
 
             Result.success(Unit)
@@ -94,7 +107,10 @@ class AuthRepository @Inject constructor(
     suspend fun signInWithCredential(
         credential: com.google.firebase.auth.AuthCredential, 
         name: String? = null, 
-        currency: String? = null
+        currency: String? = null,
+        email: String? = null,
+        phone: String? = null,
+        profilePhotoUri: String? = null
     ): Result<Unit> {
         return try {
             val authResult = auth.signInWithCredential(credential).await()
@@ -104,7 +120,7 @@ class AuthRepository @Inject constructor(
                 kotlinx.coroutines.withTimeout(8000L) {
                     firestore.collection("users").document(userId).get().await()
                 }
-            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+            } catch (e: Exception) {
                 null
             }
             
@@ -120,24 +136,38 @@ class AuthRepository @Inject constructor(
                 currency ?: "৳"
             }
 
+            var finalProfilePhotoUri = profilePhotoUri
+            if (document != null && document.exists() && document.getString("profilePhotoUri") != null) {
+                finalProfilePhotoUri = document.getString("profilePhotoUri")
+            }
+
             if (document == null || !document.exists()) {
-                val userProfile = mapOf(
+                val sdf = java.text.SimpleDateFormat("yyMMddHHmmss", java.util.Locale.getDefault())
+                val username = finalName.replace(" ", "").lowercase() + "_" + sdf.format(java.util.Date())
+
+                val userProfile = mutableMapOf<String, Any>(
                     "name" to finalName,
+                    "username" to username,
                     "currency" to finalCurrency,
-                    "email" to (authResult.user?.email ?: ""),
+                    "email" to (email ?: authResult.user?.email ?: ""),
                     "createdAt" to System.currentTimeMillis()
                 )
+                val finalPhone = phone ?: authResult.user?.phoneNumber ?: ""
+                if (finalPhone.isNotBlank()) userProfile["phone"] = finalPhone
+                if (!profilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = profilePhotoUri
+
                 try {
                     kotlinx.coroutines.withTimeout(8000L) {
                         firestore.collection("users").document(userId).set(userProfile).await()
                     }
-                } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
-                    android.util.Log.e("Auth", "Firestore credential save timed out.")
+                } catch (e: Exception) {
+                    android.util.Log.e("Auth", "Firestore credential save failed/timed out: ${e.message}")
                 }
             }
 
             settingsRepository.setUserName(finalName)
             settingsRepository.setCurrencySymbol(finalCurrency)
+            settingsRepository.setUserProfilePhoto(finalProfilePhotoUri)
             settingsRepository.setOnboardingCompleted(true)
 
             Result.success(Unit)
