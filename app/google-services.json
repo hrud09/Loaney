@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "768292747056",
+    "project_id": "loaney-72ad0",
+    "storage_bucket": "loaney-72ad0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:768292747056:android:ee1c5be967d65992adbaf5",
+        "android_client_info": {
+          "package_name": "com.sbs.loaney"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGqwRW8uT6dKn8YVXY-sC52cB0sjYegGY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

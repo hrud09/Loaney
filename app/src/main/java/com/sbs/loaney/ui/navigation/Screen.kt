@@ -2,6 +2,7 @@ package com.sbs.loaney.ui.navigation
 
 sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")
+    object Auth : Screen("auth")
     object Home : Screen("home")
     object ManageLoans : Screen("manage_loans?type={type}") {
         fun createRoute(type: String? = null) = if (type != null) "manage_loans?type=$type" else "manage_loans"

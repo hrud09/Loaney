@@ -20,9 +20,9 @@ import java.util.Date
 )
 data class LoanItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val loanId: Long,
-    val amount: Double,
-    val date: Date,
+    val loanId: Long = 0,
+    val amount: Double = 0.0,
+    val date: Date = Date(),
     val note: String? = null,
     val proofUri: String? = null
 )

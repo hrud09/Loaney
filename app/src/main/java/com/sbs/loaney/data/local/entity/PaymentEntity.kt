@@ -20,10 +20,10 @@ import java.util.Date
 )
 data class PaymentEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val loanId: Long,
-    val amount: Double,
-    val date: Date,
-    val method: String,
-    val note: String?,
-    val proofUri: String?
+    val loanId: Long = 0,
+    val amount: Double = 0.0,
+    val date: Date = Date(),
+    val method: String = "",
+    val note: String? = null,
+    val proofUri: String? = null
 )

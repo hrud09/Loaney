@@ -7,7 +7,7 @@ import com.sbs.loaney.data.local.entity.LoanEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
-import com.sbs.loaney.data.repository.LoanRepository
+import com.sbs.loaney.data.repository.ILoanRepository
 import com.sbs.loaney.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -24,7 +24,7 @@ data class ManageLoansUiState(
 
 @HiltViewModel
 class ManageLoansViewModel @Inject constructor(
-    private val repository: LoanRepository,
+    private val repository: ILoanRepository,
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 

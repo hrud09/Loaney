@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +34,7 @@ fun ProfileSidebarContent(
     onNavigateToSettings: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToShop: () -> Unit,
+    onSignOutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -204,11 +206,6 @@ fun ProfileSidebarContent(
 
         // ── Menu items ─────────────────────────────────────────────
         SidebarMenuItem(
-            icon = Icons.Default.CreditCard,
-            label = "Payment Methods",
-            onClick = { /* TODO */ }
-        )
-        SidebarMenuItem(
             icon = Icons.AutoMirrored.Filled.List,
             label = "Transaction History",
             onClick = onNavigateToHistory
@@ -217,6 +214,11 @@ fun ProfileSidebarContent(
             icon = Icons.Default.Settings,
             label = "Settings",
             onClick = onNavigateToSettings
+        )
+        SidebarMenuItem(
+            icon = Icons.AutoMirrored.Filled.Logout,
+            label = "Sign Out",
+            onClick = onSignOutClick
         )
     }
 }

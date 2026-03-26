@@ -98,6 +98,13 @@ fun MainScreen(
                         launchSingleTop = true
                         restoreState = true
                     }
+                },
+                onSignOutClick = {
+                    scope.launch { drawerState.close() }
+                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
@@ -199,8 +206,17 @@ fun MainScreen(
                 composable(Screen.Onboarding.route) {
                     OnboardingScreen(
                         onFinish = {
-                            navController.navigate(Screen.Home.route) {
+                            navController.navigate(Screen.Auth.route) {
                                 popUpTo(Screen.Onboarding.route) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+                composable(Screen.Auth.route) {
+                    AuthScreen(
+                        onAuthSuccess = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(0) { inclusive = true }
                             }
                         }
                     )
