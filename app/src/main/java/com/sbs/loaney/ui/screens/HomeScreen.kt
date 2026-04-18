@@ -87,6 +87,8 @@ import com.sbs.loaney.ui.components.WalletCardHolder
 import com.sbs.loaney.ui.components.bounceClick
 import com.sbs.loaney.ui.components.FeaturedCalendarPopup
 import com.sbs.loaney.ui.theme.*
+import com.sbs.loaney.ui.components.AlimHeader
+import com.sbs.loaney.ui.components.AlimCardAction
 import com.sbs.loaney.ui.viewmodel.HomeViewModel
 import com.sbs.loaney.ui.viewmodel.HomeUiState
 import java.text.SimpleDateFormat
@@ -1501,81 +1503,6 @@ class CardNumberVisualTransformation : VisualTransformation {
     }
 }
 
-@Composable
-fun AlimHeader(
-    userName: String,
-    userProfilePhoto: String? = null,
-    onProfileClick: () -> Unit,
-    onNotificationsClick: () -> Unit
-) {
-    val greeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-        in 0..11 -> stringResource(id = R.string.good_morning)
-        in 12..16 -> stringResource(id = R.string.good_afternoon)
-        else -> stringResource(id = R.string.good_evening)
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AlimDark)
-            .padding(top = 0.dp, start = 20.dp, end = 20.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = greeting,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = AlimWhite.copy(alpha = 0.7f),
-                    fontWeight = FontWeight.Medium
-                )
-            )
-            Text(
-                text = userName,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    color = AlimWhite,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.5.sp
-                )
-            )
-        }
-
-        // Notifications Button
-        IconButton(onClick = onNotificationsClick) {
-            Icon(
-                Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = AlimWhite
-            )
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Profile Photo
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(AlimWhite.copy(alpha = 0.15f))
-                .clickable { onProfileClick() }
-        ) {
-            if (userProfilePhoto != null) {
-                AsyncImage(
-                    model = userProfilePhoto,
-                    contentDescription = "Profile Photo",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    Icons.Default.Person, 
-                    contentDescription = null, 
-                    tint = AlimWhite,
-                    modifier = Modifier.fillMaxSize().padding(8.dp)
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun AlimBalanceCard(
@@ -1688,33 +1615,3 @@ fun AlimBalanceCard(
     }
 }
 
-@Composable
-fun AlimCardAction(icon: ImageVector, label: String, onClick: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .bounceClick { onClick() }
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(AlimWhite.copy(alpha = 0.15f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = label,
-                tint = AlimWhite,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                color = AlimWhite,
-                fontWeight = FontWeight.Medium
-            )
-        )
-    }
-}

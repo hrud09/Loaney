@@ -42,11 +42,15 @@ import com.sbs.loaney.R
 import java.util.Locale
 import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
+import com.sbs.loaney.ui.components.AlimHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    isTopLevel: Boolean = false,
+    onProfileClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -84,12 +88,14 @@ fun SettingsScreen(
                         ) 
                     },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack, 
-                                contentDescription = stringResource(id = R.string.back),
-                                tint = AlimWhite
-                            )
+                        if (!isTopLevel) {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack, 
+                                    contentDescription = stringResource(id = R.string.back),
+                                    tint = AlimWhite
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -109,102 +115,115 @@ fun SettingsScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .background(AlimCream)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            // -- GROUP 1: PROFILE --
-            SettingsGroup(title = stringResource(id = R.string.profile)) {
-                // Profile Photo Row
-                Row(
+            ) {
+                if (isTopLevel) {
+                    AlimHeader(
+                        userName = uiState.userName,
+                        userProfilePhoto = uiState.userProfilePhoto,
+                        onProfileClick = onProfileClick,
+                        onNotificationsClick = onNotificationsClick
+                    )
+                }
+                
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.Center
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                            .background(AlimGreen.copy(alpha = 0.1f), CircleShape)
-                            .border(2.dp, AlimGreen.copy(alpha = 0.5f), CircleShape)
-                            .clickable { profilePhotoLauncher.launch(arrayOf("image/*")) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (uiState.userProfilePhoto != null) {
-                            AsyncImage(
-                                model = uiState.userProfilePhoto,
-                                contentDescription = "Profile Photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Icon(Icons.Default.Person, contentDescription = null, tint = AlimGreen, modifier = Modifier.size(48.dp))
-                        }
-                        // Camera overlay
-                        Box(
-                            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.BottomCenter
+                    // -- GROUP 1: PROFILE --
+                    SettingsGroup(title = stringResource(id = R.string.profile)) {
+                        // Profile Photo Row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                             Box(modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.4f)).padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
-                                 Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                             }
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(CircleShape)
+                                    .background(AlimGreen.copy(alpha = 0.1f), CircleShape)
+                                    .border(2.dp, AlimGreen.copy(alpha = 0.5f), CircleShape)
+                                    .clickable { profilePhotoLauncher.launch(arrayOf("image/*")) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (uiState.userProfilePhoto != null) {
+                                    AsyncImage(
+                                        model = uiState.userProfilePhoto,
+                                        contentDescription = "Profile Photo",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Icon(Icons.Default.Person, contentDescription = null, tint = AlimGreen, modifier = Modifier.size(48.dp))
+                                }
+                                // Camera overlay
+                                Box(
+                                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.BottomCenter
+                                ) {
+                                     Box(modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.4f)).padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
+                                         Icon(Icons.Default.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                     }
+                                }
+                            }
                         }
+
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+
+                        SettingsItem(
+                            icon = Icons.Default.Person,
+                            title = stringResource(id = R.string.display_name),
+                            subtitle = uiState.userName,
+                            onClick = { showNameDialog = true }
+                        )
+                    }
+
+                    // -- GROUP 2: PREFERENCES --
+                    SettingsGroup(title = stringResource(id = R.string.preferences)) {
+                        val themeSubtitle = when (uiState.themeMode) {
+                            0 -> stringResource(id = R.string.theme_system)
+                            1 -> stringResource(id = R.string.theme_light)
+                            2 -> stringResource(id = R.string.theme_dark)
+                            else -> stringResource(id = R.string.theme_system)
+                        }
+                        SettingsItem(
+                            icon = Icons.Default.Palette,
+                            title = stringResource(id = R.string.theme),
+                            subtitle = themeSubtitle,
+                            onClick = { showThemeSheet = true }
+                        )
+
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                        SettingsItem(
+                            icon = Icons.Default.AttachMoney,
+                            title = stringResource(id = R.string.currency),
+                            subtitle = uiState.currencySymbol,
+                            onClick = { showCurrencySheet = true }
+                        )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                        SettingsItem(
+                            icon = Icons.Default.Language,
+                            title = stringResource(id = R.string.language),
+                            subtitle = if (uiState.appLanguage == "bn") stringResource(id = R.string.bangla) else stringResource(id = R.string.english),
+                            onClick = { showLanguageSheet = true }
+                        )
+                    }
+
+                    // -- GROUP 3: NOTIFICATIONS --
+                    SettingsGroup(title = stringResource(id = R.string.system_group)) {
+                        SettingsToggleItem(
+                            icon = Icons.Default.Notifications,
+                            title = stringResource(id = R.string.push_notifications),
+                            isChecked = uiState.notificationsEnabled,
+                            onToggle = { viewModel.setNotificationsEnabled(it) }
+                        )
                     }
                 }
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-
-                SettingsItem(
-                    icon = Icons.Default.Person,
-                    title = stringResource(id = R.string.display_name),
-                    subtitle = uiState.userName,
-                    onClick = { showNameDialog = true }
-                )
             }
-
-            // -- GROUP 2: PREFERENCES --
-            SettingsGroup(title = stringResource(id = R.string.preferences)) {
-                val themeSubtitle = when (uiState.themeMode) {
-                    0 -> stringResource(id = R.string.theme_system)
-                    1 -> stringResource(id = R.string.theme_light)
-                    2 -> stringResource(id = R.string.theme_dark)
-                    else -> stringResource(id = R.string.theme_system)
-                }
-                SettingsItem(
-                    icon = Icons.Default.Palette,
-                    title = stringResource(id = R.string.theme),
-                    subtitle = themeSubtitle,
-                    onClick = { showThemeSheet = true }
-                )
-
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-                SettingsItem(
-                    icon = Icons.Default.AttachMoney,
-                    title = stringResource(id = R.string.currency),
-                    subtitle = uiState.currencySymbol,
-                    onClick = { showCurrencySheet = true }
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-                SettingsItem(
-                    icon = Icons.Default.Language,
-                    title = stringResource(id = R.string.language),
-                    subtitle = if (uiState.appLanguage == "bn") stringResource(id = R.string.bangla) else stringResource(id = R.string.english),
-                    onClick = { showLanguageSheet = true }
-                )
-            }
-
-            // -- GROUP 3: NOTIFICATIONS --
-            SettingsGroup(title = stringResource(id = R.string.system_group)) {
-                SettingsToggleItem(
-                    icon = Icons.Default.Notifications,
-                    title = stringResource(id = R.string.push_notifications),
-                    isChecked = uiState.notificationsEnabled,
-                    onToggle = { viewModel.setNotificationsEnabled(it) }
-                )
-            }
-        }
         }
     }
 

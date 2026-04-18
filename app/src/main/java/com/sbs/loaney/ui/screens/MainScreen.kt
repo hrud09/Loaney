@@ -58,7 +58,7 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route, Screen.Shop.route)
+    val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route, Screen.Shop.route, Screen.Settings.route)
     val isTopLevel = currentDestination?.route in topLevelRoutes
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -148,7 +148,17 @@ fun MainScreen(
                         onCenterFabClick = { navController.navigate(Screen.AddLoan.createRoute("LEND")) },
                         onProfileClick = {
                             if (navController.currentDestination?.route != Screen.Settings.route) {
-                                navController.navigate(Screen.Settings.route)
+                                navController.navigate(Screen.Settings.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            } else {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         onShopClick = {
@@ -295,7 +305,12 @@ fun MainScreen(
                     )
                 }
                 composable(Screen.Settings.route) {
-                    SettingsScreen(onNavigateBack = { navController.popBackStack() })
+                    SettingsScreen(
+                        isTopLevel = isTopLevel,
+                        onNavigateBack = { navController.popBackStack() },
+                        onProfileClick = { scope.launch { drawerState.open() } },
+                        onNotificationsClick = { /* TODO: Implement global notifications */ }
+                    )
                 }
                 composable(Screen.Shop.route) {
                     ShopScreen(onNavigateBack = { navController.popBackStack() })
