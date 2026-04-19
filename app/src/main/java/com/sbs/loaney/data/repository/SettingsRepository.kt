@@ -26,6 +26,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val USER_ADDRESS = stringPreferencesKey("user_address")
         val USER_DOB = stringPreferencesKey("user_dob")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        val HAS_SEEN_TUTORIAL = booleanPreferencesKey("has_seen_tutorial")
     }
 
     // --- Flows ---
@@ -109,6 +110,14 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false // Default to false
         }
 
+    val hasSeenTutorialFlow: Flow<Boolean> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.HAS_SEEN_TUTORIAL] ?: false
+        }
+
     // --- Updaters ---
     suspend fun setThemeMode(mode: Int) {
         dataStore.edit { preferences ->
@@ -179,6 +188,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.ONBOARDING_COMPLETED] = completed
+        }
+    }
+
+    suspend fun setHasSeenTutorial(completed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.HAS_SEEN_TUTORIAL] = completed
         }
     }
 }

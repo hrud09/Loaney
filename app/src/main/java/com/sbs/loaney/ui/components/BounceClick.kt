@@ -19,9 +19,9 @@ fun Modifier.bounceClick(
     val isPressed by interactionSource.collectIsPressedAsState()
     
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.90f else 1f, // Shrink to 90% when pressed
+        targetValue = if (isPressed) 0.90f else 1f,
         animationSpec = spring(
-            dampingRatio = 0.5f, // Heavy elastic bounce
+            dampingRatio = 0.5f,
             stiffness = Spring.StiffnessLow
         ),
         label = "bounce_scale"
@@ -34,7 +34,27 @@ fun Modifier.bounceClick(
         }
         .clickable(
             interactionSource = interactionSource,
-            indication = androidx.compose.foundation.LocalIndication.current, // Restore default material ripple alongside physics push
+            indication = androidx.compose.foundation.LocalIndication.current,
             onClick = onClick
         )
+}
+
+fun Modifier.bounce(
+    interactionSource: MutableInteractionSource
+): Modifier = composed {
+    val isPressed by interactionSource.collectIsPressedAsState()
+    
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.90f else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.5f,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "bounce_scale"
+    )
+
+    this.graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
 }

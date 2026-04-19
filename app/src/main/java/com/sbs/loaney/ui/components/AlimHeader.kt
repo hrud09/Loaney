@@ -15,6 +15,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,7 +32,9 @@ fun AlimHeader(
     userName: String,
     userProfilePhoto: String? = null,
     onProfileClick: () -> Unit,
-    onNotificationsClick: () -> Unit
+    onNotificationsClick: () -> Unit,
+    onPositionedNotification: (LayoutCoordinates) -> Unit = {},
+    onPositionedProfile: (LayoutCoordinates) -> Unit = {}
 ) {
     val greeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
         in 0..11 -> stringResource(id = R.string.good_morning)
@@ -64,7 +68,10 @@ fun AlimHeader(
         }
 
         // Notifications Button
-        IconButton(onClick = onNotificationsClick) {
+        IconButton(
+            onClick = onNotificationsClick,
+            modifier = Modifier.onGloballyPositioned { onPositionedNotification(it) }
+        ) {
             Icon(
                 Icons.Default.Notifications,
                 contentDescription = "Notifications",
@@ -80,6 +87,7 @@ fun AlimHeader(
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(AlimWhite.copy(alpha = 0.15f))
+                .onGloballyPositioned { onPositionedProfile(it) }
                 .clickable { onProfileClick() }
         ) {
             if (userProfilePhoto != null) {

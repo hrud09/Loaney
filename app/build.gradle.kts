@@ -82,6 +82,8 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
     implementation(libs.play.services.auth)
+    implementation(libs.lottie.compose)
+
 
     // Image Loading
     implementation(libs.coil.compose)

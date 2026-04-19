@@ -16,8 +16,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.graphics.Color
 import com.sbs.loaney.ui.components.OnboardingIllustration
 import com.sbs.loaney.ui.components.OnboardingIllustrationType
+import com.sbs.loaney.ui.components.bounce
 import com.sbs.loaney.ui.theme.*
 
 @Composable
@@ -28,26 +33,48 @@ fun OnboardingScreen(
         OnboardingPage(
             title = "Welcome to Loaney",
             description = "Track all your lent and borrowed money in one secure place.",
-            type = OnboardingIllustrationType.WELCOME
+            type = OnboardingIllustrationType.WELCOME,
+            bgColor = AlimCream
         ),
         OnboardingPage(
             title = "Never Forget a Debt",
             description = "Keep a clear history of your transactions so you always know who owes who.",
-            type = OnboardingIllustrationType.HISTORY
+            type = OnboardingIllustrationType.HISTORY,
+            bgColor = SkyBlue.copy(alpha = 0.15f)
         ),
         OnboardingPage(
             title = "Gain Financial Clarity",
             description = "Visualize your balances and maintain healthy financial relationships.",
-            type = OnboardingIllustrationType.CLARITY
+            type = OnboardingIllustrationType.CLARITY,
+            bgColor = AlimGreen.copy(alpha = 0.1f)
         )
     )
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val coroutineScope = rememberCoroutineScope()
+    
+    // Smooth background color interpolation
+    val backgroundColor: Color by remember(pagerState.targetPage, pagerState.currentPageOffsetFraction) {
+        derivedStateOf {
+            val currentPage = pagerState.currentPage
+            val offset = pagerState.currentPageOffsetFraction
+            val nextPage = if (offset > 0) currentPage + 1 else currentPage - 1
+            
+            if (nextPage in 0 until pages.size) {
+                androidx.compose.ui.graphics.lerp(
+                    pages[currentPage].bgColor,
+                    pages[nextPage].bgColor,
+                    kotlin.math.abs(offset)
+                )
+            } else {
+                pages[currentPage].bgColor
+            }
+        }
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        containerColor = AlimCream
+        containerColor = backgroundColor
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -59,51 +86,37 @@ fun OnboardingScreen(
                 state = pagerState,
                 modifier = Modifier.weight(1f)
             ) { position ->
-                OnboardingPageContent(page = pages[position])
+                OnboardingPageContent(
+                    page = pages[position],
+                    isSelected = pagerState.currentPage == position
+                )
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp, vertical = 40.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Page Indicator
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    repeat(pages.size) { iteration ->
-                        val isSelected = pagerState.currentPage == iteration
-                        Box(
-                            modifier = Modifier
-                                .size(width = if (isSelected) 24.dp else 8.dp, height = 8.dp)
-                                .clip(CircleShape)
-                                .background(if (isSelected) AlimGreen else AlimDark.copy(alpha = 0.1f))
-                        )
+            OnboardingBottomBar(
+                pagesSize = pages.size,
+                currentPage = pagerState.currentPage,
+                onNextClick = {
+                    if (pagerState.currentPage == pages.size - 1) {
+                        onFinish()
+                    } else {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        }
                     }
                 }
-
-                Button(
-                    onClick = {
-                        if (pagerState.currentPage == pages.size - 1) {
-                            onFinish()
-                        } else {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
-                        }
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
-                ) {
-                    Text(if (pagerState.currentPage == pages.size - 1) "Get Started" else "Next", fontWeight = FontWeight.SemiBold)
-                }
-            }
+            )
         }
     }
 }
 
 @Composable
-fun OnboardingPageContent(page: OnboardingPage) {
+fun OnboardingPageContent(page: OnboardingPage, isSelected: Boolean) {
+    var visible by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(isSelected) {
+        if (isSelected) visible = true
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -111,36 +124,117 @@ fun OnboardingPageContent(page: OnboardingPage) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        OnboardingIllustration(type = page.type)
+        Box(
+            modifier = Modifier
+                .animateContentSize()
+                .padding(bottom = 48.dp)
+        ) {
+            androidx.compose.animation.AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(1000)) + scaleIn(tween(800, easing = FastOutSlowInEasing))
+            ) {
+                OnboardingIllustration(type = page.type)
+            }
+        }
         
-        Spacer(modifier = Modifier.height(64.dp))
-        
-        Text(
-            text = page.title,
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.Bold,
-                color = AlimDark,
-                fontSize = 32.sp
-            ),
-            textAlign = TextAlign.Center
-        )
+        androidx.compose.animation.AnimatedVisibility(
+            visible = visible,
+            enter = slideInVertically(tween(600, delayMillis = 200)) { it / 2 } + fadeIn(tween(600, delayMillis = 200))
+        ) {
+            Text(
+                text = page.title,
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = AlimDark,
+                    fontSize = 32.sp,
+                    letterSpacing = (-0.5).sp
+                ),
+                textAlign = TextAlign.Center
+            )
+        }
         
         Spacer(modifier = Modifier.height(20.dp))
         
-        Text(
-            text = page.description,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                color = AlimDark.copy(alpha = 0.6f),
-                lineHeight = 26.sp,
-                fontSize = 18.sp
+        androidx.compose.animation.AnimatedVisibility(
+            visible = visible,
+            enter = slideInVertically(tween(600, delayMillis = 400)) { it / 2 } + fadeIn(tween(600, delayMillis = 400))
+        ) {
+            Text(
+                text = page.description,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = AlimDark.copy(alpha = 0.65f),
+                    lineHeight = 28.sp,
+                    fontSize = 18.sp
+                ),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun OnboardingBottomBar(
+    pagesSize: Int,
+    currentPage: Int,
+    onNextClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 48.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Fluid Page Indicator
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            repeat(pagesSize) { iteration ->
+                val isSelected = currentPage == iteration
+                val width by animateDpAsState(
+                    targetValue = if (isSelected) 32.dp else 10.dp,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                    label = "indicatorWidth"
+                )
+                val color by animateColorAsState(
+                    targetValue = if (isSelected) AlimGreen else AlimDark.copy(alpha = 0.15f),
+                    label = "indicatorColor"
+                )
+                
+                Box(
+                    modifier = Modifier
+                        .height(10.dp)
+                        .width(width)
+                        .clip(CircleShape)
+                        .background(color)
+                )
+            }
+        }
+
+        // Bouncy Next Button
+        val interactionSource = remember { MutableInteractionSource() }
+        Button(
+            onClick = onNextClick,
+            interactionSource = interactionSource,
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AlimGreen,
+                contentColor = Color.White
             ),
-            textAlign = TextAlign.Center
-        )
+            modifier = Modifier
+                .height(56.dp)
+                .widthIn(min = 120.dp)
+                .bounce(interactionSource)
+        ) {
+            Text(
+                text = if (currentPage == pagesSize - 1) "Get Started" else "Next",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+            )
+        }
     }
 }
 
 data class OnboardingPage(
     val title: String,
     val description: String,
-    val type: OnboardingIllustrationType
+    val type: OnboardingIllustrationType,
+    val bgColor: Color
 )

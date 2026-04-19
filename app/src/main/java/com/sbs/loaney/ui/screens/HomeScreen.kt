@@ -94,6 +94,10 @@ import com.sbs.loaney.ui.viewmodel.HomeUiState
 import java.text.SimpleDateFormat
 import java.util.*
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import com.sbs.loaney.ui.components.TutorialOverlay
+import com.sbs.loaney.ui.components.TutorialStep
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -145,6 +149,76 @@ fun HomeScreen(
             }
         }
     ) { padding ->
+        var profileCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+        var notificationCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+        var balanceCardCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+        var calendarCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+        var quickActionsCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+        var reportCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+        var bankSectionCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+        
+        var showTutorial by remember { mutableStateOf(false) }
+
+        // Start tutorial if not seen and data is loaded
+        LaunchedEffect(uiState.isLoading, uiState.hasSeenTutorial) {
+            if (!uiState.isLoading && !uiState.hasSeenTutorial) {
+                showTutorial = true
+            }
+        }
+
+        val tutorialSteps = remember(
+            profileCoords, notificationCoords, balanceCardCoords, 
+            calendarCoords, quickActionsCoords, reportCoords, bankSectionCoords
+        ) {
+            listOfNotNull(
+                TutorialStep(
+                    title = "Personalize Your Experience",
+                    description = "Welcome! Tap your profile to customize the app theme, language, and currency to your liking.",
+                    targetCoordinates = profileCoords
+                ),
+                notificationCoords?.let {
+                    TutorialStep(
+                        title = "Smart Notifications",
+                        description = "Stay informed! We'll notify you here about upcoming loan deadlines and partial payments.",
+                        targetCoordinates = it
+                    )
+                },
+                TutorialStep(
+                    title = "Your Financial Hub",
+                    description = "This card calculates your net balance by subtracting what you owe from what is owed to you.",
+                    targetCoordinates = balanceCardCoords
+                ),
+                calendarCoords?.let {
+                    TutorialStep(
+                        title = "Transaction Timeline",
+                        description = "View your financial history on a timeline. The calendar highlights all your past and future transaction dates.",
+                        targetCoordinates = it
+                    )
+                },
+                quickActionsCoords?.let {
+                    TutorialStep(
+                        title = "Fast Tracking",
+                        description = "Lend or Borrow money in seconds. Tap these buttons to quickly record a new transaction with any contact.",
+                        targetCoordinates = it
+                    )
+                },
+                reportCoords?.let {
+                    TutorialStep(
+                        title = "Detailed Analytics",
+                        description = "Need a summary? Generate and view detailed reports of all your transactions to keep things transparent.",
+                        targetCoordinates = it
+                    )
+                },
+                bankSectionCoords?.let {
+                    TutorialStep(
+                        title = "Digital Wallet",
+                        description = "Link your bank accounts or Mobile Finance Services (MFS) for quick access to your account details and QR codes.",
+                        targetCoordinates = it
+                    )
+                }
+            )
+        }
+
         Box(modifier = Modifier.fillMaxSize().padding(padding).background(AlimCream)) {
             if (uiState.isLoading) {
                 com.sbs.loaney.ui.components.AnimatedLoadingScreen()
@@ -155,18 +229,25 @@ fun HomeScreen(
                         userName = uiState.userName,
                         userProfilePhoto = uiState.userProfilePhoto,
                         onProfileClick = onProfileClick,
-                        onNotificationsClick = { showNotificationsSheet = true }
+                        onNotificationsClick = { showNotificationsSheet = true },
+                        onPositionedProfile = { profileCoords = it },
+                        onPositionedNotification = { notificationCoords = it }
                     )
                     
-                    AlimBalanceCard(
-                        balance = uiState.totalLent - uiState.totalBorrowed,
-                        currencySymbol = uiState.currencySymbol,
-                        onNavigateToAddLoan = onNavigateToAddLoan,
-                        onNavigateToHistory = onNavigateToHistory,
-                        onNavigateToHistoryScreen = onNavigateToHistoryScreen,
-                        onReportClick = { onNavigateToHistory(null) },
-                        onCalendarClick = { showFeaturedCalendar = true }
-                    )
+                    Box(modifier = Modifier.onGloballyPositioned { balanceCardCoords = it }) {
+                        AlimBalanceCard(
+                            balance = uiState.totalLent - uiState.totalBorrowed,
+                            currencySymbol = uiState.currencySymbol,
+                            onNavigateToAddLoan = onNavigateToAddLoan,
+                            onNavigateToHistory = onNavigateToHistory,
+                            onNavigateToHistoryScreen = onNavigateToHistoryScreen,
+                            onReportClick = { onNavigateToHistory(null) },
+                            onCalendarClick = { showFeaturedCalendar = true },
+                            onPositionedCalendar = { calendarCoords = it },
+                            onPositionedQuickActions = { quickActionsCoords = it },
+                            onPositionedReport = { reportCoords = it }
+                        )
+                    }
 
                     // SCROLLABLE CONTENT
                     Column(
@@ -209,7 +290,9 @@ fun HomeScreen(
 
                 // ── BANK ACCOUNTS ──────────────────────────────────────────────
                 Column(
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .onGloballyPositioned { bankSectionCoords = it },
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(
@@ -402,14 +485,23 @@ fun HomeScreen(
         )
     }
 
-    FeaturedCalendarPopup(
-        visible = showFeaturedCalendar,
-        onDismiss = { showFeaturedCalendar = false },
-        allEvents = uiState.allEvents,
-        currencySymbol = uiState.currencySymbol,
-        onNavigateToDetail = onNavigateToDetail
-    )
-}
+        FeaturedCalendarPopup(
+            visible = showFeaturedCalendar,
+            onDismiss = { showFeaturedCalendar = false },
+            allEvents = uiState.allEvents,
+            currencySymbol = uiState.currencySymbol,
+            onNavigateToDetail = onNavigateToDetail
+        )
+
+        TutorialOverlay(
+            steps = tutorialSteps,
+            isVisible = showTutorial,
+            onComplete = {
+                showTutorial = false
+                viewModel.setHasSeenTutorial(true)
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1512,7 +1604,10 @@ fun AlimBalanceCard(
     onNavigateToHistory: (String?) -> Unit,
     onNavigateToHistoryScreen: () -> Unit,
     onReportClick: () -> Unit,
-    onCalendarClick: () -> Unit
+    onCalendarClick: () -> Unit,
+    onPositionedCalendar: (LayoutCoordinates) -> Unit = {},
+    onPositionedQuickActions: (LayoutCoordinates) -> Unit = {},
+    onPositionedReport: (LayoutCoordinates) -> Unit = {}
 ) {
     var isBalanceVisible by remember { mutableStateOf(true) }
 
@@ -1566,6 +1661,7 @@ fun AlimBalanceCard(
                             tint = AlimWhite,
                             modifier = Modifier
                                 .size(24.dp)
+                                .onGloballyPositioned { onPositionedCalendar(it) }
                                 .clickable { onCalendarClick() }
                         )
                     }
@@ -1598,13 +1694,17 @@ fun AlimBalanceCard(
 
                     // Quick Actions Row
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onGloballyPositioned { onPositionedQuickActions(it) },
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         AlimCardAction(Icons.Default.Add, stringResource(id = R.string.lend), onClick = { onNavigateToAddLoan("LEND") })
                         AlimCardAction(Icons.Default.Remove, stringResource(id = R.string.borrow), onClick = { onNavigateToAddLoan("BORROW") })
                         AlimCardAction(Icons.Default.History, stringResource(id = R.string.history), onClick = onNavigateToHistoryScreen)
-                        AlimCardAction(Icons.Default.BarChart, stringResource(id = R.string.report), onClick = onReportClick)
+                        Box(modifier = Modifier.onGloballyPositioned { onPositionedReport(it) }) {
+                            AlimCardAction(Icons.Default.BarChart, stringResource(id = R.string.report), onClick = onReportClick)
+                        }
                     }
                 }
             }

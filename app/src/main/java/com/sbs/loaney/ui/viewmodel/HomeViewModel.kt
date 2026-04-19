@@ -37,7 +37,8 @@ data class HomeUiState(
     val bankAccounts: List<BankAccountEntity> = emptyList(),
     val userName: String = "Sajibur",
     val currencySymbol: String = "৳",
-    val userProfilePhoto: String? = null
+    val userProfilePhoto: String? = null,
+    val hasSeenTutorial: Boolean = true // Default true to avoid showing it while loading
 )
 
 @HiltViewModel
@@ -51,14 +52,23 @@ class HomeViewModel @Inject constructor(
         repository.getAllBankAccounts(),
         settingsRepository.userNameFlow,
         settingsRepository.currencySymbolFlow,
-        settingsRepository.userProfilePhotoFlow
-    ) { loansWithPayments, accounts, name, currency, photo ->
+        settingsRepository.userProfilePhotoFlow,
+        settingsRepository.hasSeenTutorialFlow
+    ) { args ->
+        val loansWithPayments = args[0] as List<LoanWithPayments>
+        val accounts = args[1] as List<BankAccountEntity>
+        val name = args[2] as String
+        val currency = args[3] as String
+        val photo = args[4] as String?
+        val hasSeen = args[5] as Boolean
+        
         val summary = calculateSummary(loansWithPayments)
         summary.copy(
             bankAccounts = accounts,
             userName = name,
             currencySymbol = currency,
-            userProfilePhoto = photo
+            userProfilePhoto = photo,
+            hasSeenTutorial = hasSeen
         )
     }.stateIn(
             scope = viewModelScope,
@@ -216,6 +226,12 @@ class HomeViewModel @Inject constructor(
     fun updateBankAccount(account: BankAccountEntity) {
         viewModelScope.launch {
             repository.updateBankAccount(account)
+        }
+    }
+
+    fun setHasSeenTutorial(completed: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setHasSeenTutorial(completed)
         }
     }
 }
