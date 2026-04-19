@@ -109,33 +109,3 @@ fun AlimHeader(
     }
 }
 
-@Composable
-fun AlimCardAction(icon: ImageVector, label: String, onClick: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .bounceClick { onClick() }
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(AlimWhite.copy(alpha = 0.15f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = label,
-                tint = AlimWhite,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                color = AlimWhite,
-                fontWeight = FontWeight.Medium
-            )
-        )
-    }
-}
