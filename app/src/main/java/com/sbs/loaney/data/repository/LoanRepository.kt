@@ -26,7 +26,33 @@ class LoanRepository(
 
     override suspend fun softDeleteLoan(loanId: Long, timestamp: Long) = loanDao.softDeleteLoan(loanId, timestamp)
 
-    override suspend fun restoreLoan(loanId: Long) = loanDao.restoreLoan(loanId)
+    override suspend fun restoreLoan(loanId: Long) {
+        val loanWithPayments = loanDao.getLoanByIdOnce(loanId) ?: return
+        val loan = loanWithPayments.loan
+        val payments = loanWithPayments.payments
+        val loanItems = loanWithPayments.loanItems
+
+        val totalLoan = loan.amount + loanItems.sumOf { it.amount }
+        val paid = payments.sumOf { it.amount }
+        
+        var newStatus = when {
+            paid >= totalLoan -> com.sbs.loaney.data.model.LoanStatus.FULLY_PAID
+            paid > 0 -> com.sbs.loaney.data.model.LoanStatus.PARTIALLY_PAID
+            java.util.Date().after(loan.promisedReturnDate) -> com.sbs.loaney.data.model.LoanStatus.OVERDUE
+            else -> com.sbs.loaney.data.model.LoanStatus.ACTIVE
+        }
+
+        // If we are restoring it, it should NOT be in a completed state
+        if (newStatus == com.sbs.loaney.data.model.LoanStatus.FULLY_PAID || newStatus == com.sbs.loaney.data.model.LoanStatus.FORGIVEN) {
+            newStatus = if (paid > 0) com.sbs.loaney.data.model.LoanStatus.PARTIALLY_PAID else com.sbs.loaney.data.model.LoanStatus.ACTIVE
+        }
+
+        loanDao.updateLoan(loan.copy(
+            isDeleted = false,
+            removedAt = null,
+            status = newStatus
+        ))
+    }
 
     override fun getDeletedLoans(): Flow<List<LoanWithPayments>> = loanDao.getDeletedLoans()
 

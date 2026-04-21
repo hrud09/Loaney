@@ -107,11 +107,41 @@ class FirebaseLoanRepository @Inject constructor() : ILoanRepository {
     }
 
     override suspend fun restoreLoan(loanId: Long) {
+        val uid = auth.currentUser?.uid ?: return
+        val userDoc = firestore.collection("users").document(uid)
+        
+        // Fetch loan
+        val loanDoc = userDoc.collection(LOANS_COLLECTION).document(loanId.toString()).get().await()
+        val loan = loanDoc.toObject(LoanEntity::class.java) ?: return
+        
+        // Fetch payments and items to recalculate status
+        val paymentsSnapshot = userDoc.collection(PAYMENTS_COLLECTION).whereEqualTo("loanId", loanId).get().await()
+        val payments = paymentsSnapshot.toObjects(PaymentEntity::class.java)
+        
+        val itemsSnapshot = userDoc.collection(LOAN_ITEMS_COLLECTION).whereEqualTo("loanId", loanId).get().await()
+        val items = itemsSnapshot.toObjects(LoanItemEntity::class.java)
+        
+        val totalLoan = loan.amount + items.sumOf { it.amount }
+        val paid = payments.sumOf { it.amount }
+        
+        var newStatus = when {
+            paid >= totalLoan -> LoanStatus.FULLY_PAID
+            paid > 0 -> LoanStatus.PARTIALLY_PAID
+            java.util.Date().after(loan.promisedReturnDate) -> LoanStatus.OVERDUE
+            else -> LoanStatus.ACTIVE
+        }
+        
+        // If we are restoring it from History, it should NOT be in a completed state
+        if (newStatus == LoanStatus.FULLY_PAID || newStatus == LoanStatus.FORGIVEN) {
+            newStatus = if (paid > 0) LoanStatus.PARTIALLY_PAID else LoanStatus.ACTIVE
+        }
+        
         val updates = mapOf(
             "isDeleted" to false,
-            "removedAt" to null
+            "removedAt" to null,
+            "status" to newStatus.name
         )
-        getUserDocRef().collection(LOANS_COLLECTION).document(loanId.toString()).update(updates).await()
+        userDoc.collection(LOANS_COLLECTION).document(loanId.toString()).update(updates).await()
     }
 
     override fun getDeletedLoans(): Flow<List<LoanWithPayments>> {

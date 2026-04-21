@@ -21,6 +21,13 @@ data class LoanTrackerUiState(
     val currencySymbol: String = "৳"
 )
 
+enum class DeletionReason {
+    PAID_FULLY,
+    FORGIVEN,
+    MISTAKE,
+    OTHER
+}
+
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class LoanTrackerViewModel @Inject constructor(
@@ -82,6 +89,42 @@ class LoanTrackerViewModel @Inject constructor(
     fun deleteLoan(loan: LoanEntity) {
         viewModelScope.launch {
             repository.softDeleteLoan(loan.id)
+        }
+    }
+
+    fun deleteLoanWithReason(loan: LoanEntity, reason: DeletionReason, otherReasonText: String? = null) {
+        viewModelScope.launch {
+            when (reason) {
+                DeletionReason.PAID_FULLY -> {
+                    repository.updateLoan(loan.copy(
+                        status = LoanStatus.FULLY_PAID,
+                        removedAt = System.currentTimeMillis()
+                    ))
+                }
+                DeletionReason.FORGIVEN -> {
+                    repository.updateLoan(loan.copy(
+                        status = LoanStatus.FORGIVEN,
+                        removedAt = System.currentTimeMillis()
+                    ))
+                }
+                DeletionReason.MISTAKE -> {
+                    repository.softDeleteLoan(loan.id)
+                }
+                DeletionReason.OTHER -> {
+                    val updatedNotes = if (!otherReasonText.isNullOrBlank()) {
+                        val currentNotes = loan.notes ?: ""
+                        if (currentNotes.isBlank()) "Deletion Reason: $otherReasonText" 
+                        else "$currentNotes\nDeletion Reason: $otherReasonText"
+                    } else {
+                        loan.notes
+                    }
+                    repository.updateLoan(loan.copy(
+                        notes = updatedNotes,
+                        removedAt = System.currentTimeMillis()
+                    ))
+                    repository.softDeleteLoan(loan.id)
+                }
+            }
         }
     }
 

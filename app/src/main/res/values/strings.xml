@@ -99,6 +99,13 @@
     <!-- Loan Tracker Screen -->
     <string name="delete_loan_title">Delete Loan</string>
     <string name="delete_loan_msg">Are you sure you want to delete this loan record for %1$s? This action cannot be undone.</string>
+    <string name="delete_reason_title">Why are you deleting this loan?</string>
+    <string name="delete_reason_subtitle">Help us keep your financial history accurate by selecting a reason.</string>
+    <string name="delete_reason_paid">Loan paid fully</string>
+    <string name="delete_reason_forgiven">Forgiven</string>
+    <string name="delete_reason_mistake">Mistake / Error</string>
+    <string name="delete_reason_other">Other / Custom Reason</string>
+    <string name="delete_reason_other_hint">Enter your reason here (optional)</string>
     <string name="delete">Delete</string>
     <string name="settle_loan_title">Settle Loan</string>
     <string name="settle_loan_msg">Are you sure you want to mark this loan as settled? This will update the status to Fully Paid.</string>

@@ -1,100 +1,54 @@
-# App Description: Loaney
+# Loaney - Feature Roadmap
 
-## Overview
-**Loaney** is an open-source Android application built to help users manage their personal finances, specifically focusing on tracking lent and borrowed money, recording payments, managing loan items, and tracking balances across various bank accounts. It provides a simple, fluid, and beautiful UI for maintaining a history of debts to ensure financial clarity among friends, family, and associates.
+**Loaney** is a comprehensive personal debt and asset tracking application designed to bring clarity to your informal financial life. It simplifies how you manage money and items shared between friends, family, and associates.
 
-## Tech Stack
-- **Platform**: Android
-- **UI Toolkit**: Jetpack Compose (Modern, declarative UI)
-- **Language**: Kotlin
-- **Architecture**: MVVM (Model-View-ViewModel)
-- **Dependency Injection**: Dagger-Hilt
-- **Authentication**: Firebase Authentication (Email/Password)
-- **Database**: Firebase Cloud Firestore (with Offline Persistence)
-- **Local Persistence / Preferences**: DataStore (for settings/preferences)
+## 1. 360° Financial Dashboard
+Stay on top of your net worth with a dynamic overview of your current financial standing.
+- **Smart Balance Calculation**: Real-time netting of total money lent versus total money taken.
+- **Quick-Toggle Privacy**: Hide your balance on the home screen with one touch for public browsing.
+- **Direct Entry Actions**: Instant access to lending or borrowing workflows directly from the emerald dashboard.
 
-## Key Features
-- **User Authentication**: Secure Sign-Up and Log-In.
-- **Loan Tracking**: Add operations for lending or borrowing money/items.
-- **Payment History**: Add partial or full payments against a specific loan.
-- **Bank Account Management**: Track different bank accounts or wallets and their balances.
-- **Real-time Sync**: Data is synced in real-time across devices using Firebase Firestore's Snapshot Listeners.
-- **Offline Support**: Leverages Firestore's built-in offline caching so users can view and edit data without an internet connection.
+## 2. Advanced Loan & Debt Management
+Go beyond simple notes with structured tracking for every transaction.
+- **Two-Way Relationship Tracking**: Clearly distinguish between assets (money lent out) and liabilities (money borrowed).
+- **Promised Date Alerts**: Set expected return dates and track them through the system to avoid awkward payment delays.
+- **Rich Contact Metadata**: Store person names, phone numbers, addresses, and relationship types (Friend, Family, Colleague, etc.).
+- **Witness Verification**: Record the names of third-party witnesses for significant transactions.
 
----
+## 3. The Digital Wallet (Account Management)
+Store your account information in one secure location for quick reference during transactions.
+- **Universal Support**: Manage traditional Bank Accounts, Credit Cards, and Mobile Financial Services (e.g., bKash, Nagad, Rocket).
+- **Visual Customization**: Differentiate accounts with custom cover images or institution logos.
+- **QR Code Storage**: Save your personal MFS or Bank QR codes for quick sharing and payments.
+- **One-Tap Data Capture**: Copy account numbers and details to your clipboard with a single tap for easy pasting.
 
-## Data Structures & Firestore Schema
+## 4. Visual Payment History
+Track every cent as it moves back into your pocket or out to a creditor.
+- **Installment Recording**: Add partial or full payments against any active loan to see the remaining balance decrease over time.
+- **Payment Evidence**: Attach receipts or photo proofs for every payment installment.
+- **Transaction Notes**: Add context to specific payments for future reference.
 
-Data is stored in **Firebase Cloud Firestore**. The database utilizes root-level collections and subcollections for related data.
+## 5. Itemized Debt Tracking
+Not all debts are monetary. Loaney handles the loaning of physical assets.
+- **Item Descriptions**: Record the borrowing/lending of physical goods like books, laptops, or tools.
+- **Valuation Tracking**: Assign estimated monetary values to physical items for total debt assessment.
+- **Return Status**: Monitor which items have been returned and which are still in circulation.
 
-### 1. `users` (Root Collection)
-Stores the profiles for authenticated users.
-- **Document ID**: Firebase Authentication User UID.
-- **Fields**:
-  - `name` *(String)*: The user's displayed name.
-  - `email` *(String)*: The user's email address.
-  - `currency` *(String)*: The user's preferred local currency symbol (e.g., `৳`, `$`, `€`).
-  - `createdAt` *(Number/Long)*: Unix timestamp of account creation.
+## 6. Interactive Financial Calendar
+Never miss a deadline with the integrated scheduling system.
+- **Quick-View Strip**: A horizontal calendar strip shows upcoming due dates at a glance.
+- **Featured Calendar Popup**: A deep-dive view into all past and future financial events associated with your loans.
+- **Automated Event Mapping**: Dates from loan initiations and promised returns are automatically populated.
 
-### 2. `loans` (Root Collection)
-Stores the primary lending and borrowing records.
-- **Document ID**: Custom ID based on Unix timestamp (`String`).
-- **Fields**:
-  - `id` *(Number/Long)*: Unique identifier (same as Document ID).
-  - `type` *(String/Enum)*: `LEND` or `BORROW`.
-  - `personName` *(String)*: Name of the person the user is transacting with.
-  - `phoneNumber` *(String)*: Contact number.
-  - `email` *(String, optional)*: Contact email.
-  - `address` *(String, optional)*: Contact address.
-  - `amount` *(Number/Double)*: The principal amount of the loan.
-  - `loanDate` *(Timestamp/Date)*: The date the loan was initiated.
-  - `promisedReturnDate` *(Timestamp/Date)*: The expected date of return.
-  - `purpose` *(String, optional)*: Reason for the loan.
-  - `notes` *(String, optional)*: Additional context.
-  - `interest` *(Number/Double, optional)*: Interest rate or flat interest applied.
-  - `proofUri` *(String, optional)*: Local URI or Firebase Storage URL for document proof.
-  - `profilePhotoUri` *(String, optional)*: Photo of the person.
-  - `status` *(String/Enum)*: `ACTIVE`, `FULLY_PAID`, or `FORGIVEN`.
-  - `relationshipType` *(String, optional)*: e.g., Friend, Family, Colleague.
-  - `witness` *(String, optional)*: Name of a witness present during the transaction.
-  - `isDeleted` *(Boolean)*: Soft-delete flag for the recycle bin.
-  - `removedAt` *(Number/Long, optional)*: Timestamp when the item was soft-deleted.
-  - `createdAt` *(Number/Long)*: Document creation timestamp.
+## 7. Intelligent User Experience
+Designed to be fast, fluid, and intuitive.
+- **Contact List Picker**: Effortlessly import debtor details directly from your phone's contact list.
+- **Interactive Tutorial**: A guided tour ensures new users understand every feature of the app from day one.
+- **Neubrutalist Aesthetics**: A bold, high-contrast UI that prioritizes readability and user engagement.
+- **Profile Customization**: Set your name, preferred currency symbol, and profile banner to make the app yours.
 
-#### ↳ `payments` (Subcollection under a `loan` document)
-Stores payment installments made towards a specific loan.
-- **Document ID**: Custom ID based on Unix timestamp (`String`).
-- **Fields**:
-  - `id` *(Number/Long)*: Unique payment identifier.
-  - `loanId` *(Number/Long)*: Reference to the parent loan.
-  - `amount` *(Number/Double)*: Amount paid in this installment.
-  - `paymentDate` *(Timestamp/Date)*: When the payment was made.
-  - `note` *(String, optional)*: Context for the payment.
-  - `proofUri` *(String, optional)*: Receipt or proof of payment.
-  - `createdAt` *(Number/Long)*: Document creation timestamp.
-
-#### ↳ `loanItems` (Subcollection under a `loan` document)
-Stores non-monetary items associated with a loan (e.g., lending a book or laptop).
-- **Document ID**: Custom ID based on Unix timestamp (`String`).
-- **Fields**:
-  - `id` *(Number/Long)*: Unique item identifier.
-  - `loanId` *(Number/Long)*: Reference to the parent loan.
-  - `itemName` *(String)*: Name of the item.
-  - `description` *(String, optional)*: Details about the condition or specifics.
-  - `estimatedValue` *(Number/Double, optional)*: Approximate monetary value.
-  - `isReturned` *(Boolean)*: Status flag.
-  - `returnDate` *(Timestamp/Date, optional)*: When the item was returned.
-  - `photoUri` *(String, optional)*: Picture of the item.
-  - `createdAt` *(Number/Long)*: Document creation timestamp.
-
-### 3. `bankAccounts` (Root Collection)
-Stores the user's personal bank accounts or virtual wallets.
-- **Document ID**: Custom ID based on Unix timestamp (`String`).
-- **Fields**:
-  - `id` *(Number/Long)*: Unique bank account identifier.
-  - `bankName` *(String)*: Name of the institution (e.g., Bkash, Chase).
-  - `accountName` *(String)*: Account holder's name.
-  - `accountNumber` *(String, optional)*: Last 4 digits or full number.
-  - `initialBalance` *(Number/Double)*: Starting balance.
-  - `colorHex` *(String, optional)*: UI color code for the card.
-  - `createdAt` *(Number/Long)*: Document creation timestamp.
+## 8. Reliability & Accessibility
+Designed for use anywhere, anytime.
+- **Cloud-Synced Identity**: Securely access your data across devices using email or phone login.
+- **Zero-Latency Interactions**: Optimized state management ensures the UI responds instantly to every input.
+- **Persistence First**: Your financial data is securely maintained, ensuring you never lose a record of who owes you what.

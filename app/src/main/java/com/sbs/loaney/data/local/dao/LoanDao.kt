@@ -40,6 +40,10 @@ interface LoanDao {
     fun getLoanById(loanId: Long): Flow<LoanWithPayments?>
 
     @Transaction
+    @Query("SELECT * FROM loans WHERE id = :loanId")
+    suspend fun getLoanByIdOnce(loanId: Long): LoanWithPayments?
+
+    @Transaction
     @Query("SELECT * FROM loans WHERE isDeleted = 1 OR status IN ('FULLY_PAID', 'FORGIVEN') ORDER BY removedAt DESC")
     fun getDeletedLoans(): Flow<List<LoanWithPayments>>
 

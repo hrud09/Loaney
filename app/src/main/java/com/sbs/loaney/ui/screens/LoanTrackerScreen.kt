@@ -43,9 +43,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.data.model.calculateLoaneyPiePoints
+import com.sbs.loaney.ui.components.DeletionReasonBottomSheet
 import com.sbs.loaney.ui.components.FullScreenImageViewer
 import com.sbs.loaney.ui.components.LoaneyPieRewardOverlay
 import com.sbs.loaney.ui.viewmodel.LoanTrackerViewModel
+import com.sbs.loaney.ui.viewmodel.DeletionReason
 import java.text.SimpleDateFormat
 import java.util.*
 import coil.compose.AsyncImage
@@ -96,34 +98,17 @@ fun LoanTrackerScreen(
         viewModel.selectLoan(loanId)
     }
 
-    if (showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirmation = false },
-            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text(stringResource(id = R.string.delete_loan_title)) },
-            text = { Text(stringResource(id = R.string.delete_loan_msg, uiState.selectedLoan?.loan?.personName ?: "")) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        uiState.selectedLoan?.loan?.let {
-                            viewModel.deleteLoan(it)
-                            onNavigateBack()
-                        }
-                        showDeleteConfirmation = false
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text(stringResource(id = R.string.delete), fontWeight = FontWeight.Bold)
+    if (showDeleteConfirmation && uiState.selectedLoan != null) {
+        DeletionReasonBottomSheet(
+            personName = uiState.selectedLoan!!.loan.personName,
+            onDismiss = { showDeleteConfirmation = false },
+            onConfirm = { reason, otherText ->
+                uiState.selectedLoan?.loan?.let {
+                    viewModel.deleteLoanWithReason(it, reason, otherText)
+                    onNavigateBack()
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text(stringResource(id = R.string.cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onBackground,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                showDeleteConfirmation = false
+            }
         )
     }
 
@@ -611,6 +596,8 @@ fun LoanTrackerScreen(
         onDismiss = { isImageExpanded = false }
     )
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

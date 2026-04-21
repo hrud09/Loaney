@@ -35,6 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.local.dao.LoanWithPayments
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
+import com.sbs.loaney.ui.components.DeletionReasonBottomSheet
 import com.sbs.loaney.ui.components.FullScreenImageViewer
 import com.sbs.loaney.ui.components.bounceClick
 import com.sbs.loaney.ui.theme.*
@@ -245,30 +246,15 @@ fun ManageLoansScreen(
     }
 
     if (loanToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { loanToDelete = null },
-            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text(stringResource(id = R.string.delete_loan_title)) },
-            text = { Text(stringResource(id = R.string.delete_loan_msg, loanToDelete?.loan?.personName ?: "")) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        loanToDelete?.loan?.let { trackerViewModel.deleteLoan(it) }
-                        loanToDelete = null
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text(stringResource(id = R.string.delete), fontWeight = FontWeight.Bold)
+        DeletionReasonBottomSheet(
+            personName = loanToDelete!!.loan.personName,
+            onDismiss = { loanToDelete = null },
+            onConfirm = { reason, otherText ->
+                loanToDelete?.loan?.let { 
+                    trackerViewModel.deleteLoanWithReason(it, reason, otherText) 
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { loanToDelete = null }) {
-                    Text(stringResource(id = R.string.cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onBackground,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                loanToDelete = null
+            }
         )
     }
 
