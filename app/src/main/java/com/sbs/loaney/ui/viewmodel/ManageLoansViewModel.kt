@@ -9,39 +9,101 @@ import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.data.repository.ILoanRepository
 import com.sbs.loaney.data.repository.SettingsRepository
+import com.sbs.loaney.data.repository.UserLinkRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Date
 import javax.inject.Inject
 
+/** Status of the email-based counterpart lookup performed when saving a loan. */
+enum class EmailLinkStatus {
+    /** No email entered or lookup not yet started. */
+    IDLE,
+    /** Actively querying Firestore. */
+    CHECKING,
+    /** A registered Loaney account was found for the entered email. */
+    FOUND,
+    /** No registered account matches the entered email. */
+    NOT_FOUND
+}
+
 data class ManageLoansUiState(
     val lentLoans: List<LoanWithPayments> = emptyList(),
     val borrowedLoans: List<LoanWithPayments> = emptyList(),
     val isLoading: Boolean = false,
-    val currencySymbol: String = "৳"
+    val currencySymbol: String = "৳",
+    /** Populated with the display name of the matched user when status == FOUND. */
+    val linkedUserName: String? = null,
+    val emailLinkStatus: EmailLinkStatus = EmailLinkStatus.IDLE
 )
 
 @HiltViewModel
 class ManageLoansViewModel @Inject constructor(
     private val repository: ILoanRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val userLinkRepository: UserLinkRepository
 ) : ViewModel() {
+
+    // Internal mutable state for email-lookup status
+    private val _emailLinkStatus = MutableStateFlow(EmailLinkStatus.IDLE)
+    private val _linkedUserName = MutableStateFlow<String?>(null)
+
+    /** Tracks the in-flight email-lookup coroutine so we can cancel on each new keystroke. */
+    private var emailLookupJob: Job? = null
 
     val uiState: StateFlow<ManageLoansUiState> = combine(
         repository.getAllLoans(),
-        settingsRepository.currencySymbolFlow
-    ) { allLoans, currency ->
+        settingsRepository.currencySymbolFlow,
+        _emailLinkStatus,
+        _linkedUserName
+    ) { allLoans, currency, emailStatus, linkedName ->
         ManageLoansUiState(
             lentLoans = allLoans.filter { it.loan.type == LoanType.LEND },
             borrowedLoans = allLoans.filter { it.loan.type == LoanType.BORROW },
-            currencySymbol = currency
+            currencySymbol = currency,
+            emailLinkStatus = emailStatus,
+            linkedUserName = linkedName
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ManageLoansUiState()
     )
+
+    /**
+     * Debounced email lookup — called from the UI as the user types.
+     * Cancels any in-flight Firestore query first, then waits 600 ms before querying
+     * to avoid firing on every keystroke.
+     */
+    fun checkEmailLink(email: String) {
+        emailLookupJob?.cancel()
+        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _emailLinkStatus.value = EmailLinkStatus.IDLE
+            _linkedUserName.value = null
+            return
+        }
+        emailLookupJob = viewModelScope.launch {
+            _emailLinkStatus.value = EmailLinkStatus.CHECKING
+            delay(600L) // debounce: wait for the user to finish typing
+            val result = userLinkRepository.lookupUserByEmail(email)
+            if (result != null) {
+                _linkedUserName.value = result.second
+                _emailLinkStatus.value = EmailLinkStatus.FOUND
+            } else {
+                _linkedUserName.value = null
+                _emailLinkStatus.value = EmailLinkStatus.NOT_FOUND
+            }
+        }
+    }
+
+    /** Resets the email lookup state (e.g. when the form is cleared). */
+    fun resetEmailLinkStatus() {
+        _emailLinkStatus.value = EmailLinkStatus.IDLE
+        _linkedUserName.value = null
+    }
 
     fun addLoan(
         type: LoanType,
@@ -58,7 +120,8 @@ class ManageLoansViewModel @Inject constructor(
         relationshipType: String? = null,
         witness: String? = null,
         proofUri: String? = null,
-        profilePhotoUri: String? = null
+        profilePhotoUri: String? = null,
+        onSuccess: (Long) -> Unit = {}
     ) {
         viewModelScope.launch {
             val loan = LoanEntity(
@@ -79,7 +142,30 @@ class ManageLoansViewModel @Inject constructor(
                 witness = witness,
                 status = LoanStatus.ACTIVE
             )
-            repository.insertLoan(loan)
+            val loanId = repository.insertLoan(loan)
+
+            // ── Cross-user notification ──────────────────────────────────────
+            // If the email belongs to a registered Loaney user, send them a
+            // notification so they see this loan from their side as well.
+            if (!email.isNullOrBlank()) {
+                val recipientUid = userLinkRepository.lookupUidByEmail(email)
+                val currencySymbol = settingsRepository.currencySymbolFlow.first()
+                if (recipientUid != null) {
+                    userLinkRepository.sendLoanNotification(
+                        recipientUid = recipientUid,
+                        loanId = loanId,
+                        loanType = type.name,
+                        amount = amount,
+                        currency = currencySymbol,
+                        promisedReturnDateMillis = returnDate.time
+                    )
+                }
+            }
+            // ────────────────────────────────────────────────────────────────
+
+            // Reset lookup state after submission
+            resetEmailLinkStatus()
+            onSuccess(loanId)
         }
     }
 

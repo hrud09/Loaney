@@ -52,6 +52,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.ui.theme.*
+import com.sbs.loaney.ui.viewmodel.EmailLinkStatus
 import com.sbs.loaney.ui.viewmodel.ManageLoansViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -61,8 +62,15 @@ import com.sbs.loaney.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddLoanScreen(
-    initialType: LoanType = LoanType.LEND,
+    initialType: LoanType,
+    initialAmount: String? = null,
+    initialName: String? = null,
+    initialPurpose: String? = null,
+    initialNotes: String? = null,
+    initialWitness: String? = null,
+    initialRel: String? = null,
     onNavigateBack: () -> Unit,
+    onNavigateToDetail: (Long) -> Unit,
     viewModel: ManageLoansViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -81,20 +89,21 @@ fun AddLoanScreen(
     
     val selectedLoanType = if (pagerState.currentPage == 0) LoanType.LEND else LoanType.BORROW
 
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(initialName ?: "") }
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("0") }
+    var amount by remember { mutableStateOf(initialAmount ?: "") }
     var loanDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var returnDate by remember { mutableLongStateOf(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000L) }
-    var purpose by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
+    var purpose by remember { mutableStateOf(initialPurpose ?: "") }
+    var notes by remember { mutableStateOf(initialNotes ?: "") }
     var proofUri by remember { mutableStateOf<Uri?>(null) }
     var proofFileName by remember { mutableStateOf<String?>(null) }
-    var selectedRelationship by remember { mutableStateOf("Other") }
+    var selectedRelationship by remember { mutableStateOf(initialRel ?: "Other") }
     var email by remember { mutableStateOf("") }
+    var sendEmail by remember { mutableStateOf(false) }
     var interestRate by remember { mutableStateOf("") }
-    var witness by remember { mutableStateOf("") }
+    var witness by remember { mutableStateOf(initialWitness ?: "") }
     var profilePhotoUri by remember { mutableStateOf<Uri?>(null) }
     
     var showSuggestions by remember { mutableStateOf(false) }
@@ -107,6 +116,13 @@ fun AddLoanScreen(
         if (name.isBlank()) emptyList()
         else (uiState.lentLoans + uiState.borrowedLoans).map { it.loan.personName }.distinct()
             .filter { it.contains(name, ignoreCase = true) && it != name }
+    }
+
+    var showEmailSuggestions by remember { mutableStateOf(false) }
+    val emailSuggestions = remember(email, uiState.lentLoans, uiState.borrowedLoans) {
+        if (email.isBlank()) emptyList()
+        else (uiState.lentLoans + uiState.borrowedLoans).mapNotNull { it.loan.email }.distinct()
+            .filter { it.contains(email, ignoreCase = true) && it != email }
     }
 
     var showLoanDatePicker by remember { mutableStateOf(false) }
@@ -337,9 +353,60 @@ fun AddLoanScreen(
                                 interest = interestRate.toDoubleOrNull(), relationshipType = selectedRelationship,
                                 witness = witness.ifBlank { null },
                                 proofUri = proofUri?.toString(),
-                                profilePhotoUri = profilePhotoUri?.toString()
+                                profilePhotoUri = profilePhotoUri?.toString(),
+                                onSuccess = { newLoanId ->
+                                    if (sendEmail && email.isNotBlank()) {
+                                        val recipientLoanType = if (selectedLoanType == LoanType.LEND) "BORROW" else "LEND"
+                                        val actionText = if (selectedLoanType == LoanType.LEND) "lent you" else "borrowed from you"
+                                        val returnDateStr = dateFormat.format(Date(returnDate))
+                                        val currentDateStr = dateFormat.format(Date(loanDate))
+                                        val currency = uiState.currencySymbol
+                                        val amountStr = amount.toDoubleOrNull()?.toString() ?: "0"
+                                        
+                                        val subject = "Loaney Record: I $actionText $currency$amountStr"
+                                        
+                                        val linkUrl = "https://mahadi.itch.io/loaney?action=add&type=$recipientLoanType&amount=$amountStr"
+                                        
+                                        val body = """
+                                            Hi there!
+                                            
+                                            Here is an update regarding our recent transaction recorded on the Loaney app.
+                                            
+                                            ───────────────────────────────
+                                            TRANSACTION SUMMARY
+                                            ───────────────────────────────
+                                            Transaction: I $actionText
+                                            Amount: $currency$amountStr
+                                            Date Recorded: $currentDateStr
+                                            Promised Return Date: $returnDateStr
+                                            ───────────────────────────────
+                                            
+                                            To easily track this loan, confirm the details, and receive automated reminders, please open the Loaney app. 
+                                            
+                                            Click the secure link below to open the app (or download it if you don't have it yet). It will automatically fill in the details for you:
+                                            $linkUrl
+                                            
+                                            Stay organized,
+                                            Loaney App
+                                        """.trimIndent()
+                                        
+                                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                            data = Uri.parse("mailto:")
+                                            putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
+                                            putExtra(Intent.EXTRA_SUBJECT, subject)
+                                            putExtra(Intent.EXTRA_TEXT, body)
+                                        }
+                                        
+                                        try {
+                                            context.startActivity(intent)
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                    
+                                    onNavigateToDetail(newLoanId)
+                                }
                             )
-                            onNavigateBack()
                         } else {
                             val emptyFields = mutableListOf<String>()
                             if (!isNameValid) emptyFields.add("Name")
@@ -529,6 +596,143 @@ fun AddLoanScreen(
                             }
 
                             CustomLightTextField(
+                                value = email,
+                                onValueChange = { 
+                                    email = it
+                                    showEmailSuggestions = true
+                                    viewModel.checkEmailLink(it)
+                                },
+                                label = stringResource(id = R.string.email_optional),
+                                leadingIcon = Icons.Default.Email,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                            )
+
+                            if (showEmailSuggestions && emailSuggestions.isNotEmpty()) {
+                                DropdownMenu(
+                                    expanded = true,
+                                    onDismissRequest = { showEmailSuggestions = false },
+                                    properties = PopupProperties(focusable = false),
+                                    modifier = Modifier.fillMaxWidth(0.8f).background(MaterialTheme.colorScheme.surfaceVariant)
+                                ) {
+                                    emailSuggestions.forEach { suggestion ->
+                                        DropdownMenuItem(
+                                            text = { Text(suggestion, color = MaterialTheme.colorScheme.onBackground) },
+                                            onClick = {
+                                                email = suggestion
+                                                showEmailSuggestions = false
+                                                viewModel.checkEmailLink(suggestion)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            // ── Email Link Status Chip ─────────────────────────
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = uiState.emailLinkStatus != EmailLinkStatus.IDLE,
+                                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.expandVertically(),
+                                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.shrinkVertically()
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.padding(start = 4.dp)
+                                ) {
+                                    when (uiState.emailLinkStatus) {
+                                        EmailLinkStatus.CHECKING -> {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(14.dp),
+                                                strokeWidth = 2.dp,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                            Text(
+                                                text = "Looking up Loaney account…",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        EmailLinkStatus.FOUND -> {
+                                            Surface(
+                                                shape = androidx.compose.foundation.shape.CircleShape,
+                                                color = AlimGreen.copy(alpha = 0.12f)
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.CheckCircle,
+                                                        contentDescription = null,
+                                                        tint = AlimGreen,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                    Text(
+                                                        text = if (!uiState.linkedUserName.isNullOrBlank())
+                                                            "✨ ${uiState.linkedUserName} is on Loaney — they'll be notified!"
+                                                        else
+                                                            "✨ Loaney user found — they'll be notified!",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = AlimGreen,
+                                                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        EmailLinkStatus.NOT_FOUND -> {
+                                            Surface(
+                                                shape = androidx.compose.foundation.shape.CircleShape,
+                                                color = MaterialTheme.colorScheme.surfaceVariant
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Info,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                    Text(
+                                                        text = "Not registered on Loaney",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        else -> {}
+                                    }
+                                }
+                            }
+                            // ────────────────────────────────────────────────────────
+
+                            // Checkbox to send email
+                            AnimatedVisibility(visible = email.isNotBlank()) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { sendEmail = !sendEmail }
+                                        .padding(vertical = 4.dp, horizontal = 8.dp)
+                                ) {
+                                    Checkbox(
+                                        checked = sendEmail,
+                                        onCheckedChange = { sendEmail = it },
+                                        colors = CheckboxDefaults.colors(checkedColor = AlimGreen)
+                                    )
+                                    Text(
+                                        text = "Send automated email notification",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = AlimDark
+                                    )
+                                }
+                            }
+
+
+                            CustomLightTextField(
                                 value = phone,
                                 onValueChange = { phone = it },
                                 label = stringResource(id = R.string.phone_optional),
@@ -651,13 +855,6 @@ fun AddLoanScreen(
                         exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            CustomLightTextField(
-                                value = email,
-                                onValueChange = { email = it },
-                                label = stringResource(id = R.string.email_optional),
-                                leadingIcon = Icons.Default.Email,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                            )
 
                             CustomLightTextField(
                                 value = address,

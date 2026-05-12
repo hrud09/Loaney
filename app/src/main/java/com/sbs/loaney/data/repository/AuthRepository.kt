@@ -33,7 +33,7 @@ class AuthRepository @Inject constructor(
                 "name" to name,
                 "username" to username,
                 "currency" to currency,
-                "email" to email,
+                "email" to email.trim().lowercase(), // always store lowercase for lookup consistency
                 "createdAt" to System.currentTimeMillis()
             )
             if (!phone.isNullOrBlank()) userProfile["phone"] = phone
@@ -170,7 +170,8 @@ class AuthRepository @Inject constructor(
                     "name" to finalName,
                     "username" to username,
                     "currency" to finalCurrency,
-                    "email" to (email ?: authResult.user?.email ?: ""),
+                    // always store lowercase so whereEqualTo lookups are reliable
+                    "email" to (email ?: authResult.user?.email ?: "").trim().lowercase(),
                     "createdAt" to System.currentTimeMillis()
                 )
                 val finalPhone = phone ?: authResult.user?.phoneNumber ?: ""

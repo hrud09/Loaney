@@ -31,6 +31,7 @@ import java.util.*
 fun AlimHeader(
     userName: String,
     userProfilePhoto: String? = null,
+    unreadNotificationsCount: Int = 0,
     onProfileClick: () -> Unit,
     onNotificationsClick: () -> Unit,
     onPositionedNotification: (LayoutCoordinates) -> Unit = {},
@@ -68,15 +69,26 @@ fun AlimHeader(
         }
 
         // Notifications Button
-        IconButton(
-            onClick = onNotificationsClick,
-            modifier = Modifier.onGloballyPositioned { onPositionedNotification(it) }
+        Box(
+            modifier = Modifier.onGloballyPositioned { onPositionedNotification(it) },
+            contentAlignment = Alignment.TopEnd
         ) {
-            Icon(
-                Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = AlimWhite
-            )
+            IconButton(onClick = onNotificationsClick) {
+                Icon(
+                    Icons.Default.Notifications,
+                    contentDescription = "Notifications",
+                    tint = AlimWhite
+                )
+            }
+            if (unreadNotificationsCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 8.dp, end = 8.dp)
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(8.dp))

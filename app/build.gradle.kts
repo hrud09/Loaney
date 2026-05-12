@@ -84,6 +84,10 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.lottie.compose)
 
+    // QR Code
+    implementation(libs.zxing.core)
+    implementation(libs.zxing.android.embedded)
+
 
     // Image Loading
     implementation(libs.coil.compose)

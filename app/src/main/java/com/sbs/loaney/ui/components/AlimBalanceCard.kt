@@ -27,7 +27,8 @@ import com.sbs.loaney.ui.theme.*
 
 @Composable
 fun AlimBalanceCard(
-    balance: Double,
+    totalLent: Double,
+    totalBorrowed: Double,
     currencySymbol: String,
     onNavigateToAddLoan: (String) -> Unit,
     onNavigateToHistory: (String?) -> Unit,
@@ -64,26 +65,90 @@ fun AlimBalanceCard(
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.Top
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = stringResource(id = R.string.current_balance),
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    color = AlimWhite.copy(alpha = 0.8f),
-                                    fontWeight = FontWeight.Medium
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(
-                                if (isBalanceVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = "Toggle Balance",
-                                tint = AlimWhite.copy(alpha = 0.8f),
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .clickable { isBalanceVisible = !isBalanceVisible }
-                            )
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            // Given Section
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = stringResource(id = R.string.total_given),
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            color = AlimWhite.copy(alpha = 0.8f),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        if (isBalanceVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                        contentDescription = "Toggle Balance",
+                                        tint = AlimWhite.copy(alpha = 0.8f),
+                                        modifier = Modifier
+                                            .size(14.dp)
+                                            .clickable { isBalanceVisible = !isBalanceVisible }
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                AnimatedContent(
+                                    targetState = isBalanceVisible,
+                                    transitionSpec = {
+                                        (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
+                                            scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
+                                            .togetherWith(fadeOut(animationSpec = tween(90)))
+                                    },
+                                    label = "GivenAnimation"
+                                ) { visible ->
+                                    Text(
+                                        text = if (visible) "$currencySymbol${String.format("%,.0f", totalLent)}" else "****",
+                                        style = MaterialTheme.typography.headlineSmall.copy(
+                                            color = AlimWhite,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 20.sp
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            // Taken Section
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = stringResource(id = R.string.total_taken),
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            color = AlimWhite.copy(alpha = 0.8f),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                AnimatedContent(
+                                    targetState = isBalanceVisible,
+                                    transitionSpec = {
+                                        (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
+                                            scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
+                                            .togetherWith(fadeOut(animationSpec = tween(90)))
+                                    },
+                                    label = "TakenAnimation"
+                                ) { visible ->
+                                    Text(
+                                        text = if (visible) "$currencySymbol${String.format("%,.0f", totalBorrowed)}" else "****",
+                                        style = MaterialTheme.typography.headlineSmall.copy(
+                                            color = AlimWhite,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 20.sp
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
                         }
+
                         Icon(
                             Icons.Default.CalendarMonth,
                             contentDescription = "Calendar",
@@ -95,31 +160,7 @@ fun AlimBalanceCard(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    AnimatedContent(
-                        targetState = isBalanceVisible,
-                        transitionSpec = {
-                            (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
-                                scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
-                                .togetherWith(fadeOut(animationSpec = tween(90)))
-                        },
-                        label = "BalanceAnimation"
-                    ) { visible ->
-                        Text(
-                            text = if (visible) "$currencySymbol${String.format("%,.0f", balance)}" else "****",
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                color = AlimWhite,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 32.sp
-                            ),
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     // Quick Actions Row
                     Row(

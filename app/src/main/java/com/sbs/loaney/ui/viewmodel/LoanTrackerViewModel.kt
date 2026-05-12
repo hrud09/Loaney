@@ -18,7 +18,8 @@ import javax.inject.Inject
 data class LoanTrackerUiState(
     val selectedLoan: LoanWithPayments? = null,
     val isLoading: Boolean = false,
-    val currencySymbol: String = "৳"
+    val currencySymbol: String = "৳",
+    val userName: String = ""
 )
 
 enum class DeletionReason {
@@ -39,11 +40,13 @@ class LoanTrackerViewModel @Inject constructor(
 
     val uiState: StateFlow<LoanTrackerUiState> = combine(
         _selectedLoanId.filterNotNull().flatMapLatest { id -> repository.getLoanById(id) },
-        settingsRepository.currencySymbolFlow
-    ) { loan, currency ->
+        settingsRepository.currencySymbolFlow,
+        settingsRepository.userNameFlow
+    ) { loan, currency, userName ->
         LoanTrackerUiState(
             selectedLoan = loan,
-            currencySymbol = currency
+            currencySymbol = currency,
+            userName = userName
         )
     }.stateIn(
             scope = viewModelScope,

@@ -1,5 +1,10 @@
 package com.sbs.loaney.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.graphics.asAndroidBitmap
+
+
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -57,8 +62,43 @@ import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.util.PdfReceiptGenerator
 import com.sbs.loaney.util.sendReminder
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.Image
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 
-@OptIn(ExperimentalMaterial3Api::class)
+fun generateQrCodeBitmap(text: String, size: Int): ImageBitmap? {
+    return try {
+        val hints = mapOf<EncodeHintType, Any>(
+            EncodeHintType.MARGIN to 1,
+            EncodeHintType.ERROR_CORRECTION to com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.M
+        )
+        val bitMatrix = QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, size, size, hints)
+        val width = bitMatrix.width
+        val height = bitMatrix.height
+        val bmp = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.RGB_565)
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                bmp.setPixel(x, y, if (bitMatrix.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+            }
+        }
+        bmp.asImageBitmap()
+    } catch (e: Exception) {
+        null
+    }
+}
+
+
+
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun LoanTrackerScreen(
     loanId: Long,
@@ -67,6 +107,7 @@ fun LoanTrackerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var showEnlargedQr by remember { mutableStateOf(false) }
     var showAddPaymentSheet by remember { mutableStateOf(false) }
     var showAddLoanSheet by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -172,6 +213,55 @@ fun LoanTrackerScreen(
             titleContentColor = MaterialTheme.colorScheme.onBackground,
             textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+
+    if (showEnlargedQr && uiState.selectedLoan != null) {
+        val loan = uiState.selectedLoan!!.loan
+        val recipientLoanType = if (loan.type == LoanType.LEND) "BORROW" else "LEND"
+        val linkUrl = "https://mahadi.itch.io/loaney?action=add" +
+                "&type=$recipientLoanType" +
+                "&amount=${loan.amount}" +
+                "&name=${Uri.encode(uiState.userName)}" +
+                "&purpose=${Uri.encode(loan.purpose ?: "")}" +
+                "&notes=${Uri.encode(loan.notes ?: "")}" +
+                "&witness=${Uri.encode(loan.witness ?: "")}" +
+                "&rel=${Uri.encode(loan.relationshipType ?: "")}"
+        val enlargedQr = remember(linkUrl) { generateQrCodeBitmap(linkUrl, 800) }
+
+        androidx.compose.ui.window.Dialog(onDismissRequest = { showEnlargedQr = false }) {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Scan to Track Loan",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = AlimDark
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (enlargedQr != null) {
+                        Image(
+                            bitmap = enlargedQr,
+                            contentDescription = "Enlarged QR Code",
+                            modifier = Modifier.size(280.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { showEnlargedQr = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
+                    ) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -475,33 +565,132 @@ fun LoanTrackerScreen(
                     color = AlimWhite,
                     shadowElevation = 2.dp
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
-                        val localizedRelationship = when (loan.relationshipType) {
-                            "Friend" -> stringResource(id = R.string.relationship_friend)
-                            "Family" -> stringResource(id = R.string.relationship_family)
-                            "Colleague" -> stringResource(id = R.string.relationship_colleague)
-                            "Neighbor" -> stringResource(id = R.string.relationship_neighbor)
-                            "Other" -> stringResource(id = R.string.relationship_other)
-                            else -> loan.relationshipType ?: stringResource(id = R.string.not_specified)
-                        }
-                        DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = localizedRelationship)
-                        if (!loan.email.isNullOrBlank()) {
-                            DetailRow(icon = Icons.Default.Email, label = stringResource(id = R.string.email_optional), value = loan.email)
-                        }
-                        DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.location_optional), value = loan.address ?: stringResource(id = R.string.not_specified))
-                        DetailRow(icon = Icons.Default.Group, label = stringResource(id = R.string.witness_optional), value = loan.witness ?: stringResource(id = R.string.not_specified))
-                        if (loan.interest != null) {
-                            DetailRow(icon = Icons.Default.Percent, label = stringResource(id = R.string.interest_rate_optional), value = "${loan.interest}%")
-                        }
-                        DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes ?: stringResource(id = R.string.no_notes))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
+                            val localizedRelationship = when (loan.relationshipType) {
+                                "Friend" -> stringResource(id = R.string.relationship_friend)
+                                "Family" -> stringResource(id = R.string.relationship_family)
+                                "Colleague" -> stringResource(id = R.string.relationship_colleague)
+                                "Neighbor" -> stringResource(id = R.string.relationship_neighbor)
+                                "Other" -> stringResource(id = R.string.relationship_other)
+                                else -> loan.relationshipType ?: stringResource(id = R.string.not_specified)
+                            }
+                            DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = localizedRelationship)
+                            if (!loan.email.isNullOrBlank()) {
+                                DetailRow(icon = Icons.Default.Email, label = stringResource(id = R.string.email_optional), value = loan.email)
+                            }
+                            DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.location_optional), value = loan.address ?: stringResource(id = R.string.not_specified))
+                            DetailRow(icon = Icons.Default.Group, label = stringResource(id = R.string.witness_optional), value = loan.witness ?: stringResource(id = R.string.not_specified))
+                            if (loan.interest != null) {
+                                DetailRow(icon = Icons.Default.Percent, label = stringResource(id = R.string.interest_rate_optional), value = "${loan.interest}%")
+                            }
+                            DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes ?: stringResource(id = R.string.no_notes))
 
-                        val statusColor = when (loan.status) {
-                            LoanStatus.OVERDUE -> CoralRose
-                            LoanStatus.FULLY_PAID -> AlimGreen
-                            else -> AlimDark
+                            val statusColor = when (loan.status) {
+                                LoanStatus.OVERDUE -> CoralRose
+                                LoanStatus.FULLY_PAID -> AlimGreen
+                                else -> AlimDark
+                            }
+                            DetailRow(icon = Icons.Default.CheckCircle, label = stringResource(id = R.string.status), value = loan.status?.name ?: "", highlightColor = statusColor)
                         }
-                        DetailRow(icon = Icons.Default.CheckCircle, label = stringResource(id = R.string.status), value = loan.status?.name ?: "", highlightColor = statusColor)
+
+                        val recipientLoanType = if (loan.type == LoanType.LEND) "BORROW" else "LEND"
+                        val linkUrl = "https://mahadi.itch.io/loaney?action=add" +
+                                "&type=$recipientLoanType" +
+                                "&amount=${loan.amount}" +
+                                "&name=${Uri.encode(uiState.userName)}" +
+                                "&purpose=${Uri.encode(loan.purpose ?: "")}" +
+                                "&notes=${Uri.encode(loan.notes ?: "")}" +
+                                "&witness=${Uri.encode(loan.witness ?: "")}" +
+                                "&rel=${Uri.encode(loan.relationshipType ?: "")}"
+                        val qrBitmap = remember(linkUrl) { generateQrCodeBitmap(linkUrl, 500) }
+ 
+                        if (qrBitmap != null) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(end = 16.dp, top = 16.dp, bottom = 16.dp)
+                                    .width(170.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    // Corner Frame Lines
+                                    Canvas(modifier = Modifier.size(190.dp)) {
+                                        val strokeWidth = 2.dp.toPx()
+                                        val cornerSize = 24.dp.toPx()
+                                        val color = AlimDark.copy(alpha = 0.8f)
+                                        
+                                        // Top Left
+                                        drawPath(
+                                            path = androidx.compose.ui.graphics.Path().apply {
+                                                moveTo(0f, cornerSize)
+                                                lineTo(0f, 0f)
+                                                lineTo(cornerSize, 0f)
+                                            },
+                                            color = color,
+                                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                        )
+                                        // Top Right
+                                        drawPath(
+                                            path = Path().apply {
+                                                moveTo(this@Canvas.size.width - cornerSize, 0f)
+                                                lineTo(this@Canvas.size.width, 0f)
+                                                lineTo(this@Canvas.size.width, cornerSize)
+                                            },
+                                            color = color,
+                                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                                        )
+                                        // Bottom Left
+                                        drawPath(
+                                            path = Path().apply {
+                                                moveTo(0f, this@Canvas.size.height - cornerSize)
+                                                lineTo(0f, this@Canvas.size.height)
+                                                lineTo(cornerSize, this@Canvas.size.height)
+                                            },
+                                            color = color,
+                                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                                        )
+                                        // Bottom Right
+                                        drawPath(
+                                            path = Path().apply {
+                                                moveTo(this@Canvas.size.width - cornerSize, this@Canvas.size.height)
+                                                lineTo(this@Canvas.size.width, this@Canvas.size.height)
+                                                lineTo(this@Canvas.size.width, this@Canvas.size.height - cornerSize)
+                                            },
+                                            color = color,
+                                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                                        )
+                                    }
+
+                                    Image(
+                                        bitmap = qrBitmap,
+                                        contentDescription = "QR Code for this loan",
+                                        modifier = Modifier
+                                            .size(170.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(Color.White)
+                                            .combinedClickable(
+                                                onClick = { showEnlargedQr = true },
+                                                onLongClick = {
+                                                    val bitmap = qrBitmap.asAndroidBitmap()
+                                                    shareQrCode(context, bitmap, linkUrl)
+                                                }
+                                            )
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Scan to Track",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -1235,5 +1424,18 @@ fun AddMoreLoanBottomSheet(
                 Text(stringResource(id = R.string.add_loan), fontWeight = FontWeight.Bold)
             }
         }
+    }
+}
+
+fun shareQrCode(context: android.content.Context, bitmap: android.graphics.Bitmap, text: String) {
+    try {
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "Loaney Track Link")
+            putExtra(Intent.EXTRA_TEXT, "Scan this in Loaney app to track our loan: $text")
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "Share Loan Link"))
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 }

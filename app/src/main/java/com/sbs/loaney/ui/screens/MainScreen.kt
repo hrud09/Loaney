@@ -48,7 +48,24 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
+import androidx.activity.compose.rememberLauncherForActivityResult
+import com.journeyapps.barcodescanner.ScanContract
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import android.net.Uri
+import androidx.compose.ui.text.style.TextAlign
+import com.journeyapps.barcodescanner.ScanOptions
 
+data class ScannedLoanData(
+    val type: String,
+    val amount: String?,
+    val name: String?,
+    val purpose: String?,
+    val notes: String?,
+    val witness: String?,
+    val rel: String?
+)
 @Composable
 fun MainScreen(
     startDestination: String = Screen.Home.route,
@@ -68,6 +85,43 @@ fun MainScreen(
     val userProfile = UserProfile(name = settingsState.userName, profilePhotoUri = settingsState.userProfilePhoto)
 
     var showLogoutDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var scannedLoanData by remember { mutableStateOf<ScannedLoanData?>(null) }
+    var showIssueReport by remember { mutableStateOf(false) }
+
+    val scanLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract()
+    ) { result ->
+        if (result.contents != null) {
+            try {
+                val uri = android.net.Uri.parse(result.contents)
+                val action = uri.getQueryParameter("action")
+                val typeStr = uri.getQueryParameter("type")
+                val amountStr = uri.getQueryParameter("amount")
+                val nameStr = uri.getQueryParameter("name")
+                val purposeStr = uri.getQueryParameter("purpose")
+                val notesStr = uri.getQueryParameter("notes")
+                val witnessStr = uri.getQueryParameter("witness")
+                val relStr = uri.getQueryParameter("rel")
+                
+                if (action == "add" && typeStr != null) {
+                    scannedLoanData = ScannedLoanData(
+                        type = typeStr,
+                        amount = amountStr,
+                        name = nameStr,
+                        purpose = purposeStr,
+                        notes = notesStr,
+                        witness = witnessStr,
+                        rel = relStr
+                    )
+                } else {
+                    Toast.makeText(context, "Invalid QR Code format", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to scan QR Code", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     if (showLogoutDialog) {
         androidx.compose.material3.AlertDialog(
@@ -146,6 +200,15 @@ fun MainScreen(
                             }
                         },
                         onCenterFabClick = { navController.navigate(Screen.AddLoan.createRoute("LEND")) },
+                        onScanQrClick = {
+                            val options = ScanOptions()
+                            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                            options.setPrompt("Scan a Loaney QR Code")
+                            options.setCameraId(0)
+                            options.setBeepEnabled(false)
+                            options.setOrientationLocked(true) // Force portrait
+                            scanLauncher.launch(options)
+                        },
                         onProfileClick = {
                             if (navController.currentDestination?.route != Screen.Settings.route) {
                                 navController.navigate(Screen.Settings.route) {
@@ -287,13 +350,48 @@ fun MainScreen(
                 }
                 composable(
                     route = Screen.AddLoan.route,
-                    arguments = listOf(navArgument("type") {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = "LEND"
-                    })
+                    arguments = listOf(
+                        navArgument("type") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = "LEND"
+                        },
+                        navArgument("amount") {
+                            type = NavType.StringType
+                            nullable = true
+                        },
+                        navArgument("name") {
+                            type = NavType.StringType
+                            nullable = true
+                        },
+                        navArgument("purpose") {
+                            type = NavType.StringType
+                            nullable = true
+                        },
+                        navArgument("notes") {
+                            type = NavType.StringType
+                            nullable = true
+                        },
+                        navArgument("witness") {
+                            type = NavType.StringType
+                            nullable = true
+                        },
+                        navArgument("rel") {
+                            type = NavType.StringType
+                            nullable = true
+                        }
+                    ),
+                    deepLinks = listOf(
+                        androidx.navigation.navDeepLink { uriPattern = "https://mahadi.itch.io/loaney?action=add&type={type}&amount={amount}&name={name}&purpose={purpose}&notes={notes}&witness={witness}&rel={rel}" }
+                    )
                 ) { backStackEntry ->
                     val typeStr = backStackEntry.arguments?.getString("type") ?: "LEND"
+                    val amountStr = backStackEntry.arguments?.getString("amount")
+                    val nameStr = backStackEntry.arguments?.getString("name")
+                    val purposeStr = backStackEntry.arguments?.getString("purpose")
+                    val notesStr = backStackEntry.arguments?.getString("notes")
+                    val witnessStr = backStackEntry.arguments?.getString("witness")
+                    val relStr = backStackEntry.arguments?.getString("rel")
                     val initialType = try {
                         com.sbs.loaney.data.model.LoanType.valueOf(typeStr)
                     } catch (e: Exception) {
@@ -301,7 +399,17 @@ fun MainScreen(
                     }
                     AddLoanScreen(
                         initialType = initialType,
-                        onNavigateBack = { navController.popBackStack() }
+                        initialAmount = amountStr,
+                        initialName = nameStr,
+                        initialPurpose = purposeStr,
+                        initialNotes = notesStr,
+                        initialWitness = witnessStr,
+                        initialRel = relStr,
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToDetail = { loanId ->
+                            navController.popBackStack()
+                            navController.navigate(Screen.LoanDetail.createRoute(loanId))
+                        }
                     )
                 }
                 composable(Screen.Settings.route) {
@@ -336,6 +444,113 @@ fun MainScreen(
             }
         }
     }
+
+    if (scannedLoanData != null) {
+        AlertDialog(
+            onDismissRequest = { scannedLoanData = null },
+            title = { Text("Tracked Loan Details") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DetailItem("Type", scannedLoanData?.type ?: "")
+                    DetailItem("Amount", "৳${scannedLoanData?.amount ?: "0"}")
+                    DetailItem("From", scannedLoanData?.name ?: "Unknown")
+                    if (!scannedLoanData?.purpose.isNullOrBlank()) {
+                        DetailItem("Purpose", scannedLoanData?.purpose ?: "")
+                    }
+                    Text(
+                        "Please verify if this information is correct before tracking.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val sl = scannedLoanData!!
+                        navController.navigate(
+                            Screen.AddLoan.createRoute(
+                                type = sl.type,
+                                amount = sl.amount,
+                                name = sl.name,
+                                purpose = sl.purpose,
+                                notes = sl.notes,
+                                witness = sl.witness,
+                                rel = sl.rel
+                            )
+                        )
+                        scannedLoanData = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
+                ) { Text("Accept") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showIssueReport = true }) {
+                    Text("Ask Change", color = Color.Gray)
+                }
+            }
+        )
+    }
+
+    if (showIssueReport && scannedLoanData != null) {
+        AlertDialog(
+            onDismissRequest = { showIssueReport = false },
+            title = { Text("What's incorrect?") },
+            text = {
+                Column {
+                    val issues = listOf("Incorrect Amount", "Incorrect Person Name", "Incorrect Loan Type", "Other")
+                    issues.forEach { issue ->
+                        TextButton(
+                            onClick = {
+                                sendIssueReport(context, issue, scannedLoanData!!)
+                                showIssueReport = false
+                                scannedLoanData = null
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(issue, textAlign = TextAlign.Start, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
+                }
+            },
+            confirmButton = {}
+        )
+    }
+}
+
+@Composable
+fun DetailItem(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, fontWeight = FontWeight.SemiBold, color = Color.Gray)
+        Text(value, fontWeight = FontWeight.Bold)
+    }
+}
+
+fun sendIssueReport(context: android.content.Context, issue: String, loanData: ScannedLoanData) {
+    val message = """
+        Issue: $issue
+        
+        The tracked loan details provided were incorrect:
+        - Type: ${loanData.type}
+        - Amount: ${loanData.amount}
+        - Person: ${loanData.name}
+        - Purpose: ${loanData.purpose}
+        
+        Please provide the correct information.
+    """.trimIndent()
+
+    val intent = Intent(Intent.ACTION_SENDTO).apply {
+        data = Uri.parse("mailto:")
+        putExtra(Intent.EXTRA_EMAIL, arrayOf("mahadi.itch.io@gmail.com"))
+        putExtra(Intent.EXTRA_SUBJECT, "Loaney Track Correction Request: $issue")
+        putExtra(Intent.EXTRA_TEXT, message)
+    }
+    try {
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
+    }
 }
 
 // ── bKash-style Bottom Navigation Bar ────────────────────────────────────────
@@ -345,11 +560,13 @@ fun BkashBottomNavBar(
     currentDestination: androidx.navigation.NavDestination?,
     onNavItemClick: (String) -> Unit,
     onCenterFabClick: () -> Unit,
+    onScanQrClick: () -> Unit,
     onProfileClick: () -> Unit,
     onShopClick: () -> Unit
 ) {
     val pink = MaterialTheme.colorScheme.primary
     val gray = MaterialTheme.colorScheme.onSurfaceVariant
+    var expanded by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxWidth(),
@@ -411,6 +628,35 @@ fun BkashBottomNavBar(
             }
         }
 
+        // FABs Popup Menu
+        androidx.compose.animation.AnimatedVisibility(
+            visible = expanded,
+            enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically(initialOffsetY = { it / 2 }),
+            exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically(targetOffsetY = { it / 2 }),
+            modifier = Modifier.padding(bottom = 100.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Manual Input FAB
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Manual Input", color = AlimDark, fontWeight = FontWeight.Bold, modifier = Modifier.background(AlimCream, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                    Box(modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape).clip(CircleShape).background(AlimWhite).clickable { expanded = false; onCenterFabClick() }, contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Edit, contentDescription = "Manual Input", tint = AlimGreen)
+                    }
+                }
+                
+                // Scan QR FAB
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Scan QR Code", color = AlimDark, fontWeight = FontWeight.Bold, modifier = Modifier.background(AlimCream, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                    Box(modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape).clip(CircleShape).background(AlimWhite).clickable { expanded = false; onScanQrClick() }, contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR", tint = AlimGreen)
+                    }
+                }
+            }
+        }
+
         // Center FAB — Moved outside Surface to prevent clipping
         Box(
             modifier = Modifier
@@ -419,7 +665,7 @@ fun BkashBottomNavBar(
                 .then(Modifier.shadow(elevation = 16.dp, shape = CircleShape, spotColor = AlimGreen))
                 .clip(CircleShape)
                 .background(AlimGreen)
-                .bounceClick { onCenterFabClick() },
+                .bounceClick { expanded = !expanded },
             contentAlignment = Alignment.Center
         ) {
             Icon(

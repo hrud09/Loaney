@@ -55,14 +55,44 @@ If your database isn't secured, bots can scrape it and exhaust your free read/wr
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // This entirely locks down the database so users can ONLY read, write, 
-    // and access their own personal profile, loans, and banking data!
-    match /users/{userId}/{document=**} {
+
+    // ── User profile (root document) ─────────────────────────────────────
+    // Any logged-in user can READ a root user document (we need this to
+    // do the email-to-UID lookup query). Only the owner can WRITE their
+    // own profile.
+    match /users/{userId} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── All personal subcollections (loans, payments, etc.) ──────────────
+    // Only the owner can read/write their own financial data.
+    match /users/{userId}/loans/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /users/{userId}/payments/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /users/{userId}/loanItems/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /users/{userId}/bankAccounts/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Cross-user loan notifications ─────────────────────────────────────
+    // Any authenticated user can WRITE a notification to another user's
+    // loanNotifications subcollection (so the sender can notify the recipient).
+    // Only the recipient (owner) can READ and UPDATE (mark-as-read) their
+    // own notifications.
+    match /users/{userId}/loanNotifications/{notifId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
 ```
+
 3. Click **Publish**. Your data is now perfectly secure!
 
 ---
@@ -100,3 +130,28 @@ Here is exactly how the app optimizes your free tier usage for Loan data:
 **In summary:** As long as you followed Step 3 to enable **Cloud Firestore** and applied the security rule, your app will instantly and securely backup all Loan Data to the cloud 100% for free!
 
 *Enjoy your fully synchronized, cloud-ready application!*
+
+---
+
+## Troubleshooting: Email Lookup Always Returns "Not Registered"
+
+If the email lookup in the **Add Loan** screen always shows *"Not registered on Loaney"* even for valid accounts, there are **two possible causes**:
+
+### Cause 1 — Firestore Security Rules not updated (most common)
+
+The email lookup performs a *collection query* across all `users` documents. The original rules blocked this entirely (returning an empty result, not an error). 
+
+**Fix:** Make sure you have applied the updated rules from **Step 3** above. Look for the `match /users/{userId}` block with `allow read: if request.auth != null;`. If you still see the old single wildcard rule, replace it with the full new rule set and click **Publish**.
+
+You can confirm this is the problem by checking Android Studio's Logcat and filtering by `UserLinkRepository` — you will see a line like:
+```
+Email lookup PERMISSION_DENIED — Firestore rules need updating. See FirebaseGuide.md
+```
+
+### Cause 2 — Existing accounts stored email with wrong casing
+
+Before the bug fix, the app stored emails exactly as typed (e.g. `"User@Gmail.com"`). The lookup searches for lowercase (`"user@gmail.com"`). These don't match.
+
+**Fix for existing test accounts:** Go to **Firestore Console → Data → users → {your document}** and manually edit the `email` field to be fully lowercase. All new sign-ups will be stored correctly going forward.
+
+**Fix for production (automated):** Run a one-time migration in the Firebase Console using the Firestore web UI to lowercase the `email` field in every document under the `users` collection.

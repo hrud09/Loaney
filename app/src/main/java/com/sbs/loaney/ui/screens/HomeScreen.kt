@@ -99,9 +99,12 @@ fun HomeScreen(
     onNavigateToHistory: (String?) -> Unit,
     onNavigateToHistoryScreen: () -> Unit,
     onProfileClick: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    notificationsViewModel: com.sbs.loaney.ui.viewmodel.NotificationsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val notifications by notificationsViewModel.notifications.collectAsState()
+    val unreadCount = notifications.count { !it.isRead }
     val context = LocalContext.current
     var showAddBankSheet by remember { mutableStateOf(false) }
     var showNotificationsSheet by remember { mutableStateOf(false) }
@@ -115,9 +118,6 @@ fun HomeScreen(
     var accountToDelete by remember { mutableStateOf<BankAccountEntity?>(null) }
     var accountToEdit by remember { mutableStateOf<BankAccountEntity?>(null) }
 
-    val balance by remember(uiState.totalLent, uiState.totalBorrowed) {
-        derivedStateOf { uiState.totalLent - uiState.totalBorrowed }
-    }
     val bankAccounts = uiState.bankAccounts
     val allLoans by remember(uiState.lentLoans, uiState.borrowedLoans) {
         derivedStateOf { (uiState.lentLoans + uiState.borrowedLoans).sortedByDescending { it.loan.loanDate } }
@@ -181,7 +181,7 @@ fun HomeScreen(
                 },
                 TutorialStep(
                     title = "Your Financial Hub",
-                    description = "This card calculates your net balance by subtracting what you owe from what is owed to you.",
+                    description = "This card displays your total given and taken amounts, keeping you informed about your financial status.",
                     targetCoordinates = balanceCardCoords
                 ),
                 calendarCoords?.let {
@@ -224,6 +224,7 @@ fun HomeScreen(
                     AlimHeader(
                         userName = uiState.userName,
                         userProfilePhoto = uiState.userProfilePhoto,
+                        unreadNotificationsCount = unreadCount,
                         onProfileClick = onProfileClick,
                         onNotificationsClick = { showNotificationsSheet = true },
                         onPositionedProfile = { profileCoords = it },
@@ -232,7 +233,8 @@ fun HomeScreen(
                     
                     Box(modifier = Modifier.onGloballyPositioned { balanceCardCoords = it }) {
                         AlimBalanceCard(
-                            balance = uiState.totalLent - uiState.totalBorrowed,
+                            totalLent = uiState.totalLent,
+                            totalBorrowed = uiState.totalBorrowed,
                             currencySymbol = uiState.currencySymbol,
                             onNavigateToAddLoan = onNavigateToAddLoan,
                             onNavigateToHistory = onNavigateToHistory,
