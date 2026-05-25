@@ -61,7 +61,14 @@ import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.util.PdfReceiptGenerator
-import com.sbs.loaney.util.sendReminder
+import com.sbs.loaney.util.getReminderMessage
+import com.sbs.loaney.util.sendWhatsAppReminder
+import com.sbs.loaney.util.sendSmsReminder
+import com.sbs.loaney.util.sendEmailReminder
+import com.sbs.loaney.util.sendMessengerReminder
+import com.sbs.loaney.util.sendGenericShareReminder
+import com.sbs.loaney.ui.components.ReminderChannelBottomSheet
+import com.sbs.loaney.ui.components.ReminderChannel
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.Image
@@ -117,6 +124,7 @@ fun LoanTrackerScreen(
     var expandedImageUri by remember { mutableStateOf<String?>(null) }
     var isImageExpanded by remember { mutableStateOf(false) }
     var showEditLoanSheet by remember { mutableStateOf(false) }
+    var showReminderSheet by remember { mutableStateOf(false) }
 
     // Loaney Pie reward overlay
     var showRewardOverlay by remember { mutableStateOf(false) }
@@ -374,23 +382,7 @@ fun LoanTrackerScreen(
                             }
                             // Send Reminder
                             TextButton(
-                                onClick = {
-                                    uiState.selectedLoan?.let { lwp ->
-                                        val loan = lwp.loan
-                                        val total = loan.amount + lwp.loanItems.sumOf { it.amount }
-                                        val paid = lwp.payments.sumOf { it.amount }
-                                        val remaining = (total - paid).coerceAtLeast(0.0)
-                                        val dateFormat = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
-                                        sendReminder(
-                                            context = context,
-                                            contactName = loan.personName,
-                                            amount = remaining,
-                                            dueDate = dateFormat.format(loan.promisedReturnDate),
-                                            phoneNumber = loan.phoneNumber.ifBlank { null },
-                                            currencySymbol = uiState.currencySymbol
-                                        )
-                                    }
-                                },
+                                onClick = { showReminderSheet = true },
                                  colors = ButtonDefaults.textButtonColors(contentColor = AlimGreen)
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -784,6 +776,58 @@ fun LoanTrackerScreen(
         imageUri = expandedImageUri,
         onDismiss = { isImageExpanded = false }
     )
+
+    if (showReminderSheet && uiState.selectedLoan != null) {
+        ReminderChannelBottomSheet(
+            onDismiss = { showReminderSheet = false },
+            onChannelSelected = { channel ->
+                uiState.selectedLoan?.let { lwp ->
+                    val loan = lwp.loan
+                    val total = loan.amount + lwp.loanItems.sumOf { it.amount }
+                    val paid = lwp.payments.sumOf { it.amount }
+                    val remaining = (total - paid).coerceAtLeast(0.0)
+                    val dateFormat = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
+                    val dueDateStr = dateFormat.format(loan.promisedReturnDate)
+                    val message = getReminderMessage(
+                        contactName = loan.personName,
+                        amount = remaining,
+                        dueDate = dueDateStr,
+                        currencySymbol = uiState.currencySymbol
+                    )
+
+                    when (channel) {
+                        ReminderChannel.WhatsApp -> {
+                            if (!loan.phoneNumber.isNullOrBlank()) {
+                                sendWhatsAppReminder(context, loan.phoneNumber, message)
+                            } else {
+                                android.widget.Toast.makeText(context, "No phone number available", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        ReminderChannel.Messenger -> {
+                            sendMessengerReminder(context, message)
+                        }
+                        ReminderChannel.SMS -> {
+                            if (!loan.phoneNumber.isNullOrBlank()) {
+                                sendSmsReminder(context, loan.phoneNumber, message)
+                            } else {
+                                android.widget.Toast.makeText(context, "No phone number available", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        ReminderChannel.Email -> {
+                            if (!loan.email.isNullOrBlank()) {
+                                sendEmailReminder(context, loan.email, loan.personName, message)
+                            } else {
+                                android.widget.Toast.makeText(context, "No email address available", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        ReminderChannel.Other -> {
+                            sendGenericShareReminder(context, message)
+                        }
+                    }
+                }
+            }
+        )
+    }
 }
 
 

@@ -58,6 +58,7 @@ fun AddBankAccountBottomSheet(
     var accountName by remember { mutableStateOf(editingAccount?.accountName ?: "") }
     var accountNumber by remember { mutableStateOf(editingAccount?.accountNumber ?: "") }
     var bankName by remember { mutableStateOf(editingAccount?.bankName ?: "") }
+    var selectedCountry by remember { mutableStateOf("") }
     var branchName by remember { mutableStateOf(editingAccount?.branchName ?: "") }
     var swiftCode by remember { mutableStateOf(editingAccount?.swiftCode ?: "") }
     var proofUri by remember { mutableStateOf<Uri?>(editingAccount?.coverImageUri?.let { Uri.parse(it) }) }
@@ -217,12 +218,33 @@ fun AddBankAccountBottomSheet(
             }
             
             if (selectedTab != 2) {
-                CustomLightTextField(
-                    value = bankName,
-                    onValueChange = { bankName = it },
-                    label = if (selectedTab == 1) "Card Issuer (e.g. Visa, Mastercard)" else stringResource(id = R.string.bank_name_hint),
-                    leadingIcon = if (selectedTab == 1) Icons.Default.CreditCard else Icons.Default.AccountBalance
-                )
+                if (selectedTab == 0) {
+                    val countries = com.sbs.loaney.data.model.BanksData.countriesWithBanks.keys.toList()
+                    val banksForCountry = com.sbs.loaney.data.model.BanksData.countriesWithBanks[selectedCountry] ?: emptyList()
+                    
+                    SearchableDropdown(
+                        value = selectedCountry,
+                        onValueChange = { selectedCountry = it },
+                        label = "Country (Optional)",
+                        leadingIcon = Icons.Default.Public,
+                        options = countries
+                    )
+                    
+                    SearchableDropdown(
+                        value = bankName,
+                        onValueChange = { bankName = it },
+                        label = stringResource(id = R.string.bank_name_hint),
+                        leadingIcon = Icons.Default.AccountBalance,
+                        options = banksForCountry
+                    )
+                } else {
+                    CustomLightTextField(
+                        value = bankName,
+                        onValueChange = { bankName = it },
+                        label = "Card Issuer (e.g. Visa, Mastercard)",
+                        leadingIcon = Icons.Default.CreditCard
+                    )
+                }
             }
 
             CustomLightTextField(
