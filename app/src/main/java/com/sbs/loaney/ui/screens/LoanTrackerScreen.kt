@@ -61,6 +61,7 @@ import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.util.PdfReceiptGenerator
+import kotlinx.coroutines.launch
 import com.sbs.loaney.util.getReminderMessage
 import com.sbs.loaney.util.sendWhatsAppReminder
 import com.sbs.loaney.util.sendSmsReminder
@@ -114,6 +115,7 @@ fun LoanTrackerScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var showEnlargedQr by remember { mutableStateOf(false) }
     var showAddPaymentSheet by remember { mutableStateOf(false) }
     var showAddLoanSheet by remember { mutableStateOf(false) }
@@ -153,8 +155,10 @@ fun LoanTrackerScreen(
             onDismiss = { showDeleteConfirmation = false },
             onConfirm = { reason, otherText ->
                 uiState.selectedLoan?.loan?.let {
-                    viewModel.deleteLoanWithReason(it, reason, otherText)
-                    onNavigateBack()
+                    viewModel.deleteLoanWithReason(it, reason, otherText) {
+                        isNavigatingBack = true
+                        onNavigateBack()
+                    }
                 }
                 showDeleteConfirmation = false
             }
@@ -295,24 +299,32 @@ fun LoanTrackerScreen(
                     },
                     actions = {
                         if (uiState.selectedLoan != null) {
+                            val loan = uiState.selectedLoan!!.loan
+                            val isCompleted = loan.status == LoanStatus.FULLY_PAID || loan.status == LoanStatus.FORGIVEN || loan.deleted
                             IconButton(onClick = {
                                 uiState.selectedLoan?.let { lwp ->
-                                    PdfReceiptGenerator.generateAndShare(
-                                        context = context,
-                                        loan = lwp.loan,
-                                        payments = lwp.payments,
-                                        loanItems = lwp.loanItems,
-                                        currencySymbol = uiState.currencySymbol
-                                    )
+                                    scope.launch {
+                                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            PdfReceiptGenerator.generateAndShare(
+                                                context = context,
+                                                loan = lwp.loan,
+                                                payments = lwp.payments,
+                                                loanItems = lwp.loanItems,
+                                                currencySymbol = uiState.currencySymbol
+                                            )
+                                        }
+                                    }
                                 }
                             }) {
                                 Icon(Icons.Default.Share, contentDescription = "Share Receipt", tint = AlimWhite)
                             }
-                            IconButton(onClick = { showEditLoanSheet = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit", tint = AlimWhite)
-                            }
-                            IconButton(onClick = { showDeleteConfirmation = true }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = AlimWhite)
+                            if (!isCompleted) {
+                                IconButton(onClick = { showEditLoanSheet = true }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = AlimWhite)
+                                }
+                                IconButton(onClick = { showDeleteConfirmation = true }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = AlimWhite)
+                                }
                             }
                         }
                     },
@@ -325,7 +337,9 @@ fun LoanTrackerScreen(
         },
         bottomBar = {
             if (!isNavigatingBack) {
-            if (uiState.selectedLoan != null && uiState.selectedLoan?.loan?.status != LoanStatus.FULLY_PAID && uiState.selectedLoan?.loan?.status != LoanStatus.FORGIVEN) {
+            val loan = uiState.selectedLoan?.loan
+            val isCompleted = loan?.status == LoanStatus.FULLY_PAID || loan?.status == LoanStatus.FORGIVEN || loan?.deleted == true
+            if (uiState.selectedLoan != null && !isCompleted) {
                 Surface(
                     color = AlimWhite,
                     shadowElevation = 8.dp
@@ -583,12 +597,21 @@ fun LoanTrackerScreen(
                             }
                             DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes ?: stringResource(id = R.string.no_notes))
 
-                            val statusColor = when (loan.status) {
-                                LoanStatus.OVERDUE -> CoralRose
-                                LoanStatus.FULLY_PAID -> AlimGreen
+                            val statusColor = when {
+                                loan.deleted -> MaterialTheme.colorScheme.error
+                                loan.status == LoanStatus.OVERDUE -> CoralRose
+                                loan.status == LoanStatus.FULLY_PAID -> AlimGreen
+                                loan.status == LoanStatus.FORGIVEN -> CoralRose
                                 else -> AlimDark
                             }
-                            DetailRow(icon = Icons.Default.CheckCircle, label = stringResource(id = R.string.status), value = loan.status?.name ?: "", highlightColor = statusColor)
+                            val statusValue = when {
+                                loan.deleted -> stringResource(id = R.string.status_deleted)
+                                loan.status == LoanStatus.FORGIVEN -> stringResource(id = R.string.status_forgiven)
+                                loan.status == LoanStatus.FULLY_PAID -> stringResource(id = R.string.status_completed)
+                                loan.status == LoanStatus.OVERDUE -> stringResource(id = R.string.status_overdue)
+                                else -> stringResource(id = R.string.status_active)
+                            }
+                            DetailRow(icon = Icons.Default.CheckCircle, label = stringResource(id = R.string.status), value = statusValue, highlightColor = statusColor)
                         }
 
                         val recipientLoanType = if (loan.type == LoanType.LEND) "BORROW" else "LEND"

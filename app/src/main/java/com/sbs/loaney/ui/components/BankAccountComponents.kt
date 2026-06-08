@@ -35,7 +35,8 @@ fun BankAccountCard(
     account: BankAccountEntity,
     context: Context,
     onDelete: (BankAccountEntity) -> Unit,
-    onEdit: (BankAccountEntity) -> Unit
+    onEdit: (BankAccountEntity) -> Unit,
+    onShare: (BankAccountEntity) -> Unit
 ) {
     val clipboardManager = remember { context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -122,6 +123,19 @@ fun BankAccountCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.White, modifier = Modifier.size(16.dp))
+                }
+
+                // Share overlay
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(top = 10.dp, start = 78.dp)
+                        .size(28.dp)
+                        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                        .clickable { onShare(account) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = "Share", tint = Color.White, modifier = Modifier.size(16.dp))
                 }
 
                 // Copy All overlay

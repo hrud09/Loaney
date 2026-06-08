@@ -36,7 +36,7 @@ interface LoanDao {
     fun getLoansByType(type: LoanType): Flow<List<LoanWithPayments>>
 
     @Transaction
-    @Query("SELECT * FROM loans WHERE id = :loanId AND isDeleted = 0")
+    @Query("SELECT * FROM loans WHERE id = :loanId")
     fun getLoanById(loanId: Long): Flow<LoanWithPayments?>
 
     @Transaction

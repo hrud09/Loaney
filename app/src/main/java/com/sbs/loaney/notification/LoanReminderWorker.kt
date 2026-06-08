@@ -11,7 +11,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.*
 import com.sbs.loaney.MainActivity
 import com.sbs.loaney.R
-import com.sbs.loaney.data.local.AppDatabase
+import kotlinx.coroutines.tasks.await
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.data.repository.SettingsRepository
@@ -86,8 +86,30 @@ class LoanReminderWorker(
 
         val currencySymbol = settingsRepository.currencySymbolFlow.first()
 
-        val db = AppDatabase.getDatabase(applicationContext)
-        val loans = db.loanDao().getAllLoansOnce()
+        val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+        val uid = auth.currentUser?.uid ?: return Result.success()
+        val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+
+        val loans = try {
+            val snapshot = firestore.collection("users").document(uid).collection("loans").get().await()
+            snapshot.toObjects(com.sbs.loaney.data.local.entity.LoanEntity::class.java)
+        } catch (e: Exception) {
+            return Result.failure()
+        }
+
+        val payments = try {
+            val snapshot = firestore.collection("users").document(uid).collection("payments").get().await()
+            snapshot.toObjects(com.sbs.loaney.data.local.entity.PaymentEntity::class.java)
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+        val loanItems = try {
+            val snapshot = firestore.collection("users").document(uid).collection("loanItems").get().await()
+            snapshot.toObjects(com.sbs.loaney.data.local.entity.LoanItemEntity::class.java)
+        } catch (e: Exception) {
+            emptyList()
+        }
 
         val today = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
@@ -106,13 +128,15 @@ class LoanReminderWorker(
 
         var notificationId = 1000
 
-        for (loanWithPayments in loans) {
-            val loan = loanWithPayments.loan
-            // Skip fully paid loans
-            if (loan.status == LoanStatus.FULLY_PAID) continue
+        for (loan in loans) {
+            // Skip fully paid or deleted loans
+            if (loan.status == LoanStatus.FULLY_PAID || loan.deleted) continue
 
-            val totalLoan = loan.amount + loanWithPayments.loanItems.sumOf { it.amount }
-            val paid = loanWithPayments.payments.sumOf { it.amount }
+            val currentLoanItems = loanItems.filter { it.loanId == loan.id }
+            val currentPayments = payments.filter { it.loanId == loan.id }
+
+            val totalLoan = loan.amount + currentLoanItems.sumOf { it.amount }
+            val paid = currentPayments.sumOf { it.amount }
             val remaining = totalLoan - paid
             if (remaining <= 0) continue
 

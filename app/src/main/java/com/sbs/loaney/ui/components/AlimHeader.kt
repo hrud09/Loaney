@@ -102,21 +102,12 @@ fun AlimHeader(
                 .onGloballyPositioned { onPositionedProfile(it) }
                 .clickable { onProfileClick() }
         ) {
-            if (userProfilePhoto != null) {
-                AsyncImage(
-                    model = userProfilePhoto,
-                    contentDescription = "Profile Photo",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    Icons.Default.Person, 
-                    contentDescription = null, 
-                    tint = AlimWhite,
-                    modifier = Modifier.fillMaxSize().padding(8.dp)
-                )
-            }
+            AsyncImage(
+                model = userProfilePhoto ?: R.drawable.default_profile_pic,
+                contentDescription = "Profile Photo",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
         }
     }
 }

@@ -85,6 +85,7 @@ import com.sbs.loaney.ui.components.*
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.HomeViewModel
 import com.sbs.loaney.ui.viewmodel.HomeUiState
+import com.sbs.loaney.ui.viewmodel.EmailLinkStatus
 import java.text.SimpleDateFormat
 import java.util.*
 import com.google.firebase.auth.FirebaseAuth
@@ -117,6 +118,10 @@ fun HomeScreen(
     
     var accountToDelete by remember { mutableStateOf<BankAccountEntity?>(null) }
     var accountToEdit by remember { mutableStateOf<BankAccountEntity?>(null) }
+    var accountToShare by remember { mutableStateOf<BankAccountEntity?>(null) }
+    var shareEmail by remember { mutableStateOf("") }
+    val shareStatus by viewModel.shareStatus.collectAsState()
+    val shareLinkedName by viewModel.shareLinkedName.collectAsState()
 
     val bankAccounts = uiState.bankAccounts
     val allLoans by remember(uiState.lentLoans, uiState.borrowedLoans) {
@@ -370,7 +375,8 @@ fun HomeScreen(
                                     onEdit = { 
                                         accountToEdit = it
                                         showAddBankSheet = true
-                                    }
+                                    },
+                                    onShare = { accountToShare = it }
                                 )
                             }
                         }
@@ -450,6 +456,80 @@ fun HomeScreen(
             }
         )
     }
+ 
+     if (accountToShare != null) {
+         AlertDialog(
+             onDismissRequest = { 
+                 accountToShare = null
+                 shareEmail = ""
+                 viewModel.resetShareEmailStatus()
+             },
+             title = { Text("Share ${if (accountToShare!!.isCard) "Card" else if (accountToShare!!.isMfs) "MFS Account" else "Bank Account"}") },
+             text = {
+                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                     Text("Enter the email of the person you want to share this account with:")
+                     
+                     OutlinedTextField(
+                         value = shareEmail,
+                         onValueChange = {
+                             shareEmail = it
+                             viewModel.checkShareEmail(it)
+                         },
+                         label = { Text("Recipient Email") },
+                         singleLine = true,
+                         shape = RoundedCornerShape(12.dp),
+                         modifier = Modifier.fillMaxWidth(),
+                         colors = OutlinedTextFieldDefaults.colors(
+                             focusedBorderColor = AlimGreen,
+                             focusedContainerColor = Color.White,
+                             unfocusedContainerColor = Color.White
+                         )
+                     )
+                     
+                     when (shareStatus) {
+                         EmailLinkStatus.CHECKING -> {
+                             Text("Checking database...", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                         }
+                         EmailLinkStatus.FOUND -> {
+                             Text("Registered user found: $shareLinkedName", color = AlimGreen, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                         }
+                         EmailLinkStatus.NOT_FOUND -> {
+                             Text("No registered Loaney account found. An email invitation will be sent instead.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                         }
+                         else -> {}
+                     }
+                 }
+             },
+             confirmButton = {
+                 Button(
+                     onClick = {
+                         accountToShare?.let {
+                             viewModel.shareBankAccount(it, shareEmail) {
+                                 accountToShare = null
+                                 shareEmail = ""
+                                 Toast.makeText(context, "Account shared successfully!", Toast.LENGTH_SHORT).show()
+                             }
+                         }
+                     },
+                     colors = ButtonDefaults.buttonColors(containerColor = AlimGreen),
+                     enabled = shareEmail.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(shareEmail).matches() && shareStatus != EmailLinkStatus.CHECKING
+                 ) {
+                     Text("Share", color = Color.White)
+                 }
+             },
+             dismissButton = {
+                 TextButton(
+                     onClick = { 
+                         accountToShare = null
+                         shareEmail = ""
+                         viewModel.resetShareEmailStatus()
+                     }
+                 ) {
+                     Text("Cancel")
+                 }
+             }
+         )
+     }
 
     if (showNotificationsSheet) {
         NotificationsBottomSheet(

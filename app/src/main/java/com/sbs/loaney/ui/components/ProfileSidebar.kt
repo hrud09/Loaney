@@ -70,18 +70,12 @@ fun ProfileSidebarContent(
                                 .background(MaterialTheme.colorScheme.primaryContainer),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (profile.profilePhotoUri != null) {
-                                coil.compose.AsyncImage(
-                                    model = profile.profilePhotoUri,
-                                    contentDescription = "Profile Photo",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                                )
-                            } else {
-                                androidx.compose.material.icons.Icons.Default.Person.let {
-                                    Icon(it, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(40.dp))
-                                }
-                            }
+                            coil.compose.AsyncImage(
+                                model = profile.profilePhotoUri ?: com.sbs.loaney.R.drawable.default_profile_pic,
+                                contentDescription = "Profile Photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
                         }
 
                         // Level Badge

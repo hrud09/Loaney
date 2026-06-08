@@ -24,7 +24,15 @@ class LoanRepository(
 
     override suspend fun updateLoan(loan: LoanEntity) = loanDao.updateLoan(loan)
 
-    override suspend fun softDeleteLoan(loanId: Long, timestamp: Long) = loanDao.softDeleteLoan(loanId, timestamp)
+    override suspend fun softDeleteLoan(loanId: Long, timestamp: Long, notes: String?) {
+        if (notes != null) {
+            val loanWithPayments = loanDao.getLoanByIdOnce(loanId)
+            if (loanWithPayments != null) {
+                loanDao.updateLoan(loanWithPayments.loan.copy(notes = notes))
+            }
+        }
+        loanDao.softDeleteLoan(loanId, timestamp)
+    }
 
     override suspend fun restoreLoan(loanId: Long) {
         val loanWithPayments = loanDao.getLoanByIdOnce(loanId) ?: return
@@ -48,7 +56,7 @@ class LoanRepository(
         }
 
         loanDao.updateLoan(loan.copy(
-            isDeleted = false,
+            deleted = false,
             removedAt = null,
             status = newStatus
         ))

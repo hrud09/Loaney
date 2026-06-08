@@ -142,7 +142,8 @@ class UserLinkRepository @Inject constructor() {
         loanType: String,
         amount: Double,
         currency: String,
-        promisedReturnDateMillis: Long
+        promisedReturnDateMillis: Long,
+        pdfBase64: String? = null
     ) {
         val currentUser = auth.currentUser ?: return
         val senderUid = currentUser.uid
@@ -166,7 +167,8 @@ class UserLinkRepository @Inject constructor() {
                 currency = currency,
                 promisedReturnDateMillis = promisedReturnDateMillis,
                 createdAt = System.currentTimeMillis(),
-                isRead = false
+                isRead = false,
+                pdfBase64 = pdfBase64
             )
 
             firestore.collection(USERS_COLLECTION)
@@ -195,7 +197,8 @@ class UserLinkRepository @Inject constructor() {
         loanType: String,
         amount: Double,
         currency: String,
-        promisedReturnDateMillis: Long
+        promisedReturnDateMillis: Long,
+        pdfBase64: String? = null
     ) {
         val currentUser = auth.currentUser ?: return
         val senderUid = currentUser.uid
@@ -214,7 +217,7 @@ class UserLinkRepository @Inject constructor() {
             val subject = "New Loaney update from $senderName"
             val textContent = "Hi there!\n\n$senderName $actionText $currency$amount.\n\nPromised return date: $returnDateString\n\nLogin to the Loaney app to view details."
 
-            val emailDoc = mapOf(
+            val emailDoc = mutableMapOf<String, Any>(
                 "to" to recipientEmail,
                 "message" to mapOf(
                     "subject" to subject,
@@ -222,10 +225,120 @@ class UserLinkRepository @Inject constructor() {
                 )
             )
 
+            if (pdfBase64 != null) {
+                emailDoc["attachments"] = listOf(
+                    mapOf(
+                        "filename" to "Loaney_Receipt.pdf",
+                        "content" to pdfBase64,
+                        "encoding" to "base64"
+                    )
+                )
+            }
+
             firestore.collection("mail").add(emailDoc).await()
             Log.d(TAG, "Email notification queued for: $recipientEmail")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send email notification: ${e.message}")
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Write bank account share notification to recipient
+    // ──────────────────────────────────────────────────────────────────────────
+
+    suspend fun sendBankAccountNotification(
+        recipientUid: String,
+        account: com.sbs.loaney.data.local.entity.BankAccountEntity
+    ) {
+        val currentUser = auth.currentUser ?: return
+        val senderUid = currentUser.uid
+
+        // Prevent sending a notification to yourself.
+        if (senderUid == recipientUid) return
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION)
+                .document(senderUid)
+                .get()
+                .await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+
+            val notificationId = System.currentTimeMillis().toString()
+            val notification = LinkedLoanNotification(
+                id = notificationId,
+                senderName = senderName,
+                senderUid = senderUid,
+                loanType = if (account.isMfs) "SHARE_MFS" else if (account.isCard) "SHARE_CARD" else "SHARE_BANK",
+                amount = 0.0,
+                createdAt = System.currentTimeMillis(),
+                isRead = false,
+                accountName = account.accountName,
+                accountNumber = account.accountNumber,
+                bankName = account.bankName,
+                branchName = account.branchName,
+                swiftCode = account.swiftCode,
+                isCard = account.isCard,
+                isMfs = account.isMfs,
+                mfsProvider = account.mfsProvider,
+                qrCodeUri = account.qrCodeUri
+            )
+
+            firestore.collection(USERS_COLLECTION)
+                .document(recipientUid)
+                .collection(NOTIFICATIONS_SUBCOLLECTION)
+                .document(notificationId)
+                .set(notification)
+                .await()
+
+            Log.d(TAG, "Bank account notification sent to UID: $recipientUid")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send bank notification: ${e.message}")
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Write bank account share email notification to `mail` collection
+    // ──────────────────────────────────────────────────────────────────────────
+
+    suspend fun sendBankAccountEmail(
+        recipientEmail: String,
+        account: com.sbs.loaney.data.local.entity.BankAccountEntity
+    ) {
+        val currentUser = auth.currentUser ?: return
+        val senderUid = currentUser.uid
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION)
+                .document(senderUid)
+                .get()
+                .await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+
+            val accountType = if (account.isMfs) "MFS Account" else if (account.isCard) "Card" else "Bank Account"
+            val subject = "$senderName shared a $accountType with you"
+            val details = buildString {
+                append("Here are the details:\n")
+                append("- Type: $accountType\n")
+                append("- Institution/Provider: ${account.bankName}\n")
+                append("- Account Holder/Name: ${account.accountName}\n")
+                append("- Account/Mobile/Card Number: ${account.accountNumber}\n")
+                if (!account.branchName.isNullOrBlank()) append("- Branch: ${account.branchName}\n")
+                if (!account.swiftCode.isNullOrBlank()) append("- SWIFT: ${account.swiftCode}\n")
+            }
+            val body = "Hi there,\n\n$senderName has shared their $accountType details with you on Loaney.\n\n$details\nLogin to the Loaney app to view and import details directly into your wallet."
+
+            val emailDoc = mapOf(
+                "to" to recipientEmail,
+                "message" to mapOf(
+                    "subject" to subject,
+                    "text" to body
+                )
+            )
+
+            firestore.collection("mail").add(emailDoc).await()
+            Log.d(TAG, "Bank share email queued for: $recipientEmail")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send bank share email: ${e.message}")
         }
     }
 

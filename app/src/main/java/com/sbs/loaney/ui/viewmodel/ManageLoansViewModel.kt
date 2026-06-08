@@ -13,6 +13,9 @@ import com.sbs.loaney.data.repository.UserLinkRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import android.content.Context
+import com.sbs.loaney.util.PdfReceiptGenerator
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -44,7 +47,8 @@ data class ManageLoansUiState(
 class ManageLoansViewModel @Inject constructor(
     private val repository: ILoanRepository,
     private val settingsRepository: SettingsRepository,
-    private val userLinkRepository: UserLinkRepository
+    private val userLinkRepository: UserLinkRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     // Internal mutable state for email-lookup status
@@ -150,6 +154,19 @@ class ManageLoansViewModel @Inject constructor(
             if (!email.isNullOrBlank()) {
                 val recipientUid = userLinkRepository.lookupUidByEmail(email)
                 val currencySymbol = settingsRepository.currencySymbolFlow.first()
+                
+                // Generate PDF bytes and encode to Base64
+                val pdfBytes = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    PdfReceiptGenerator.generatePdfBytes(
+                        context = context,
+                        loan = loan.copy(id = loanId),
+                        payments = emptyList(),
+                        loanItems = emptyList(),
+                        currencySymbol = currencySymbol
+                    )
+                }
+                val pdfBase64 = android.util.Base64.encodeToString(pdfBytes, android.util.Base64.NO_WRAP)
+                
                 if (recipientUid != null) {
                     userLinkRepository.sendLoanNotification(
                         recipientUid = recipientUid,
@@ -157,9 +174,20 @@ class ManageLoansViewModel @Inject constructor(
                         loanType = type.name,
                         amount = amount,
                         currency = currencySymbol,
-                        promisedReturnDateMillis = returnDate.time
+                        promisedReturnDateMillis = returnDate.time,
+                        pdfBase64 = pdfBase64
                     )
                 }
+                
+                // Always send the email notification with the attached PDF
+                userLinkRepository.sendEmailNotification(
+                    recipientEmail = email,
+                    loanType = type.name,
+                    amount = amount,
+                    currency = currencySymbol,
+                    promisedReturnDateMillis = returnDate.time,
+                    pdfBase64 = pdfBase64
+                )
             }
             // ────────────────────────────────────────────────────────────────
 

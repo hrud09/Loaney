@@ -10,6 +10,7 @@ import com.sbs.loaney.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -21,6 +22,11 @@ import com.sbs.loaney.data.model.CalendarEvent
 import com.sbs.loaney.data.model.CalendarEventType
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.sbs.loaney.data.repository.UserLinkRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -44,8 +50,59 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: ILoanRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val userLinkRepository: UserLinkRepository
 ) : ViewModel() {
+
+    // Sharing account state
+    private val _shareStatus = MutableStateFlow(EmailLinkStatus.IDLE)
+    val shareStatus = _shareStatus.asStateFlow()
+
+    private val _shareLinkedName = MutableStateFlow<String?>(null)
+    val shareLinkedName = _shareLinkedName.asStateFlow()
+
+    private var shareLookupJob: Job? = null
+
+    fun checkShareEmail(email: String) {
+        shareLookupJob?.cancel()
+        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _shareStatus.value = EmailLinkStatus.IDLE
+            _shareLinkedName.value = null
+            return
+        }
+        shareLookupJob = viewModelScope.launch {
+            _shareStatus.value = EmailLinkStatus.CHECKING
+            delay(600L)
+            val result = userLinkRepository.lookupUserByEmail(email)
+            if (result != null) {
+                _shareLinkedName.value = result.second
+                _shareStatus.value = EmailLinkStatus.FOUND
+            } else {
+                _shareLinkedName.value = null
+                _shareStatus.value = EmailLinkStatus.NOT_FOUND
+            }
+        }
+    }
+
+    fun resetShareEmailStatus() {
+        _shareStatus.value = EmailLinkStatus.IDLE
+        _shareLinkedName.value = null
+    }
+
+    fun shareBankAccount(account: BankAccountEntity, email: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val trimmed = email.trim()
+            val recipientUid = userLinkRepository.lookupUidByEmail(trimmed)
+            if (recipientUid != null) {
+                userLinkRepository.sendBankAccountNotification(recipientUid, account)
+            }
+            // Queue email notification
+            userLinkRepository.sendBankAccountEmail(trimmed, account)
+            
+            resetShareEmailStatus()
+            onComplete()
+        }
+    }
 
     val uiState: StateFlow<HomeUiState> = combine(
         repository.getAllLoans(),
@@ -70,11 +127,12 @@ class HomeViewModel @Inject constructor(
             userProfilePhoto = photo,
             hasSeenTutorial = hasSeen
         )
-    }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = HomeUiState()
-        )
+    }.flowOn(kotlinx.coroutines.Dispatchers.Default)
+     .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeUiState()
+    )
 
     private fun calculateSummary(loans: List<LoanWithPayments>): HomeUiState {
         var totalLentBalance = 0.0

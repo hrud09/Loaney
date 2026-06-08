@@ -138,7 +138,7 @@ fun AlimBalanceCard(
                                     Text(
                                         text = if (visible) "$currencySymbol${String.format("%,.0f", totalBorrowed)}" else "****",
                                         style = MaterialTheme.typography.headlineSmall.copy(
-                                            color = Color.Red,
+                                            color = CoralRose,
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 20.sp
                                         ),

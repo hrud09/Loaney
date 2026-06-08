@@ -77,4 +77,59 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
+    /**
+     * Initiates Facebook login via Firebase's browser redirection flow.
+     */
+    fun signInWithFacebook(
+        activity: android.app.Activity,
+        defaultName: String? = null,
+        defaultCurrency: String? = null
+    ) {
+        _authState.value = AuthState.Loading
+        val provider = com.google.firebase.auth.OAuthProvider.newBuilder("facebook.com")
+        provider.setScopes(listOf("email", "public_profile"))
+
+        val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+        auth.startActivityForSignInWithProvider(activity, provider.build())
+            .addOnSuccessListener { authResult ->
+                viewModelScope.launch {
+                    val result = authRepository.handlePostOAuthLogin(authResult, defaultName, defaultCurrency)
+                    result.onSuccess {
+                        _authState.value = AuthState.Success
+                    }.onFailure { error ->
+                        _authState.value = AuthState.Error(error.message ?: "Facebook login failed")
+                    }
+                }
+            }
+            .addOnFailureListener { exception ->
+                _authState.value = AuthState.Error(exception.message ?: "Facebook login failed")
+            }
+    }
+
+    /**
+     * Checks for a pending Facebook auth result (e.g. if the activity was recreated during redirect).
+     */
+    fun checkPendingFacebookAuth(
+        defaultName: String? = null,
+        defaultCurrency: String? = null
+    ) {
+        val auth = com.google.firebase.auth.FirebaseAuth.getInstance()
+        val pendingResultTask = auth.pendingAuthResult
+        if (pendingResultTask != null) {
+            _authState.value = AuthState.Loading
+            pendingResultTask.addOnSuccessListener { authResult ->
+                viewModelScope.launch {
+                    val result = authRepository.handlePostOAuthLogin(authResult, defaultName, defaultCurrency)
+                    result.onSuccess {
+                        _authState.value = AuthState.Success
+                    }.onFailure { error ->
+                        _authState.value = AuthState.Error(error.message ?: "Facebook login failed")
+                    }
+                }
+            }.addOnFailureListener { exception ->
+                _authState.value = AuthState.Error(exception.message ?: "Facebook login failed")
+            }
+        }
+    }
 }

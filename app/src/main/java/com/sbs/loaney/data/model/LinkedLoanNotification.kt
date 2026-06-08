@@ -36,5 +36,19 @@ data class LinkedLoanNotification(
     val createdAt: Long = System.currentTimeMillis(),
 
     /** Whether the recipient has acknowledged / dismissed the notification. */
-    val isRead: Boolean = false
+    val isRead: Boolean = false,
+
+    // Additional fields for Bank/Card/MFS sharing
+    val accountName: String = "",
+    val accountNumber: String = "",
+    val bankName: String = "",
+    val branchName: String? = null,
+    val swiftCode: String? = null,
+    val isCard: Boolean = false,
+    val isMfs: Boolean = false,
+    val mfsProvider: String? = null,
+    val qrCodeUri: String? = null,
+
+    // PDF attachment (Base64 encoded string)
+    val pdfBase64: String? = null
 )

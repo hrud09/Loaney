@@ -298,7 +298,7 @@ fun HistoryLoanCard(
     val loan = item.loan
     val totalLoan = loan.amount + item.loanItems.sumOf { it.amount }
     
-    val isDeleted = loan.isDeleted
+    val isDeleted = loan.deleted
     val isForgiven = loan.status == LoanStatus.FORGIVEN
     val isFullyPaid = loan.status == LoanStatus.FULLY_PAID
 

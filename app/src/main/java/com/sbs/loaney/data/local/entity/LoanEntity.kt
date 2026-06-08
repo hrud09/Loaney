@@ -1,5 +1,6 @@
 package com.sbs.loaney.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.sbs.loaney.data.model.LoanStatus
@@ -25,7 +26,7 @@ data class LoanEntity(
     val status: LoanStatus = LoanStatus.ACTIVE,
     val relationshipType: String? = null,
     val witness: String? = null,
-    val isDeleted: Boolean = false,
+    @ColumnInfo(name = "isDeleted") val deleted: Boolean = false,
     val removedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

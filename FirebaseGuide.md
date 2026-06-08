@@ -89,6 +89,13 @@ service cloud.firestore {
       allow create: if request.auth != null;
       allow read, update, delete: if request.auth != null && request.auth.uid == userId;
     }
+
+    // ── Email Trigger Notifications ───────────────────────────────────────
+    // Any authenticated user can create an email document to be sent by
+    // the trigger email extension.
+    match /mail/{mailId} {
+      allow create: if request.auth != null;
+    }
   }
 }
 ```

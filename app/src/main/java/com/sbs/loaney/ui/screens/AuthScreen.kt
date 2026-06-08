@@ -52,6 +52,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
+import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.AuthState
 import com.sbs.loaney.ui.viewmodel.AuthViewModel
@@ -102,9 +103,18 @@ fun AuthScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        authViewModel.checkPendingFacebookAuth(
+            defaultName = name.takeIf { isSignUp },
+            defaultCurrency = selectedCurrency.takeIf { isSignUp }
+        )
+    }
+
     // --- Google Sign In Setup ---
-    val webClientIdRes = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-    val webClientId = if (webClientIdRes != 0) context.getString(webClientIdRes) else ""
+    val webClientId = remember {
+        val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+        if (resId != 0) context.getString(resId) else "768292747056-p32lk2i0fmf8vvu5107jd8s0bs2tf81r.apps.googleusercontent.com"
+    }
 
     val googleSignInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -192,20 +202,13 @@ fun AuthScreen(
                             .clickable { imagePickerLauncher.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
-                        if (profilePhotoUri != null) {
-                            AsyncImage(
-                                model = profilePhotoUri,
-                                contentDescription = "Profile Photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Dummy Avatar",
-                                tint = AlimDark.copy(alpha = 0.3f),
-                                modifier = Modifier.size(60.dp)
-                            )
+                        AsyncImage(
+                            model = profilePhotoUri ?: R.drawable.default_profile_pic,
+                            contentDescription = "Profile Photo",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        if (profilePhotoUri == null) {
                             Icon(
                                 imageVector = Icons.Default.AddAPhoto,
                                 contentDescription = "Add Photo",
@@ -552,6 +555,31 @@ fun AuthScreen(
                     border = BorderStroke(1.dp, AlimDark.copy(alpha = 0.1f))
                 ) {
                     Text("Continue with Google", fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Facebook Sign In Button
+                Button(
+                    onClick = {
+                        localError = null
+                        if (activity != null) {
+                            authViewModel.signInWithFacebook(
+                                activity = activity,
+                                defaultName = name.takeIf { isSignUp },
+                                defaultCurrency = selectedCurrency.takeIf { isSignUp }
+                            )
+                        } else {
+                            localError = "Activity context is required for Facebook Login"
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1877F2), // Facebook Blue
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("Continue with Facebook", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             } else {
                 Spacer(modifier = Modifier.height(24.dp))

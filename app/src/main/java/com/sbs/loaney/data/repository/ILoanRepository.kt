@@ -14,7 +14,7 @@ interface ILoanRepository {
     fun getLoanById(loanId: Long): Flow<LoanWithPayments?>
     suspend fun insertLoan(loan: LoanEntity): Long
     suspend fun updateLoan(loan: LoanEntity)
-    suspend fun softDeleteLoan(loanId: Long, timestamp: Long = System.currentTimeMillis())
+    suspend fun softDeleteLoan(loanId: Long, timestamp: Long = System.currentTimeMillis(), notes: String? = null)
     suspend fun restoreLoan(loanId: Long)
     fun getDeletedLoans(): Flow<List<LoanWithPayments>>
     suspend fun deleteLoan(loan: LoanEntity)
