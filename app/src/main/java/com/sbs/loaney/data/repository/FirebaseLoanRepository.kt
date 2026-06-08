@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.async
 import javax.inject.Inject
 
 class FirebaseLoanRepository @Inject constructor(
@@ -99,13 +100,15 @@ class FirebaseLoanRepository @Inject constructor(
 
     override fun getAllLoans(): Flow<List<LoanWithPayments>> {
         return combine(allLoansBaseFlow, allPaymentsBaseFlow, allLoanItemsBaseFlow) { loans, payments, items ->
+            val paymentsByLoan = payments.groupBy { it.loanId }
+            val itemsByLoan = items.groupBy { it.loanId }
             loans.filter { !it.deleted && it.status != LoanStatus.FULLY_PAID && it.status != LoanStatus.FORGIVEN }
                  .sortedByDescending { it.createdAt }
                  .map { loan ->
                      LoanWithPayments(
                          loan = loan,
-                         payments = payments.filter { it.loanId == loan.id },
-                         loanItems = items.filter { it.loanId == loan.id }
+                         payments = paymentsByLoan[loan.id] ?: emptyList(),
+                         loanItems = itemsByLoan[loan.id] ?: emptyList()
                      )
                  }
         }
@@ -120,10 +123,12 @@ class FirebaseLoanRepository @Inject constructor(
     override fun getLoanById(loanId: Long): Flow<LoanWithPayments?> {
         return combine(allLoansBaseFlow, allPaymentsBaseFlow, allLoanItemsBaseFlow) { loans, payments, items ->
             val loan = loans.find { it.id == loanId } ?: return@combine null
+            val paymentsByLoan = payments.groupBy { it.loanId }
+            val itemsByLoan = items.groupBy { it.loanId }
             LoanWithPayments(
                 loan = loan,
-                payments = payments.filter { it.loanId == loanId },
-                loanItems = items.filter { it.loanId == loanId }
+                payments = paymentsByLoan[loanId] ?: emptyList(),
+                loanItems = itemsByLoan[loanId] ?: emptyList()
             )
         }
     }
@@ -185,20 +190,25 @@ class FirebaseLoanRepository @Inject constructor(
         }
     }
 
-    override suspend fun restoreLoan(loanId: Long) {
-        val uid = auth.currentUser?.uid ?: return
+    override suspend fun restoreLoan(loanId: Long) = kotlinx.coroutines.coroutineScope {
+        val uid = auth.currentUser?.uid ?: return@coroutineScope
         val userDoc = firestore.collection("users").document(uid)
         
-        // Fetch loan
-        val loanDoc = userDoc.collection(LOANS_COLLECTION).document(loanId.toString()).get().await()
-        val loan = loanDoc.toObject(LoanEntity::class.java) ?: return
+        // Fetch loan, payments and items concurrently
+        val loanDeferred = async {
+            userDoc.collection(LOANS_COLLECTION).document(loanId.toString()).get().await()
+        }
+        val paymentsDeferred = async {
+            userDoc.collection(PAYMENTS_COLLECTION).whereEqualTo("loanId", loanId).get().await()
+        }
+        val itemsDeferred = async {
+            userDoc.collection(LOAN_ITEMS_COLLECTION).whereEqualTo("loanId", loanId).get().await()
+        }
         
-        // Fetch payments and items to recalculate status
-        val paymentsSnapshot = userDoc.collection(PAYMENTS_COLLECTION).whereEqualTo("loanId", loanId).get().await()
-        val payments = paymentsSnapshot.toObjects(PaymentEntity::class.java)
-        
-        val itemsSnapshot = userDoc.collection(LOAN_ITEMS_COLLECTION).whereEqualTo("loanId", loanId).get().await()
-        val items = itemsSnapshot.toObjects(LoanItemEntity::class.java)
+        val loanDoc = loanDeferred.await()
+        val loan = loanDoc.toObject(LoanEntity::class.java) ?: return@coroutineScope
+        val payments = paymentsDeferred.await().toObjects(PaymentEntity::class.java)
+        val items = itemsDeferred.await().toObjects(LoanItemEntity::class.java)
         
         val totalLoan = loan.amount + items.sumOf { it.amount }
         val paid = payments.sumOf { it.amount }
@@ -225,13 +235,15 @@ class FirebaseLoanRepository @Inject constructor(
 
     override fun getDeletedLoans(): Flow<List<LoanWithPayments>> {
         return combine(allLoansBaseFlow, allPaymentsBaseFlow, allLoanItemsBaseFlow) { loans, payments, items ->
+            val paymentsByLoan = payments.groupBy { it.loanId }
+            val itemsByLoan = items.groupBy { it.loanId }
             loans.filter { it.deleted || it.status == LoanStatus.FULLY_PAID || it.status == LoanStatus.FORGIVEN }
                  .sortedByDescending { it.removedAt ?: 0L }
                  .map { loan ->
                      LoanWithPayments(
                          loan = loan,
-                         payments = payments.filter { it.loanId == loan.id },
-                         loanItems = items.filter { it.loanId == loan.id }
+                         payments = paymentsByLoan[loan.id] ?: emptyList(),
+                         loanItems = itemsByLoan[loan.id] ?: emptyList()
                      )
                  }
         }
@@ -242,13 +254,22 @@ class FirebaseLoanRepository @Inject constructor(
     }
 
     override suspend fun deleteExpiredLoans(threshold: Long) {
-        val snapshot = getUserDocRef().collection(LOANS_COLLECTION).get().await()
+        val snapshot = getUserDocRef().collection(LOANS_COLLECTION)
+            .whereLessThan("removedAt", threshold)
+            .get()
+            .await()
+        if (snapshot.isEmpty) return
+        val batch = firestore.batch()
+        var hasUpdates = false
         for (doc in snapshot.documents) {
             val loan = doc.toObject(LoanEntity::class.java) ?: continue
-            if ((loan.deleted || loan.status == LoanStatus.FULLY_PAID || loan.status == LoanStatus.FORGIVEN) &&
-                loan.removedAt != null && loan.removedAt < threshold) {
-                getUserDocRef().collection(LOANS_COLLECTION).document(doc.id).delete().await()
+            if (loan.deleted || loan.status == LoanStatus.FULLY_PAID || loan.status == LoanStatus.FORGIVEN) {
+                batch.delete(doc.reference)
+                hasUpdates = true
             }
+        }
+        if (hasUpdates) {
+            batch.commit().await()
         }
     }
 

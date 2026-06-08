@@ -151,6 +151,9 @@ fun LineChart(
         )
     }
 
+    val path = remember { Path() }
+    val fillPath = remember { Path() }
+
     Surface(
         modifier = modifier.fillMaxWidth().height(120.dp),
         color = Color.White.copy(alpha = 0.5f),
@@ -161,8 +164,8 @@ fun LineChart(
             val height = size.height
             val stepX = if (dataPoints.size > 1) width / (dataPoints.size - 1) else width
 
-            val path = Path()
-            val fillPath = Path()
+            path.reset()
+            fillPath.reset()
 
             var previousX = 0f
             var previousY = height - ((dataPoints.first() - minVal) / range) * height

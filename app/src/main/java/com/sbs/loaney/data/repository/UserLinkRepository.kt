@@ -51,23 +51,14 @@ class UserLinkRepository @Inject constructor() {
      */
     suspend fun lookupUidByEmail(targetEmail: String): String? {
         val trimmed = targetEmail.trim()
+        val lowercase = trimmed.lowercase()
         return try {
-            // Pass 1 — lowercase (canonical)
-            val lowercase = trimmed.lowercase()
-            var snapshot = firestore.collection(USERS_COLLECTION)
-                .whereEqualTo("email", lowercase)
+            val searchEmails = listOf(lowercase, trimmed).distinct()
+            val snapshot = firestore.collection(USERS_COLLECTION)
+                .whereIn("email", searchEmails)
                 .limit(1)
                 .get()
                 .await()
-
-            // Pass 2 — original casing (legacy accounts stored before normalisation fix)
-            if (snapshot.isEmpty && trimmed != lowercase) {
-                snapshot = firestore.collection(USERS_COLLECTION)
-                    .whereEqualTo("email", trimmed)
-                    .limit(1)
-                    .get()
-                    .await()
-            }
 
             if (snapshot.isEmpty) null else snapshot.documents.first().id
         } catch (e: Exception) {
@@ -86,23 +77,14 @@ class UserLinkRepository @Inject constructor() {
      */
     suspend fun lookupUserByEmail(targetEmail: String): Pair<String, String>? {
         val trimmed = targetEmail.trim()
+        val lowercase = trimmed.lowercase()
         return try {
-            // Pass 1 — lowercase
-            val lowercase = trimmed.lowercase()
-            var snapshot = firestore.collection(USERS_COLLECTION)
-                .whereEqualTo("email", lowercase)
+            val searchEmails = listOf(lowercase, trimmed).distinct()
+            val snapshot = firestore.collection(USERS_COLLECTION)
+                .whereIn("email", searchEmails)
                 .limit(1)
                 .get()
                 .await()
-
-            // Pass 2 — original casing (legacy accounts)
-            if (snapshot.isEmpty && trimmed != lowercase) {
-                snapshot = firestore.collection(USERS_COLLECTION)
-                    .whereEqualTo("email", trimmed)
-                    .limit(1)
-                    .get()
-                    .await()
-            }
 
             if (snapshot.isEmpty) null else {
                 val doc = snapshot.documents.first()

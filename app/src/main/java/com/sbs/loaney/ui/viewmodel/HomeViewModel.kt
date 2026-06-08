@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 
+import kotlinx.coroutines.flow.map
+
 data class HomeUiState(
     val isLoading: Boolean = true,
     val totalLent: Double = 0.0,
@@ -104,22 +106,25 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private val loanSummaryFlow = repository.getAllLoans()
+        .map { calculateSummary(it) }
+        .flowOn(kotlinx.coroutines.Dispatchers.Default)
+
     val uiState: StateFlow<HomeUiState> = combine(
-        repository.getAllLoans(),
+        loanSummaryFlow,
         repository.getAllBankAccounts(),
         settingsRepository.userNameFlow,
         settingsRepository.currencySymbolFlow,
         settingsRepository.userProfilePhotoFlow,
         settingsRepository.hasSeenTutorialFlow
     ) { args ->
-        val loansWithPayments = args[0] as List<LoanWithPayments>
+        val summary = args[0] as HomeUiState
         val accounts = args[1] as List<BankAccountEntity>
         val name = args[2] as String
         val currency = args[3] as String
         val photo = args[4] as String?
         val hasSeen = args[5] as Boolean
-        
-        val summary = calculateSummary(loansWithPayments)
+
         summary.copy(
             bankAccounts = accounts,
             userName = name,
@@ -127,8 +132,7 @@ class HomeViewModel @Inject constructor(
             userProfilePhoto = photo,
             hasSeenTutorial = hasSeen
         )
-    }.flowOn(kotlinx.coroutines.Dispatchers.Default)
-     .stateIn(
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = HomeUiState()

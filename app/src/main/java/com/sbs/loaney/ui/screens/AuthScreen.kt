@@ -42,6 +42,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -123,9 +124,23 @@ fun AuthScreen(
                 val account = task.getResult(ApiException::class.java)!!
                 val credential = GoogleAuthProvider.getCredential(account.idToken, null)
                 authViewModel.signInWithCredential(credential, name.takeIf { isSignUp }, selectedCurrency)
+            } catch (e: ApiException) {
+                val statusMessage = when (e.statusCode) {
+                    10, 12500 -> "Developer configuration issue. Make sure your SHA-1 fingerprint is added in the Firebase Console."
+                    7 -> "Network error. Please check your internet connection."
+                    12501 -> null // User cancelled, ignore
+                    else -> "Google sign in failed (code ${e.statusCode}): ${e.message}"
+                }
+                if (statusMessage != null) {
+                    localError = statusMessage
+                }
             } catch (e: Exception) {
                 localError = "Google sign in failed: ${e.message}"
             }
+        } else if (result.resultCode == Activity.RESULT_CANCELED) {
+            // User cancelled the flow, ignore to be seamless
+        } else {
+            localError = "Google Sign-In canceled or failed."
         }
     }
 
@@ -554,7 +569,19 @@ fun AuthScreen(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = AlimDark),
                     border = BorderStroke(1.dp, AlimDark.copy(alpha = 0.1f))
                 ) {
-                    Text("Continue with Google", fontWeight = FontWeight.Bold)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_google_logo),
+                            contentDescription = "Google Logo",
+                            modifier = Modifier.size(20.dp),
+                            tint = Color.Unspecified
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("Continue with Google", fontWeight = FontWeight.Bold)
+                    }
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 

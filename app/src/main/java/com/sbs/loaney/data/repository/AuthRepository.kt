@@ -159,7 +159,7 @@ class AuthRepository @Inject constructor(
                 currency ?: "৳"
             }
 
-            var finalProfilePhotoUri = profilePhotoUri
+            var finalProfilePhotoUri = profilePhotoUri ?: authResult.user?.photoUrl?.toString()
             if (document != null && document.exists() && document.getString("profilePhotoUri") != null) {
                 finalProfilePhotoUri = document.getString("profilePhotoUri")
             }
@@ -188,7 +188,7 @@ class AuthRepository @Inject constructor(
                 )
                 val finalPhone = phone ?: authResult.user?.phoneNumber ?: ""
                 if (finalPhone.isNotBlank()) userProfile["phone"] = finalPhone
-                if (!profilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = profilePhotoUri
+                if (!finalProfilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = finalProfilePhotoUri
                 if (!address.isNullOrBlank()) userProfile["address"] = address
                 if (!dateOfBirth.isNullOrBlank()) userProfile["dateOfBirth"] = dateOfBirth
 

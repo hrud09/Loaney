@@ -92,11 +92,14 @@ fun generateQrCodeBitmap(text: String, size: Int): ImageBitmap? {
         val width = bitMatrix.width
         val height = bitMatrix.height
         val bmp = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.RGB_565)
-        for (x in 0 until width) {
-            for (y in 0 until height) {
-                bmp.setPixel(x, y, if (bitMatrix.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+        val pixels = IntArray(width * height)
+        for (y in 0 until height) {
+            val offset = y * width
+            for (x in 0 until width) {
+                pixels[offset + x] = if (bitMatrix.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE
             }
         }
+        bmp.setPixels(pixels, 0, width, 0, 0, width, height)
         bmp.asImageBitmap()
     } catch (e: Exception) {
         null
@@ -238,7 +241,11 @@ fun LoanTrackerScreen(
                 "&notes=${Uri.encode(loan.notes ?: "")}" +
                 "&witness=${Uri.encode(loan.witness ?: "")}" +
                 "&rel=${Uri.encode(loan.relationshipType ?: "")}"
-        val enlargedQr = remember(linkUrl) { generateQrCodeBitmap(linkUrl, 800) }
+        val enlargedQr by produceState<ImageBitmap?>(initialValue = null, key1 = linkUrl) {
+            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                generateQrCodeBitmap(linkUrl, 800)
+            }
+        }
 
         androidx.compose.ui.window.Dialog(onDismissRequest = { showEnlargedQr = false }) {
             Surface(
@@ -257,9 +264,10 @@ fun LoanTrackerScreen(
                         color = AlimDark
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    if (enlargedQr != null) {
+                    val enlargedQrVal = enlargedQr
+                    if (enlargedQrVal != null) {
                         Image(
-                            bitmap = enlargedQr,
+                            bitmap = enlargedQrVal,
                             contentDescription = "Enlarged QR Code",
                             modifier = Modifier.size(280.dp)
                         )
@@ -623,9 +631,14 @@ fun LoanTrackerScreen(
                                 "&notes=${Uri.encode(loan.notes ?: "")}" +
                                 "&witness=${Uri.encode(loan.witness ?: "")}" +
                                 "&rel=${Uri.encode(loan.relationshipType ?: "")}"
-                        val qrBitmap = remember(linkUrl) { generateQrCodeBitmap(linkUrl, 500) }
+                        val qrBitmap by produceState<ImageBitmap?>(initialValue = null, key1 = linkUrl) {
+                            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                                generateQrCodeBitmap(linkUrl, 500)
+                            }
+                        }
  
-                        if (qrBitmap != null) {
+                        val qrBitmapVal = qrBitmap
+                        if (qrBitmapVal != null) {
                             Column(
                                 modifier = Modifier
                                     .padding(end = 16.dp, top = 16.dp, bottom = 16.dp)
@@ -682,7 +695,7 @@ fun LoanTrackerScreen(
                                     }
 
                                     Image(
-                                        bitmap = qrBitmap,
+                                        bitmap = qrBitmapVal,
                                         contentDescription = "QR Code for this loan",
                                         modifier = Modifier
                                             .size(170.dp)
@@ -691,7 +704,7 @@ fun LoanTrackerScreen(
                                             .combinedClickable(
                                                 onClick = { showEnlargedQr = true },
                                                 onLongClick = {
-                                                    val bitmap = qrBitmap.asAndroidBitmap()
+                                                    val bitmap = qrBitmapVal.asAndroidBitmap()
                                                     shareQrCode(context, bitmap, linkUrl)
                                                 }
                                             )
