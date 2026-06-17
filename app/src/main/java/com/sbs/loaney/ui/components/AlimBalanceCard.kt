@@ -42,10 +42,10 @@ fun AlimBalanceCard(
     var isBalanceVisible by remember { mutableStateOf(true) }
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        // Background Split Layer: Top half black (AlimDark), bottom half cream (AlimCream)
+        // Background Split Layer: Top half black (AlimDark), bottom half dynamic background
         Column(modifier = Modifier.matchParentSize()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth().background(AlimDark))
-            Box(modifier = Modifier.weight(1f).fillMaxWidth().background(AlimCream))
+            Box(modifier = Modifier.weight(1f).fillMaxWidth().background(MaterialTheme.colorScheme.background))
         }
 
         // Foreground Content Layer

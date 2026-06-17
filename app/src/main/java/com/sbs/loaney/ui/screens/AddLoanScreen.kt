@@ -262,7 +262,7 @@ fun AddLoanScreen(
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
     Scaffold(
-        containerColor = AlimCream,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(modifier = Modifier.background(AlimDark)) {
                 CenterAlignedTopAppBar(
@@ -332,7 +332,7 @@ fun AddLoanScreen(
         bottomBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = AlimCream,
+                color = MaterialTheme.colorScheme.background,
                 shadowElevation = 0.dp
             ) {
                 Button(
@@ -440,7 +440,7 @@ fun AddLoanScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(AlimCream)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             HorizontalPager(
                 state = pagerState,

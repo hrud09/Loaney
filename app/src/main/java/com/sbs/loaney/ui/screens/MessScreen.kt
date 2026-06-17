@@ -27,7 +27,7 @@ fun MessScreen(
     onNavigateToTracker: () -> Unit
 ) {
     Scaffold(
-        containerColor = AlimCream,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(modifier = Modifier.background(AlimDark)) {
                 CenterAlignedTopAppBar(
@@ -56,7 +56,7 @@ fun MessScreen(
             Text(
                 text = stringResource(id = R.string.available_tools),
                 style = MaterialTheme.typography.titleLarge,
-                color = AlimDark,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold
             )
 
@@ -100,7 +100,7 @@ fun ToolCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = AlimWhite,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp
     ) {
         Row(
@@ -126,12 +126,12 @@ fun ToolCard(
                     text = title, 
                     style = MaterialTheme.typography.titleMedium, 
                     fontWeight = FontWeight.Bold,
-                    color = AlimDark
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = description, 
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AlimDark.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

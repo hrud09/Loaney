@@ -66,7 +66,7 @@ fun BankAccountCard(
             .padding(4.dp)
             .neubrutalistCard(
                 shape = BigCardShape,
-                backgroundColor = NbPureWhite
+                backgroundColor = MaterialTheme.colorScheme.surface
             )
     ) {
         Column {
@@ -162,7 +162,7 @@ fun BankAccountCard(
                 }
             }
 
-            HorizontalDivider(color = NbPureBlack, thickness = 2.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground, thickness = 2.dp)
 
             // Details Section
             Column(

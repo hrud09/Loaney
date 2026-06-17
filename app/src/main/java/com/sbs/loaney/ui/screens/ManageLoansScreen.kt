@@ -86,7 +86,7 @@ fun ManageLoansScreen(
     val currentType = if (pagerState.currentPage == 0) LoanType.LEND else LoanType.BORROW
 
     Scaffold(
-        containerColor = AlimCream,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(modifier = Modifier.background(AlimDark)) {
                 CenterAlignedTopAppBar(
@@ -175,8 +175,8 @@ fun ManageLoansScreen(
                             Box(
                                 modifier = Modifier
                                     .size(100.dp)
-                                    .background(AlimWhite, CircleShape)
-                                    .border(1.dp, AlimDark.copy(alpha = 0.1f), CircleShape),
+                                    .background(MaterialTheme.colorScheme.surface, CircleShape)
+                                    .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -196,7 +196,7 @@ fun ManageLoansScreen(
                             Text(
                                 stringResource(id = R.string.tap_to_start_tracking),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = AlimDark.copy(alpha = 0.6f),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.padding(horizontal = 32.dp)
                             )
@@ -345,6 +345,7 @@ fun SwipeableManageLoanCard(
             }
         }
     ) {
+        // swipe content
         ManageLoanCard(
             item = item,
             dateFormat = dateFormat,
@@ -382,7 +383,7 @@ fun ManageLoanCard(
                 shape = RoundedCornerShape(12.dp)
             ),
         shape = RoundedCornerShape(24.dp),
-        color = AlimWhite,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp
     ) {
         Row(
@@ -446,7 +447,7 @@ fun ManageLoanCard(
                         text = "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", remainingBalance)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = AlimDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -477,7 +478,7 @@ fun ManageLoanCard(
                         Text(
                             text = stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)),
                             style = MaterialTheme.typography.bodySmall,
-                            color = AlimDark.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
@@ -490,7 +491,7 @@ fun ManageLoanCard(
                     val statusColor = when (loan.status) {
                         LoanStatus.OVERDUE -> CoralRose
                         LoanStatus.FULLY_PAID -> AlimGreen
-                        else -> AlimDark.copy(alpha = 0.6f)
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
                     }
                     Text(
                         text = statusText,

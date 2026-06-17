@@ -285,7 +285,7 @@ fun LoanTrackerScreen(
     }
 
     Scaffold(
-        containerColor = AlimCream,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(modifier = Modifier.background(AlimDark)) {
                 CenterAlignedTopAppBar(
@@ -349,7 +349,7 @@ fun LoanTrackerScreen(
             val isCompleted = loan?.status == LoanStatus.FULLY_PAID || loan?.status == LoanStatus.FORGIVEN || loan?.deleted == true
             if (uiState.selectedLoan != null && !isCompleted) {
                 Surface(
-                    color = AlimWhite,
+                    color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 8.dp
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
@@ -442,7 +442,7 @@ fun LoanTrackerScreen(
                 modifier = Modifier
                     .padding(padding)
                     .fillMaxSize()
-                    .background(AlimCream)
+                    .background(MaterialTheme.colorScheme.background)
                     .verticalScroll(rememberScrollState())
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -451,7 +451,7 @@ fun LoanTrackerScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    color = AlimWhite,
+                    color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 2.dp
                 ) {
                      Row(
@@ -516,16 +516,16 @@ fun LoanTrackerScreen(
                             Text(
                                  text = if (loan.type == LoanType.LEND) stringResource(id = R.string.due_date_format, dateFormat.format(loan.promisedReturnDate)) else stringResource(id = R.string.repay_by, dateFormat.format(loan.promisedReturnDate)),
                                  style = MaterialTheme.typography.labelMedium,
-                                 color = AlimDark.copy(alpha = 0.6f)
+                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                              )
                         }
 
                         Column(horizontalAlignment = Alignment.End) {
-                            Text(
+                             Text(
                                 text = "${uiState.currencySymbol}${String.format("%.0f", remaining)}",
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = AlimDark,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 1,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )
@@ -576,7 +576,7 @@ fun LoanTrackerScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    color = AlimWhite,
+                    color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 2.dp
                 ) {
                     Row(
@@ -610,7 +610,7 @@ fun LoanTrackerScreen(
                                 loan.status == LoanStatus.OVERDUE -> CoralRose
                                 loan.status == LoanStatus.FULLY_PAID -> AlimGreen
                                 loan.status == LoanStatus.FORGIVEN -> CoralRose
-                                else -> AlimDark
+                                 else -> MaterialTheme.colorScheme.onSurface
                             }
                             val statusValue = when {
                                 loan.deleted -> stringResource(id = R.string.status_deleted)
@@ -727,7 +727,7 @@ fun LoanTrackerScreen(
                     text = stringResource(id = R.string.loan_history),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = AlimDark
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { // 16.dp * 0.75

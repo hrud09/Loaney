@@ -3,6 +3,7 @@ package com.sbs.loaney.ui.theme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -18,8 +19,8 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun Modifier.neubrutalistCard(
     shape: Shape = CardShape,
-    backgroundColor: Color = NbPureWhite,
-    borderColor: Color = NbPureBlack,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    borderColor: Color = MaterialTheme.colorScheme.onBackground,
     borderWidth: Dp = 2.dp,
     shadowOffset: Dp = 4.dp
 ): Modifier = this
@@ -43,8 +44,8 @@ fun Modifier.neubrutalistCard(
 @Composable
 fun Modifier.neubrutalistButton(
     shape: Shape = ButtonShape,
-    backgroundColor: Color = NbCoral,
-    borderColor: Color = NbPureBlack,
+    backgroundColor: Color = MaterialTheme.colorScheme.primary,
+    borderColor: Color = MaterialTheme.colorScheme.onBackground,
     borderWidth: Dp = 2.dp,
     shadowOffset: Dp = 2.dp
 ): Modifier = this

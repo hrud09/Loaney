@@ -148,12 +148,12 @@ fun UpcomingDeadlineSection(
                         .width(60.dp)
                         .height(76.dp)
                         .background(
-                            if (isSelected) CyberIndigo else Color.White.copy(alpha = 0.5f),
+                            if (isSelected) CyberIndigo else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                             RoundedCornerShape(16.dp)
                         )
                         .border(
                             width = 0.5.dp,
-                            color = if (isSelected) Color.White.copy(alpha = 0.3f) else PureBlack.copy(alpha = 0.05f),
+                            color = if (isSelected) Color.White.copy(alpha = 0.3f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
                             shape = RoundedCornerShape(16.dp)
                         )
                         .clickable { onDateSelected(date) },
@@ -171,14 +171,14 @@ fun UpcomingDeadlineSection(
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
                             ),
-                            color = if (isSelected) PureWhite.copy(alpha = 0.8f) else Color(0xFF64748B)
+                            color = if (isSelected) PureWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = dateFormat.format(date),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black,
-                            color = if (isSelected) PureWhite else Color(0xFF1E293B)
+                            color = if (isSelected) PureWhite else MaterialTheme.colorScheme.onSurface
                         )
                         
                         if (dayDeadlines.isNotEmpty()) {
@@ -208,8 +208,8 @@ fun UpcomingDeadlineSection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(80.dp)
-                        .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
-                        .border(0.5.dp, Color.Black.copy(alpha = 0.05f), RoundedCornerShape(24.dp)),
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
+                        .border(0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), RoundedCornerShape(24.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(

@@ -1,6 +1,7 @@
 package com.sbs.loaney.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -29,32 +30,35 @@ import com.sbs.loaney.ui.theme.*
 fun OnboardingScreen(
     onFinish: () -> Unit
 ) {
-    val pages = listOf(
-        OnboardingPage(
-            title = "Welcome to Loaney",
-            description = "Track all your lent and borrowed money in one secure place.",
-            type = OnboardingIllustrationType.WELCOME,
-            bgColor = AlimCream
-        ),
-        OnboardingPage(
-            title = "Never Forget a Debt",
-            description = "Keep a clear history of your transactions so you always know who owes who.",
-            type = OnboardingIllustrationType.HISTORY,
-            bgColor = SkyBlue.copy(alpha = 0.15f)
-        ),
-        OnboardingPage(
-            title = "Gain Financial Clarity",
-            description = "Visualize your balances and maintain healthy financial relationships.",
-            type = OnboardingIllustrationType.CLARITY,
-            bgColor = AlimGreen.copy(alpha = 0.1f)
+    val isDark = isSystemInDarkTheme()
+    val pages = remember(isDark) {
+        listOf(
+            OnboardingPage(
+                title = "Welcome to Loaney",
+                description = "Track all your lent and borrowed money in one secure place.",
+                type = OnboardingIllustrationType.WELCOME,
+                bgColor = if (isDark) Color(0xFF0D0D12) else AlimCream
+            ),
+            OnboardingPage(
+                title = "Never Forget a Debt",
+                description = "Keep a clear history of your transactions so you always know who owes who.",
+                type = OnboardingIllustrationType.HISTORY,
+                bgColor = if (isDark) Color(0xFF131C30) else SkyBlue.copy(alpha = 0.15f)
+            ),
+            OnboardingPage(
+                title = "Gain Financial Clarity",
+                description = "Visualize your balances and maintain healthy financial relationships.",
+                type = OnboardingIllustrationType.CLARITY,
+                bgColor = if (isDark) Color(0xFF0B1D16) else AlimGreen.copy(alpha = 0.1f)
+            )
         )
-    )
+    }
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val coroutineScope = rememberCoroutineScope()
     
     // Smooth background color interpolation
-    val backgroundColor: Color by remember(pagerState.targetPage, pagerState.currentPageOffsetFraction) {
+    val backgroundColor: Color by remember(pagerState.targetPage, pagerState.currentPageOffsetFraction, pages) {
         derivedStateOf {
             val currentPage = pagerState.currentPage
             val offset = pagerState.currentPageOffsetFraction
@@ -145,7 +149,7 @@ fun OnboardingPageContent(page: OnboardingPage, isSelected: Boolean) {
                 text = page.title,
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = AlimDark,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 32.sp,
                     letterSpacing = (-0.5).sp
                 ),
@@ -162,7 +166,7 @@ fun OnboardingPageContent(page: OnboardingPage, isSelected: Boolean) {
             Text(
                 text = page.description,
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    color = AlimDark.copy(alpha = 0.65f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
                     lineHeight = 28.sp,
                     fontSize = 18.sp
                 ),
@@ -195,7 +199,7 @@ fun OnboardingBottomBar(
                     label = "indicatorWidth"
                 )
                 val color by animateColorAsState(
-                    targetValue = if (isSelected) AlimGreen else AlimDark.copy(alpha = 0.15f),
+                    targetValue = if (isSelected) AlimGreen else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
                     label = "indicatorColor"
                 )
                 

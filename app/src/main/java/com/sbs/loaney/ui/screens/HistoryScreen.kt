@@ -45,7 +45,7 @@ fun HistoryScreen(
     var loanToDeletePermanently by remember { mutableStateOf<LoanWithPayments?>(null) }
 
     Scaffold(
-        containerColor = AlimCream,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(modifier = Modifier.background(AlimDark)) {
                 CenterAlignedTopAppBar(
@@ -72,20 +72,20 @@ fun HistoryScreen(
                 )
             }
         }
-    ) { padding ->
+    ) { paddingValues ->
         if (uiState.isLoading) {
-            AnimatedLoadingScreen(modifier = Modifier.padding(padding))
+            AnimatedLoadingScreen(modifier = Modifier.padding(paddingValues))
         } else {
             Column(
                 modifier = Modifier
-                    .padding(padding)
+                    .padding(paddingValues)
                     .fillMaxSize()
             ) {
                 // Info Section
                 if (uiState.deletedLoans.isNotEmpty()) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        color = AlimDark.copy(alpha = 0.05f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f),
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
@@ -101,7 +101,7 @@ fun HistoryScreen(
                             Text(
                                 stringResource(id = R.string.history_desc),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = AlimDark.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                             )
                         }
                     }
@@ -124,13 +124,13 @@ fun HistoryScreen(
                                 imageVector = Icons.Outlined.History,
                                 contentDescription = "No history",
                                 modifier = Modifier.size(64.dp),
-                                tint = AlimDark.copy(alpha = 0.2f)
+                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 stringResource(id = R.string.no_history_found),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = AlimDark.copy(alpha = 0.4f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                             )
                         }
                     } else {
@@ -322,7 +322,7 @@ fun HistoryLoanCard(
             .background(Color.Transparent)
             .bounceClick(onClick),
         shape = RoundedCornerShape(24.dp),
-        color = AlimWhite,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp
     ) {
         Row(
@@ -334,14 +334,14 @@ fun HistoryLoanCard(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(AlimDark.copy(alpha = 0.05f), RoundedCornerShape(12.dp)),
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = loan.personName.firstOrNull()?.toString()?.uppercase() ?: "",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = AlimDark
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -357,7 +357,7 @@ fun HistoryLoanCard(
                         text = loan.personName,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
-                        color = AlimDark,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         modifier = Modifier.weight(1f)
                     )
@@ -365,7 +365,7 @@ fun HistoryLoanCard(
                         text = "${currencySymbol}${String.format(Locale.getDefault(), "%,.0f", totalLoan)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = AlimDark
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -380,7 +380,7 @@ fun HistoryLoanCard(
                     Text(
                         text = dateFormat.format(Date(dateToShow)),
                         style = MaterialTheme.typography.bodySmall,
-                        color = AlimDark.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Surface(

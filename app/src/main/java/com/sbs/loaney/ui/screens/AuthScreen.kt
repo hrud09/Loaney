@@ -172,7 +172,7 @@ fun AuthScreen(
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        containerColor = AlimCream
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -187,14 +187,14 @@ fun AuthScreen(
             Text(
                 text = if (isSignUp) "Create Account" else "Welcome Back",
                 style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Bold, color = AlimDark
+                    fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground
                 ),
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = if (isSignUp) "Sign up to securely sync your data" else "Log in to access your records",
-                style = MaterialTheme.typography.bodyLarge.copy(color = AlimDark.copy(alpha = 0.6f)),
+                style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)),
                 textAlign = TextAlign.Center
             )
 
@@ -205,7 +205,7 @@ fun AuthScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "Profile Picture",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = AlimDark),
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -213,7 +213,7 @@ fun AuthScreen(
                         modifier = Modifier
                             .size(100.dp)
                             .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(AlimDark.copy(alpha = 0.1f))
+                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                             .clickable { imagePickerLauncher.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
@@ -228,7 +228,7 @@ fun AuthScreen(
                                 imageVector = Icons.Default.AddAPhoto,
                                 contentDescription = "Add Photo",
                                 tint = AlimGreen,
-                                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).size(24.dp).background(AlimWhite, androidx.compose.foundation.shape.CircleShape).padding(4.dp)
+                                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).size(24.dp).background(MaterialTheme.colorScheme.surface, androidx.compose.foundation.shape.CircleShape).padding(4.dp)
                             )
                         }
                     }
@@ -241,7 +241,7 @@ fun AuthScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(AlimWhite, RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -254,7 +254,7 @@ fun AuthScreen(
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Log In", color = if (!isSignUp) AlimWhite else AlimDark, fontWeight = FontWeight.Bold)
+                        Text("Log In", color = if (!isSignUp) Color.White else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                     }
                     Box(
                         modifier = Modifier
@@ -265,7 +265,7 @@ fun AuthScreen(
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Sign Up", color = if (isSignUp) AlimWhite else AlimDark, fontWeight = FontWeight.Bold)
+                        Text("Sign Up", color = if (isSignUp) Color.White else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(modifier = Modifier.height(32.dp))
@@ -294,7 +294,7 @@ fun AuthScreen(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                        focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
             } else if (isPhoneMode) {
@@ -307,7 +307,7 @@ fun AuthScreen(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                        focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
             } else {
@@ -320,7 +320,7 @@ fun AuthScreen(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                        focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -340,7 +340,7 @@ fun AuthScreen(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                        focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
             }
@@ -359,7 +359,7 @@ fun AuthScreen(
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                            focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                         )
                     )
 
@@ -374,7 +374,7 @@ fun AuthScreen(
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                                focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                             )
                         )
                     } else {
@@ -387,7 +387,7 @@ fun AuthScreen(
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                                focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                             )
                         )
                     }
@@ -402,7 +402,7 @@ fun AuthScreen(
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                            focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                         )
                     )
 
@@ -416,14 +416,14 @@ fun AuthScreen(
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AlimGreen, focusedContainerColor = AlimWhite, unfocusedContainerColor = AlimWhite
+                            focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                         )
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "Local Currency",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = AlimDark),
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -432,13 +432,13 @@ fun AuthScreen(
                             val isSelected = selectedCurrency == symbol
                             Surface(
                                 shape = RoundedCornerShape(16.dp),
-                                color = if (isSelected) AlimGreen.copy(alpha = 0.1f) else AlimWhite,
+                                color = if (isSelected) AlimGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
                                 modifier = Modifier
                                     .weight(1f)
                                     .clickable { selectedCurrency = symbol }
                                     .border(
                                         width = if (isSelected) 2.dp else 1.dp,
-                                        color = if (isSelected) AlimGreen else AlimDark.copy(alpha = 0.05f),
+                                        color = if (isSelected) AlimGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                                         shape = RoundedCornerShape(16.dp)
                                     )
                             ) {
@@ -447,10 +447,10 @@ fun AuthScreen(
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(symbol, style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold, color = if (isSelected) AlimGreen else AlimDark
+                                        fontWeight = FontWeight.Bold, color = if (isSelected) AlimGreen else MaterialTheme.colorScheme.onSurface
                                     ))
                                     Text(code, style = MaterialTheme.typography.labelSmall.copy(
-                                        color = if (isSelected) AlimGreen else AlimDark.copy(alpha = 0.5f), fontSize = 9.sp
+                                        color = if (isSelected) AlimGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 9.sp
                                     ))
                                 }
                             }
@@ -527,9 +527,9 @@ fun AuthScreen(
             if (!isOtpMode) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = AlimDark.copy(alpha = 0.1f))
-                    Text(" or ", color = AlimDark.copy(alpha = 0.5f), modifier = Modifier.padding(horizontal = 8.dp))
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = AlimDark.copy(alpha = 0.1f))
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
+                    Text(" or ", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f), modifier = Modifier.padding(horizontal = 8.dp))
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                 }
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -541,8 +541,8 @@ fun AuthScreen(
                     },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AlimDark),
-                    border = BorderStroke(1.dp, AlimDark.copy(alpha = 0.1f))
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                 ) {
                     Text(if (isPhoneMode) "Continue with Email" else "Continue with Phone", fontWeight = FontWeight.Bold)
                 }
@@ -566,8 +566,8 @@ fun AuthScreen(
                     },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AlimDark),
-                    border = BorderStroke(1.dp, AlimDark.copy(alpha = 0.1f))
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

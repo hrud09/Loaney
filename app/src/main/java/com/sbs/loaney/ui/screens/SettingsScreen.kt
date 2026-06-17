@@ -105,7 +105,7 @@ fun SettingsScreen(
                 )
             }
         },
-        containerColor = AlimCream
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (isLoading) {
             com.sbs.loaney.ui.components.AnimatedLoadingScreen(modifier = Modifier.padding(paddingValues))
@@ -114,7 +114,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(AlimCream)
+                    .background(MaterialTheme.colorScheme.background)
             ) {
                 if (isTopLevel) {
                     AlimHeader(
@@ -369,7 +369,7 @@ fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
         )
         Surface(
             shape = RoundedCornerShape(24.dp),
-            color = AlimWhite,
+            color = MaterialTheme.colorScheme.surface,
             shadowElevation = 2.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -397,12 +397,12 @@ fun SettingsItem(icon: ImageVector, title: String, subtitle: String? = null, onC
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge.copy(color = AlimDark, fontWeight = FontWeight.SemiBold))
+            Text(title, style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold))
             if (subtitle != null) {
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium.copy(color = AlimDark.copy(alpha = 0.6f)))
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
             }
         }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = AlimDark.copy(alpha = 0.4f))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -424,7 +424,7 @@ fun SettingsToggleItem(icon: ImageVector, title: String, isChecked: Boolean, onT
             Icon(icon, contentDescription = title, tint = AlimGreen)
         }
         Spacer(modifier = Modifier.width(16.dp))
-        Text(title, style = MaterialTheme.typography.bodyLarge.copy(color = AlimDark, fontWeight = FontWeight.SemiBold), modifier = Modifier.weight(1f))
+        Text(title, style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold), modifier = Modifier.weight(1f))
         Switch(
             checked = isChecked,
             onCheckedChange = onToggle,

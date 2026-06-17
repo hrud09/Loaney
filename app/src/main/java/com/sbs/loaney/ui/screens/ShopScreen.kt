@@ -82,13 +82,13 @@ fun ShopScreen(
                 )
             }
         },
-        containerColor = AlimCream
-    ) { padding ->
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
         Column(
             modifier = Modifier
-                .padding(padding)
+                .padding(paddingValues)
                 .fillMaxSize()
-                .background(AlimCream)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             // --- Pie Balance Header (Re-styled as Report Summary) ---
             Box(
@@ -136,7 +136,7 @@ fun ShopScreen(
                                         color = AlimWhite,
                                         fontSize = 36.sp
                                     )
-                                )
+                               )
                                 Text(
                                     text = " PIES",
                                     color = AlimWhite.copy(alpha = 0.6f),
@@ -278,8 +278,8 @@ fun CategoryChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
                         .background(AlimGreen, CircleShape)
                 } else {
                     Modifier
-                        .background(AlimWhite, CircleShape)
-                        .border(1.dp, AlimDark.copy(alpha = 0.1f), CircleShape)
+                        .background(MaterialTheme.colorScheme.surface, CircleShape)
+                        .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), CircleShape)
                 }
             )
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -301,7 +301,7 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
             .fillMaxWidth()
             .alpha(if (canAfford) 1f else 0.6f),
         shape = RoundedCornerShape(24.dp),
-        color = AlimWhite,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp
     ) {
         Box(

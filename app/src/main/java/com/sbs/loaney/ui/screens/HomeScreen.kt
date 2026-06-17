@@ -131,7 +131,7 @@ fun HomeScreen(
     val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
 
     Scaffold(
-        containerColor = AlimCream,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column(modifier = Modifier.background(AlimDark)) {
                 CenterAlignedTopAppBar(
@@ -220,7 +220,7 @@ fun HomeScreen(
             )
         }
 
-        Box(modifier = Modifier.fillMaxSize().padding(padding).background(AlimCream)) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding).background(MaterialTheme.colorScheme.background)) {
             if (uiState.isLoading) {
                 com.sbs.loaney.ui.components.AnimatedLoadingScreen()
             } else {
