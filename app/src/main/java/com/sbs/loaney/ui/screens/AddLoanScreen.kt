@@ -726,7 +726,7 @@ fun AddLoanScreen(
                                     Text(
                                         text = "Send automated email notification",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = AlimDark
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -980,10 +980,10 @@ fun CustomLightTextField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = AlimGreen,
             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-            focusedContainerColor = AlimWhite,
-            unfocusedContainerColor = AlimWhite,
-            focusedTextColor = AlimDark,
-            unfocusedTextColor = AlimDark,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
             cursorColor = AlimGreen
         ),
         leadingIcon = leadingIcon?.let {

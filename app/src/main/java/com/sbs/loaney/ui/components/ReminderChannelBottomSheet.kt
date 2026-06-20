@@ -31,10 +31,10 @@ fun ReminderChannelBottomSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = AlimWhite,
+        containerColor = MaterialTheme.colorScheme.surface,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = AlimDark.copy(alpha = 0.1f)) }
+        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)) }
     ) {
         Column(
             modifier = Modifier
@@ -47,7 +47,7 @@ fun ReminderChannelBottomSheet(
                 text = "Send Reminder Via",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = AlimDark
+                color = MaterialTheme.colorScheme.onSurface
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -55,7 +55,7 @@ fun ReminderChannelBottomSheet(
             Text(
                 text = "Choose a communication channel to notify the recipient.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = AlimDark.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
             
@@ -121,7 +121,7 @@ fun ChannelItem(
             text = channel.label,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
-            color = AlimDark.copy(alpha = 0.8f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
             textAlign = TextAlign.Center
         )
     }

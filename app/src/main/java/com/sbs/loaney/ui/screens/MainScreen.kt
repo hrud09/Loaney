@@ -574,7 +574,7 @@ fun BkashBottomNavBar(
         contentAlignment = Alignment.BottomCenter
     ) {
         Surface(
-            color = AlimWhite,
+            color = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
             shadowElevation = 24.dp,
             modifier = Modifier.fillMaxWidth()
@@ -642,16 +642,16 @@ fun BkashBottomNavBar(
             ) {
                 // Manual Input FAB
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Manual Input", color = AlimDark, fontWeight = FontWeight.Bold, modifier = Modifier.background(AlimCream, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
-                    Box(modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape).clip(CircleShape).background(AlimWhite).clickable { expanded = false; onCenterFabClick() }, contentAlignment = Alignment.Center) {
+                    Text("Manual Input", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                    Box(modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape).clip(CircleShape).background(MaterialTheme.colorScheme.surface).clickable { expanded = false; onCenterFabClick() }, contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.Edit, contentDescription = "Manual Input", tint = AlimGreen)
                     }
                 }
                 
                 // Scan QR FAB
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Scan QR Code", color = AlimDark, fontWeight = FontWeight.Bold, modifier = Modifier.background(AlimCream, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
-                    Box(modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape).clip(CircleShape).background(AlimWhite).clickable { expanded = false; onScanQrClick() }, contentAlignment = Alignment.Center) {
+                    Text("Scan QR Code", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                    Box(modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape).clip(CircleShape).background(MaterialTheme.colorScheme.surface).clickable { expanded = false; onScanQrClick() }, contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR", tint = AlimGreen)
                     }
                 }
@@ -689,7 +689,7 @@ private fun BkashNavBarItem(
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     
     val color by animateColorAsState(
-        targetValue = if (selected) AlimGreen else AlimDark.copy(alpha = 0.4f),
+        targetValue = if (selected) AlimGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
         animationSpec = tween(300),
         label = "item_color"
     )

@@ -269,27 +269,7 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // ── UPCOMING DEADLINES ─────────────────────────────────────────
-                if (uiState.upcomingDeadlines.isNotEmpty()) {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        var selectedDate by remember {
-                            mutableStateOf(
-                                uiState.upcomingDeadlines.firstOrNull()?.loan?.promisedReturnDate ?:
-                                Calendar.getInstance().apply {
-                                    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-                                }.time
-                            )
-                        }
-                        UpcomingDeadlineSection(
-                            deadlines = uiState.upcomingDeadlines,
-                            currencySymbol = uiState.currencySymbol,
-                            selectedDate = selectedDate,
-                            onDateSelected = { selectedDate = it },
-                            onNavigateToDetail = onNavigateToDetail
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
+
 
                 // ── BANK ACCOUNTS ──────────────────────────────────────────────
                 Column(
