@@ -27,6 +27,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val USER_DOB = stringPreferencesKey("user_dob")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val HAS_SEEN_TUTORIAL = booleanPreferencesKey("has_seen_tutorial")
+        val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
     }
 
     // --- Flows ---
@@ -118,6 +119,14 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.HAS_SEEN_TUTORIAL] ?: false
         }
 
+    val autoBackupEnabledFlow: Flow<Boolean> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.AUTO_BACKUP_ENABLED] ?: false
+        }
+
     // --- Updaters ---
     suspend fun setThemeMode(mode: Int) {
         dataStore.edit { preferences ->
@@ -194,6 +203,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setHasSeenTutorial(completed: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.HAS_SEEN_TUTORIAL] = completed
+        }
+     }
+
+    suspend fun setAutoBackupEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.AUTO_BACKUP_ENABLED] = enabled
         }
     }
 }
