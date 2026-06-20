@@ -42,8 +42,8 @@ fun DeletionReasonBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = AlimWhite,
-        dragHandle = { BottomSheetDefaults.DragHandle(color = AlimDark.copy(alpha = 0.1f)) },
+        containerColor = MaterialTheme.colorScheme.surface,
+        dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)) },
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
@@ -76,7 +76,7 @@ fun DeletionReasonBottomSheet(
                 text = "Delete Loan for $personName?",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
-                color = AlimDark,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
             
@@ -85,7 +85,7 @@ fun DeletionReasonBottomSheet(
             Text(
                 text = stringResource(id = R.string.delete_reason_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
-                color = AlimDark.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
@@ -134,7 +134,9 @@ fun DeletionReasonBottomSheet(
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = AlimGreen,
-                            unfocusedBorderColor = AlimDark.copy(alpha = 0.1f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                         )
                     )
                 }
@@ -153,8 +155,8 @@ fun DeletionReasonBottomSheet(
                         .weight(1f)
                         .height(56.dp),
                     shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, AlimDark.copy(alpha = 0.1f)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AlimDark)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
                 ) {
                     Text(stringResource(id = R.string.cancel), fontWeight = FontWeight.Bold)
                 }
@@ -194,7 +196,7 @@ fun ReasonItem(
         color = if (isSelected) AlimGreen.copy(alpha = 0.05f) else Color.Transparent,
         border = BorderStroke(
             width = if (isSelected) 2.dp else 1.dp,
-            color = if (isSelected) AlimGreen else AlimDark.copy(alpha = 0.1f)
+            color = if (isSelected) AlimGreen else MaterialTheme.colorScheme.outlineVariant
         )
     ) {
         Row(
@@ -207,12 +209,12 @@ fun ReasonItem(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSelected) AlimGreen else AlimDark
+                    color = if (isSelected) AlimGreen else MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = AlimDark.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
@@ -221,7 +223,7 @@ fun ReasonItem(
                 onClick = onClick,
                 colors = RadioButtonDefaults.colors(
                     selectedColor = AlimGreen,
-                    unselectedColor = AlimDark.copy(alpha = 0.2f)
+                    unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                 )
             )
         }
