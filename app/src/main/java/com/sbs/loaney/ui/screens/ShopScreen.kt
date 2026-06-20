@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Stars
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -149,116 +150,64 @@ fun ShopScreen(
                 }
             }
 
-            // --- Categories ---
-            LazyRow(
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier
-                    .padding(bottom = 20.dp)
-                    .animateContentSize(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioLowBouncy,
-                            stiffness = Spring.StiffnessLow
-                        )
-                    )
-            ) {
-                item {
-                    CategoryChip(
-                        label = "All",
-                        isSelected = uiState.selectedCategory == null,
-                        onClick = { viewModel.selectCategory(null) }
-                    )
-                }
-                items(CouponCategory.entries) { category ->
-                    CategoryChip(
-                        label = category.name.lowercase().capitalize(),
-                        isSelected = uiState.selectedCategory == category,
-                        onClick = { viewModel.selectCategory(category) }
-                    )
-                }
-            }
-
-            // --- Coupons Grid ---
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(1),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 130.dp), // Increased padding
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(uiState.filteredCoupons) { coupon ->
-                    CouponCard(
-                        coupon = coupon,
-                        canAfford = uiState.totalPies >= coupon.costInPies,
-                        onClick = { selectedCoupon = coupon }
-                    )
-                }
-            }
-        }
-
-        // --- Purchase Confirmation Dialog ---
-        if (selectedCoupon != null) {
-            val coupon = selectedCoupon!!
-            AlertDialog(
-                onDismissRequest = { selectedCoupon = null },
-                containerColor = MaterialTheme.colorScheme.surface,
-                title = { Text("Confirm Redemption", color = MaterialTheme.colorScheme.onBackground) },
-                text = {
-                    Text(
-                        "Spend ${coupon.costInPies} pies for ${coupon.brandName}'s ${coupon.discountTitle}?",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            viewModel.purchaseCoupon(coupon)
-                            selectedCoupon = null
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
-                    ) {
-                        Text("Redeem", fontWeight = FontWeight.Bold)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { selectedCoupon = null }) {
-                        Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            )
-        }
-
-        // --- Success Overlay ---
-        AnimatedVisibility(
-            visible = uiState.purchaseSuccess,
-            enter = fadeIn() + scaleIn(),
-            exit = fadeOut() + scaleOut()
-        ) {
+            // --- Coming Soon Section ---
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.8f)),
+                    .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = Color(0xFF00C896),
-                        modifier = Modifier.size(100.dp)
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    Text(
-                        "Coupon Redeemed!",
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        "Check your email for the code.",
-                        color = Color.White.copy(alpha = 0.6f),
-                        fontSize = 16.sp
-                    )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .background(AlimGreen.copy(alpha = 0.12f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingBag,
+                                contentDescription = null,
+                                tint = AlimGreen,
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        Text(
+                            text = "Rewards Shop Coming Soon",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.Center
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        Text(
+                            text = "We are baking some amazing rewards for you! Track your loans, keep up the good credit, and collect more Loaney Pies to redeem them here soon.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 20.sp
+                        )
+                    }
                 }
             }
         }

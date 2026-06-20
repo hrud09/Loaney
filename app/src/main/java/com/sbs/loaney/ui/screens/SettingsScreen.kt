@@ -79,52 +79,6 @@ fun SettingsScreen(
         viewModel.setUserProfilePhoto(uri?.toString())
     }
 
-    val driveScope = Scope("https://www.googleapis.com/auth/drive.appdata")
-    var pendingAction by remember { mutableStateOf<String?>(null) }
-
-    val googleDriveAuthLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val account = GoogleSignIn.getLastSignedInAccount(context)
-            if (account != null && GoogleSignIn.hasPermissions(account, driveScope)) {
-                if (pendingAction == "backup") {
-                    viewModel.backupDatabase()
-                } else if (pendingAction == "restore") {
-                    viewModel.restoreDatabase {
-                        (context as? android.app.Activity)?.finish()
-                        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-                        intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(intent)
-                    }
-                }
-            } else {
-                android.widget.Toast.makeText(context, "Google Drive permission not granted", android.widget.Toast.LENGTH_SHORT).show()
-            }
-        }
-        pendingAction = null
-    }
-
-    val triggerGoogleDriveAction: (String) -> Unit = { action ->
-        val account = GoogleSignIn.getLastSignedInAccount(context)
-        if (account != null && GoogleSignIn.hasPermissions(account, driveScope)) {
-            if (action == "backup") viewModel.backupDatabase()
-            else viewModel.restoreDatabase {
-                (context as? android.app.Activity)?.finish()
-                val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-                intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(intent)
-            }
-        } else {
-            pendingAction = action
-            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestScopes(driveScope)
-                .build()
-            val googleSignInClient = GoogleSignIn.getClient(context, gso)
-            googleDriveAuthLauncher.launch(googleSignInClient.signInIntent)
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -273,43 +227,6 @@ fun SettingsScreen(
                         )
                     }
 
-                    // -- GROUP 4: BACKUP & SYNC --
-                    SettingsGroup(title = "Cloud Backup & Sync") {
-                        val backupState by viewModel.backupState.collectAsState()
-                        val errorMessage by viewModel.backupErrorMessage.collectAsState()
-                        
-                        LaunchedEffect(backupState) {
-                            if (backupState == com.sbs.loaney.ui.viewmodel.BackupState.SUCCESS) {
-                                android.widget.Toast.makeText(context, "Cloud sync operation successful!", android.widget.Toast.LENGTH_SHORT).show()
-                                viewModel.resetBackupState()
-                            } else if (backupState == com.sbs.loaney.ui.viewmodel.BackupState.ERROR) {
-                                android.widget.Toast.makeText(context, errorMessage ?: "Operation failed", android.widget.Toast.LENGTH_LONG).show()
-                                viewModel.resetBackupState()
-                            }
-                        }
-                        
-                        SettingsItem(
-                            icon = Icons.Default.CloudUpload,
-                            title = "Backup Now",
-                            subtitle = if (backupState == com.sbs.loaney.ui.viewmodel.BackupState.LOADING) "Backing up..." else "Upload database to Google Drive",
-                            onClick = {
-                                if (backupState != com.sbs.loaney.ui.viewmodel.BackupState.LOADING) {
-                                    triggerGoogleDriveAction("backup")
-                                }
-                            }
-                        )
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
-                        SettingsItem(
-                            icon = Icons.Default.CloudDownload,
-                            title = "Restore Data",
-                            subtitle = if (backupState == com.sbs.loaney.ui.viewmodel.BackupState.LOADING) "Restoring..." else "Download database from Google Drive",
-                            onClick = {
-                                if (backupState != com.sbs.loaney.ui.viewmodel.BackupState.LOADING) {
-                                    triggerGoogleDriveAction("restore")
-                                }
-                            }
-                        )
-                    }
                 }
             }
         }

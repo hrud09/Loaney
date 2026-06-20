@@ -104,45 +104,9 @@ fun AuthScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        authViewModel.checkPendingFacebookAuth(
-            defaultName = name.takeIf { isSignUp },
-            defaultCurrency = selectedCurrency.takeIf { isSignUp }
-        )
-    }
 
-    // --- Google Sign In Setup ---
-    val webClientId = remember {
-        val resId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-        if (resId != 0) context.getString(resId) else "768292747056-p32lk2i0fmf8vvu5107jd8s0bs2tf81r.apps.googleusercontent.com"
-    }
 
-    val googleSignInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)!!
-                val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-                authViewModel.signInWithCredential(credential, name.takeIf { isSignUp }, selectedCurrency)
-            } catch (e: ApiException) {
-                val statusMessage = when (e.statusCode) {
-                    10, 12500 -> "Developer configuration issue. Make sure your SHA-1 fingerprint is added in the Firebase Console."
-                    7 -> "Network error. Please check your internet connection."
-                    12501 -> null // User cancelled, ignore
-                    else -> "Google sign in failed (code ${e.statusCode}): ${e.message}"
-                }
-                if (statusMessage != null) {
-                    localError = statusMessage
-                }
-            } catch (e: Exception) {
-                localError = "Google sign in failed: ${e.message}"
-            }
-        } else if (result.resultCode == Activity.RESULT_CANCELED) {
-            // User cancelled the flow, ignore to be seamless
-        } else {
-            localError = "Google Sign-In canceled or failed."
-        }
-    }
+
 
     // --- Image Picker Setup ---
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -547,67 +511,6 @@ fun AuthScreen(
                     Text(if (isPhoneMode) "Continue with Email" else "Continue with Phone", fontWeight = FontWeight.Bold)
                 }
                 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Google Sign In Button
-                OutlinedButton(
-                    onClick = {
-                        localError = null
-                        if (webClientId.isEmpty()) {
-                            localError = "Google Sign-In is not configured. Missing Web Client ID in google-services.json."
-                            return@OutlinedButton
-                        }
-                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                            .requestIdToken(webClientId)
-                            .requestEmail()
-                            .build()
-                        val googleSignInClient = GoogleSignIn.getClient(context, gso)
-                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
-                    },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_google_logo),
-                            contentDescription = "Google Logo",
-                            modifier = Modifier.size(20.dp),
-                            tint = Color.Unspecified
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("Continue with Google", fontWeight = FontWeight.Bold)
-                    }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Facebook Sign In Button
-                Button(
-                    onClick = {
-                        localError = null
-                        if (activity != null) {
-                            authViewModel.signInWithFacebook(
-                                activity = activity,
-                                defaultName = name.takeIf { isSignUp },
-                                defaultCurrency = selectedCurrency.takeIf { isSignUp }
-                            )
-                        } else {
-                            localError = "Activity context is required for Facebook Login"
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1877F2), // Facebook Blue
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("Continue with Facebook", fontWeight = FontWeight.Bold, color = Color.White)
-                }
             } else {
                 Spacer(modifier = Modifier.height(24.dp))
                 TextButton(onClick = { isOtpMode = false }) {
