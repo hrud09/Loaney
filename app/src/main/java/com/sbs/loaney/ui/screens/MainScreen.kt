@@ -298,6 +298,7 @@ fun MainScreen(
                 composable(Screen.Onboarding.route) {
                     OnboardingScreen(
                         onFinish = {
+                            settingsViewModel.setOnboardingCompleted(true)
                             navController.navigate(Screen.Auth.route) {
                                 popUpTo(Screen.Onboarding.route) { inclusive = true }
                             }

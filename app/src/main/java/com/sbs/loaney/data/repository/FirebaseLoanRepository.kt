@@ -15,9 +15,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.async
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
 class FirebaseLoanRepository @Inject constructor(
@@ -33,20 +36,26 @@ class FirebaseLoanRepository @Inject constructor(
     private val LOAN_ITEMS_COLLECTION = "loanItems"
     private val BANK_ACCOUNTS_COLLECTION = "bankAccounts"
 
-    private inline fun <reified T> getSubcollectionFlow(subcollectionName: String): Flow<List<T>> = callbackFlow {
-        val uid = auth.currentUser?.uid
-        if (uid == null) {
-            trySend(emptyList())
-            close()
-            return@callbackFlow
-        }
+    private inline fun <reified T> getSubcollectionFlow(uid: String, subcollectionName: String): Flow<List<T>> = callbackFlow {
         val listener = firestore.collection("users").document(uid).collection(subcollectionName)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     trySend(emptyList()) // Safely fallback if network/permissions fail
                     return@addSnapshotListener
                 }
-                val items = snapshot?.toObjects(T::class.java) ?: emptyList()
+                val items = mutableListOf<T>()
+                if (snapshot != null) {
+                    for (doc in snapshot.documents) {
+                        try {
+                            val item = doc.toObject(T::class.java)
+                            if (item != null) {
+                                items.add(item)
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("FirebaseLoanRepository", "Error deserializing document ${doc.id} in $subcollectionName: ${e.message}", e)
+                        }
+                    }
+                }
                 trySend(items)
             }
         awaitClose { listener.remove() }
@@ -94,9 +103,29 @@ class FirebaseLoanRepository @Inject constructor(
         auth.currentUser?.uid ?: throw Exception("Unauthorized: Please log in again to sync data.")
     )
 
-    private val allLoansBaseFlow = getSubcollectionFlow<LoanEntity>(LOANS_COLLECTION)
-    private val allPaymentsBaseFlow = getSubcollectionFlow<PaymentEntity>(PAYMENTS_COLLECTION)
-    private val allLoanItemsBaseFlow = getSubcollectionFlow<LoanItemEntity>(LOAN_ITEMS_COLLECTION)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val userIdFlow: Flow<String?> = callbackFlow {
+        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            trySend(firebaseAuth.currentUser?.uid)
+        }
+        auth.addAuthStateListener(listener)
+        awaitClose { auth.removeAuthStateListener(listener) }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val allLoansBaseFlow = userIdFlow.flatMapLatest { uid ->
+        if (uid == null) flowOf(emptyList()) else getSubcollectionFlow<LoanEntity>(uid, LOANS_COLLECTION)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val allPaymentsBaseFlow = userIdFlow.flatMapLatest { uid ->
+        if (uid == null) flowOf(emptyList()) else getSubcollectionFlow<PaymentEntity>(uid, PAYMENTS_COLLECTION)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val allLoanItemsBaseFlow = userIdFlow.flatMapLatest { uid ->
+        if (uid == null) flowOf(emptyList()) else getSubcollectionFlow<LoanItemEntity>(uid, LOAN_ITEMS_COLLECTION)
+    }
 
     override fun getAllLoans(): Flow<List<LoanWithPayments>> {
         return combine(allLoansBaseFlow, allPaymentsBaseFlow, allLoanItemsBaseFlow) { loans, payments, items ->
@@ -206,9 +235,46 @@ class FirebaseLoanRepository @Inject constructor(
         }
         
         val loanDoc = loanDeferred.await()
-        val loan = loanDoc.toObject(LoanEntity::class.java) ?: return@coroutineScope
-        val payments = paymentsDeferred.await().toObjects(PaymentEntity::class.java)
-        val items = itemsDeferred.await().toObjects(LoanItemEntity::class.java)
+        val loan = try {
+            loanDoc.toObject(LoanEntity::class.java)
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseLoanRepository", "Error deserializing restored loan $loanId: ${e.message}", e)
+            null
+        } ?: return@coroutineScope
+
+        val payments = mutableListOf<PaymentEntity>()
+        try {
+            val pSnapshot = paymentsDeferred.await()
+            for (doc in pSnapshot.documents) {
+                try {
+                    val p = doc.toObject(PaymentEntity::class.java)
+                    if (p != null) {
+                        payments.add(p)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("FirebaseLoanRepository", "Error deserializing payment for restored loan $loanId: ${e.message}", e)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseLoanRepository", "Error loading payments for restored loan $loanId: ${e.message}", e)
+        }
+
+        val items = mutableListOf<LoanItemEntity>()
+        try {
+            val iSnapshot = itemsDeferred.await()
+            for (doc in iSnapshot.documents) {
+                try {
+                    val item = doc.toObject(LoanItemEntity::class.java)
+                    if (item != null) {
+                        items.add(item)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("FirebaseLoanRepository", "Error deserializing item for restored loan $loanId: ${e.message}", e)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseLoanRepository", "Error loading items for restored loan $loanId: ${e.message}", e)
+        }
         
         val totalLoan = loan.amount + items.sumOf { it.amount }
         val paid = payments.sumOf { it.amount }
@@ -262,7 +328,12 @@ class FirebaseLoanRepository @Inject constructor(
         val batch = firestore.batch()
         var hasUpdates = false
         for (doc in snapshot.documents) {
-            val loan = doc.toObject(LoanEntity::class.java) ?: continue
+            val loan = try {
+                doc.toObject(LoanEntity::class.java)
+            } catch (e: Exception) {
+                android.util.Log.e("FirebaseLoanRepository", "Error deserializing loan ${doc.id} during cleanup: ${e.message}", e)
+                null
+            } ?: continue
             if (loan.deleted || loan.status == LoanStatus.FULLY_PAID || loan.status == LoanStatus.FORGIVEN) {
                 batch.delete(doc.reference)
                 hasUpdates = true
@@ -325,8 +396,11 @@ class FirebaseLoanRepository @Inject constructor(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getAllBankAccounts(): Flow<List<BankAccountEntity>> {
-        return getSubcollectionFlow<BankAccountEntity>(BANK_ACCOUNTS_COLLECTION)
+        return userIdFlow.flatMapLatest { uid ->
+            if (uid == null) flowOf(emptyList()) else getSubcollectionFlow<BankAccountEntity>(uid, BANK_ACCOUNTS_COLLECTION)
+        }
     }
 
     override suspend fun insertBankAccount(account: BankAccountEntity): Long {

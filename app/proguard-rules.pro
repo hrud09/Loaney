@@ -5,6 +5,17 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
+# Keep model and entity classes for Firebase Firestore serialization/deserialization
+-keep class com.sbs.loaney.data.local.entity.** { *; }
+-keep class com.sbs.loaney.data.model.** { *; }
+
+# Keep Room database and DAO classes
+-keep class com.sbs.loaney.data.local.AppDatabase { *; }
+-keep class com.sbs.loaney.data.local.dao.** { *; }
+
+# Preserve annotations, signature, and enclosing methods
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:

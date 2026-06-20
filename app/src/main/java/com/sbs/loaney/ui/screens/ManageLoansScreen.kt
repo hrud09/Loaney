@@ -209,11 +209,7 @@ fun ManageLoansScreen(
                         ) {
                             items(loans, key = { it.loan.id }) { item ->
                                 SwipeableManageLoanCard(
-                                    modifier = Modifier.animateItem(
-                                        fadeInSpec = null, 
-                                        placementSpec = androidx.compose.animation.core.tween(durationMillis = 300, easing = androidx.compose.animation.core.FastOutSlowInEasing), 
-                                        fadeOutSpec = null
-                                    ),
+                                    modifier = Modifier,
                                     item = item,
                                     dateFormat = dateFormat,
                                     currencySymbol = uiState.currencySymbol,
@@ -290,8 +286,7 @@ fun SwipeableManageLoanCard(
                 }
                 else -> false
             }
-        },
-        positionalThreshold = { totalDistance -> totalDistance * 0.4f }
+        }
     )
 
     SwipeToDismissBox(

@@ -349,7 +349,19 @@ class UserLinkRepository @Inject constructor() {
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
-                val items = snapshot?.toObjects(LinkedLoanNotification::class.java) ?: emptyList()
+                val items = mutableListOf<LinkedLoanNotification>()
+                if (snapshot != null) {
+                    for (doc in snapshot.documents) {
+                        try {
+                            val item = doc.toObject(LinkedLoanNotification::class.java)
+                            if (item != null) {
+                                items.add(item)
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error deserializing notification document ${doc.id}: ${e.message}", e)
+                        }
+                    }
+                }
                 trySend(items)
             }
         awaitClose { listener.remove() }

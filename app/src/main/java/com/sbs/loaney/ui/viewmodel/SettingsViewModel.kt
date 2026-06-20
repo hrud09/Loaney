@@ -23,10 +23,21 @@ data class SettingsUiState(
     val userDob: String? = null
 )
 
+enum class BackupState {
+    IDLE, LOADING, SUCCESS, ERROR
+}
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
+
+    private val _backupState = kotlinx.coroutines.flow.MutableStateFlow<BackupState>(BackupState.IDLE)
+    val backupState: StateFlow<BackupState> = _backupState
+
+    private val _backupErrorMessage = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val backupErrorMessage: StateFlow<String?> = _backupErrorMessage
 
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.themeModeFlow,
@@ -136,5 +147,39 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.setOnboardingCompleted(completed)
         }
+    }
+
+    fun backupDatabase() {
+        _backupState.value = BackupState.LOADING
+        _backupErrorMessage.value = null
+        viewModelScope.launch {
+            val result = com.sbs.loaney.util.GoogleDriveBackupManager(context).backup()
+            result.onSuccess {
+                _backupState.value = BackupState.SUCCESS
+            }.onFailure { error ->
+                _backupState.value = BackupState.ERROR
+                _backupErrorMessage.value = error.message ?: "Backup failed"
+            }
+        }
+    }
+
+    fun restoreDatabase(onSuccess: () -> Unit = {}) {
+        _backupState.value = BackupState.LOADING
+        _backupErrorMessage.value = null
+        viewModelScope.launch {
+            val result = com.sbs.loaney.util.GoogleDriveBackupManager(context).restore()
+            result.onSuccess {
+                _backupState.value = BackupState.SUCCESS
+                onSuccess()
+            }.onFailure { error ->
+                _backupState.value = BackupState.ERROR
+                _backupErrorMessage.value = error.message ?: "Restore failed"
+            }
+        }
+    }
+
+    fun resetBackupState() {
+        _backupState.value = BackupState.IDLE
+        _backupErrorMessage.value = null
     }
 }

@@ -35,7 +35,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             if (exception is IOException) emit(emptyPreferences()) else throw exception
         }
         .map { preferences ->
-            preferences[PreferencesKeys.THEME_MODE] ?: 1
+            preferences[PreferencesKeys.THEME_MODE] ?: 0
         }
 
     val accentColorFlow: Flow<Int> = dataStore.data

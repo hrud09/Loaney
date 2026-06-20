@@ -30,7 +30,7 @@ import com.sbs.loaney.ui.theme.*
 fun OnboardingScreen(
     onFinish: () -> Unit
 ) {
-    val isDark = isSystemInDarkTheme()
+    val isDark = MaterialTheme.colorScheme.onBackground == AlimCream
     val pages = remember(isDark) {
         listOf(
             OnboardingPage(

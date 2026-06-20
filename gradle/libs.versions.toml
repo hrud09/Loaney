@@ -26,6 +26,9 @@ playServicesAuth = "21.3.0"
 lottie = "6.6.0"
 zxing = "3.5.3"
 zxingEmbedded = "4.3.0"
+googleApiClient = "2.2.0"
+googleHttpClient = "1.43.3"
+googleServicesDrive = "v3-rev20230822-2.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -66,6 +69,9 @@ play-services-auth = { group = "com.google.android.gms", name = "play-services-a
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 zxing-android-embedded = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxingEmbedded" }
+google-api-client-android = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClient" }
+google-api-services-drive = { group = "com.google.apis", name = "google-api-services-drive", version.ref = "googleServicesDrive" }
+google-http-client-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClient" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
