@@ -3,7 +3,7 @@ package com.sbs.loaney.di
 import android.content.Context
 import com.sbs.loaney.data.local.AppDatabase
 import com.sbs.loaney.data.repository.ILoanRepository
-import com.sbs.loaney.data.repository.FirebaseLoanRepository
+import com.sbs.loaney.data.repository.LoanRepository
 import com.sbs.loaney.data.repository.SettingsRepository
 import com.sbs.loaney.data.repository.dataStore
 import dagger.Module
@@ -25,8 +25,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideLoanRepository(firebaseRepository: FirebaseLoanRepository): ILoanRepository {
-        return firebaseRepository
+    fun provideLoanRepository(database: AppDatabase): ILoanRepository {
+        return LoanRepository(
+            loanDao = database.loanDao(),
+            bankAccountDao = database.bankAccountDao()
+        )
     }
 
     @Provides
