@@ -603,7 +603,7 @@ fun BkashBottomNavBar(
                     icon = if (historySelected) Icons.Default.ReceiptLong else Icons.Outlined.ReceiptLong,
                     label = "Transaction",
                     selected = historySelected,
-                    onClick = { onNavItemClick(Screen.ManageLoans.route) }
+                    onClick = { onNavItemClick(Screen.ManageLoans.createRoute()) }
                 )
 
                 // Placeholder for center FAB space
