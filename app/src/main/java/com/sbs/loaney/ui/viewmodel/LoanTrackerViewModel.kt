@@ -29,11 +29,14 @@ enum class DeletionReason {
     OTHER
 }
 
+import com.sbs.loaney.util.AnalyticsHelper
+
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class LoanTrackerViewModel @Inject constructor(
     private val repository: ILoanRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val analyticsHelper: AnalyticsHelper
 ) : ViewModel() {
 
     private val _selectedLoanId = MutableStateFlow<Long?>(null)
@@ -70,6 +73,7 @@ class LoanTrackerViewModel @Inject constructor(
                 proofUri = proofUri
             )
             repository.insertPayment(payment)
+            analyticsHelper.logPaymentCompleted(amount)
             updateLoanStatus(loanId)
         }
     }

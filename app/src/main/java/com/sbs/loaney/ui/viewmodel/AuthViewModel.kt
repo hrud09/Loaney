@@ -16,9 +16,12 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState()
 }
 
+import com.sbs.loaney.util.AnalyticsHelper
+
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val analyticsHelper: AnalyticsHelper
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -34,6 +37,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             val result = authRepository.signUp(email, password, name, currency, phone, profilePhotoUri, address, dateOfBirth)
             result.onSuccess {
+                analyticsHelper.logEvent("sign_up_complete")
                 _authState.value = AuthState.Success
             }.onFailure { error ->
                 _authState.value = AuthState.Error(error.message ?: "Sign up failed")
@@ -46,6 +50,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             val result = authRepository.signIn(email, password)
             result.onSuccess {
+                analyticsHelper.logEvent("login_complete")
                 _authState.value = AuthState.Success
             }.onFailure { error ->
                 _authState.value = AuthState.Error(error.message ?: "Log in failed")
@@ -71,6 +76,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             val result = authRepository.signInWithCredential(credential, name, currency, email, phone, profilePhotoUri, address, dateOfBirth)
             result.onSuccess {
+                analyticsHelper.logEvent("login_complete")
                 _authState.value = AuthState.Success
             }.onFailure { error ->
                 _authState.value = AuthState.Error(error.message ?: "Sign in failed")
@@ -96,6 +102,7 @@ class AuthViewModel @Inject constructor(
                 viewModelScope.launch {
                     val result = authRepository.handlePostOAuthLogin(authResult, defaultName, defaultCurrency)
                     result.onSuccess {
+                        analyticsHelper.logEvent("login_complete")
                         _authState.value = AuthState.Success
                     }.onFailure { error ->
                         _authState.value = AuthState.Error(error.message ?: "Facebook login failed")
@@ -122,6 +129,7 @@ class AuthViewModel @Inject constructor(
                 viewModelScope.launch {
                     val result = authRepository.handlePostOAuthLogin(authResult, defaultName, defaultCurrency)
                     result.onSuccess {
+                        analyticsHelper.logEvent("login_complete")
                         _authState.value = AuthState.Success
                     }.onFailure { error ->
                         _authState.value = AuthState.Error(error.message ?: "Facebook login failed")

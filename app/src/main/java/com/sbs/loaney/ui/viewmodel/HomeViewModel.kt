@@ -49,11 +49,14 @@ data class HomeUiState(
     val hasSeenTutorial: Boolean = true // Default true to avoid showing it while loading
 )
 
+import com.sbs.loaney.util.AnalyticsHelper
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: ILoanRepository,
     private val settingsRepository: SettingsRepository,
-    private val userLinkRepository: UserLinkRepository
+    private val userLinkRepository: UserLinkRepository,
+    private val analyticsHelper: AnalyticsHelper
 ) : ViewModel() {
 
     // Sharing account state
@@ -276,6 +279,7 @@ class HomeViewModel @Inject constructor(
                 qrCodeUri = qrCodeUri
             )
             repository.insertBankAccount(account)
+            analyticsHelper.logBankAccountAdded(isCard, isMfs)
         }
     }
 

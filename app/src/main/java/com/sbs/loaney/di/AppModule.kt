@@ -35,4 +35,10 @@ object AppModule {
     fun provideSettingsRepository(@ApplicationContext context: Context): SettingsRepository {
         return SettingsRepository(context.dataStore)
     }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAnalytics(@ApplicationContext context: Context): com.google.firebase.analytics.FirebaseAnalytics {
+        return com.google.firebase.analytics.FirebaseAnalytics.getInstance(context)
+    }
 }

@@ -175,6 +175,8 @@ class LoanReminderWorker(
 
         try {
             NotificationManagerCompat.from(applicationContext).notify(id, notification)
+            com.google.firebase.analytics.FirebaseAnalytics.getInstance(applicationContext)
+                .logEvent("reminder_notification_sent", null)
         } catch (e: SecurityException) {
             // Permission not granted — silently skip
         }

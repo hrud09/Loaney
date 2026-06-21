@@ -43,12 +43,15 @@ data class ManageLoansUiState(
     val emailLinkStatus: EmailLinkStatus = EmailLinkStatus.IDLE
 )
 
+import com.sbs.loaney.util.AnalyticsHelper
+
 @HiltViewModel
 class ManageLoansViewModel @Inject constructor(
     private val repository: ILoanRepository,
     private val settingsRepository: SettingsRepository,
     private val userLinkRepository: UserLinkRepository,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val analyticsHelper: AnalyticsHelper
 ) : ViewModel() {
 
     // Internal mutable state for email-lookup status
@@ -147,6 +150,8 @@ class ManageLoansViewModel @Inject constructor(
                 status = LoanStatus.ACTIVE
             )
             val loanId = repository.insertLoan(loan)
+            
+            analyticsHelper.logLoanCreated(amount, type.name)
 
             // ── Cross-user notification ──────────────────────────────────────
             // If the email belongs to a registered Loaney user, send them a

@@ -178,6 +178,8 @@ object PdfReceiptGenerator {
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+        com.google.firebase.analytics.FirebaseAnalytics.getInstance(context)
+            .logEvent("receipt_generated", null)
         context.startActivity(Intent.createChooser(shareIntent, "Share Receipt"))
     }
 
@@ -319,6 +321,10 @@ object PdfReceiptGenerator {
         val outputStream = java.io.ByteArrayOutputStream()
         pdfDocument.writeTo(outputStream)
         pdfDocument.close()
+        
+        com.google.firebase.analytics.FirebaseAnalytics.getInstance(context)
+            .logEvent("receipt_generated", null)
+            
         return outputStream.toByteArray()
     }
 
