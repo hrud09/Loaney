@@ -261,11 +261,6 @@ fun HomeScreen(
                     ) {
                         Spacer(modifier = Modifier.height(16.dp))
 
-                    if (allLoans.isEmpty()) {
-                        Box(modifier = Modifier.padding(horizontal = 20.dp)) {
-                            HomeZeroState(onNavigateToAddLoan = { onNavigateToAddLoan("LEND") })
-                        }
-                     }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
