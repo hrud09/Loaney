@@ -36,6 +36,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.ui.screens.CustomLightTextField
 import com.sbs.loaney.ui.theme.*
+import com.sbs.loaney.ui.viewmodel.BackupState
 import com.sbs.loaney.ui.viewmodel.SettingsViewModel
 import androidx.compose.ui.res.stringResource
 import com.sbs.loaney.R
@@ -54,10 +55,14 @@ fun SettingsScreen(
     isTopLevel: Boolean = false,
     onProfileClick: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
+    onCloudBackupSignInClick: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val backupState by viewModel.backupState.collectAsState()
+    val backupErrorMessage by viewModel.backupErrorMessage.collectAsState()
     val context = LocalContext.current
+    val isSignedIn = remember { com.google.firebase.auth.FirebaseAuth.getInstance().currentUser != null }
 
     // Dialog & Sheet States
     var showNameDialog by remember { mutableStateOf(false) }
@@ -227,8 +232,46 @@ fun SettingsScreen(
                         )
                     }
 
+                    SettingsGroup(title = "Cloud Backup") {
+                        SettingsItem(
+                            icon = Icons.Default.CloudUpload,
+                            title = if (isSignedIn) "Back up to cloud" else "Sign in to back up to cloud",
+                            subtitle = if (isSignedIn) "Save a secure copy with your cloud account" else "Guest data stays on this device until you sign in",
+                            onClick = {
+                                if (isSignedIn) {
+                                    viewModel.backupDatabase()
+                                } else {
+                                    onCloudBackupSignInClick()
+                                }
+                            }
+                        )
+                        if (isSignedIn) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                            SettingsItem(
+                                icon = Icons.Default.CloudDownload,
+                                title = "Restore from cloud",
+                                subtitle = "Bring back your latest cloud backup",
+                                onClick = { viewModel.restoreDatabase() }
+                            )
+                        }
+                    }
+
                 }
             }
+        }
+    }
+
+    LaunchedEffect(backupState, backupErrorMessage) {
+        when (backupState) {
+            BackupState.SUCCESS -> {
+                android.widget.Toast.makeText(context, "Cloud backup updated", android.widget.Toast.LENGTH_SHORT).show()
+                viewModel.resetBackupState()
+            }
+            BackupState.ERROR -> {
+                android.widget.Toast.makeText(context, backupErrorMessage ?: "Cloud backup failed", android.widget.Toast.LENGTH_LONG).show()
+                viewModel.resetBackupState()
+            }
+            else -> Unit
         }
     }
 

@@ -65,12 +65,9 @@ class MainActivity : ComponentActivity() {
 
             LoaneyTheme(darkTheme = isDarkTheme) {
                 if (onboardingCompleted != null) {
-            val startDest = androidx.compose.runtime.remember(onboardingCompleted == null) {
-                val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-                if (currentUser != null) {
+            val startDest = androidx.compose.runtime.remember(onboardingCompleted) {
+                if (onboardingCompleted == true) {
                     com.sbs.loaney.ui.navigation.Screen.Home.route
-                } else if (onboardingCompleted == true) {
-                    com.sbs.loaney.ui.navigation.Screen.Auth.route
                 } else {
                     com.sbs.loaney.ui.navigation.Screen.Onboarding.route
                 }

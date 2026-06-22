@@ -13,6 +13,20 @@ class AuthRepository @Inject constructor(
 
     val currentUser get() = auth.currentUser
 
+    suspend fun continueAsGuest(name: String, currency: String): Result<Unit> {
+        return try {
+            settingsRepository.setUserName(name.trim())
+            settingsRepository.setCurrencySymbol(currency)
+            settingsRepository.setUserProfilePhoto(null)
+            settingsRepository.setUserAddress(null)
+            settingsRepository.setUserDob(null)
+            settingsRepository.setOnboardingCompleted(true)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /**
      * Signs up the user, saves their profile to Firestore, 
      * and updates the local settings state for seamless access.

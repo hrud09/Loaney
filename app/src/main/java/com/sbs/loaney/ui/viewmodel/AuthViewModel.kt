@@ -58,6 +58,19 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun continueAsGuest(name: String, currency: String) {
+        _authState.value = AuthState.Loading
+        viewModelScope.launch {
+            val result = authRepository.continueAsGuest(name, currency)
+            result.onSuccess {
+                analyticsHelper.logEvent("guest_mode_start")
+                _authState.value = AuthState.Success
+            }.onFailure { error ->
+                _authState.value = AuthState.Error(error.message ?: "Guest mode failed")
+            }
+        }
+    }
+
     fun resetState() {
         _authState.value = AuthState.Idle
     }
