@@ -298,7 +298,6 @@ fun MainScreen(
                 composable(Screen.Onboarding.route) {
                     OnboardingScreen(
                         onFinish = {
-                            settingsViewModel.setOnboardingCompleted(true)
                             navController.navigate(Screen.Auth.route) {
                                 popUpTo(Screen.Onboarding.route) { inclusive = true }
                             }
@@ -418,7 +417,10 @@ fun MainScreen(
                         isTopLevel = isTopLevel,
                         onNavigateBack = { navController.popBackStack() },
                         onProfileClick = { scope.launch { drawerState.open() } },
-                        onNotificationsClick = { /* TODO: Implement global notifications */ }
+                        onNotificationsClick = { /* TODO: Implement global notifications */ },
+                        onCloudBackupSignInClick = {
+                            navController.navigate(Screen.Auth.route)
+                        }
                     )
                 }
                 composable(Screen.Shop.route) {

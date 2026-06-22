@@ -64,6 +64,7 @@ fun AuthScreen(
     onAuthSuccess: () -> Unit,
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
+    var isGuestMode by remember { mutableStateOf(true) }
     var isSignUp by remember { mutableStateOf(false) }
     var isPhoneMode by remember { mutableStateOf(false) }
     var isOtpMode by remember { mutableStateOf(false) }
@@ -149,7 +150,11 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(48.dp))
             
             Text(
-                text = if (isSignUp) "Create Account" else "Welcome Back",
+                text = when {
+                    isGuestMode -> "Hop into Loaney"
+                    isSignUp -> "Create Account"
+                    else -> "Welcome Back"
+                },
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground
                 ),
@@ -157,7 +162,11 @@ fun AuthScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (isSignUp) "Sign up to securely sync your data" else "Log in to access your records",
+                text = when {
+                    isGuestMode -> "Use the app with just your name. Your data stays secure on this device."
+                    isSignUp -> "Create an account when you want cloud backup."
+                    else -> "Sign in to back up or restore your cloud data."
+                },
                 style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)),
                 textAlign = TextAlign.Center
             )
@@ -165,7 +174,7 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Profile Image Picker (Moved to top of form)
-            AnimatedVisibility(visible = isSignUp && !isOtpMode) {
+            AnimatedVisibility(visible = !isGuestMode && isSignUp && !isOtpMode) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "Profile Picture",
@@ -200,8 +209,65 @@ fun AuthScreen(
                 }
             }
 
+            AnimatedVisibility(visible = isGuestMode) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it; localError = null },
+                        label = { Text("Your Name") },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AlimGreen) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AlimGreen,
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Local Currency",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        currencies.forEach { (symbol, code) ->
+                            val isSelected = selectedCurrency == symbol
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (isSelected) AlimGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { selectedCurrency = symbol }
+                                    .border(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) AlimGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(symbol, style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold, color = if (isSelected) AlimGreen else MaterialTheme.colorScheme.onSurface
+                                    ))
+                                    Text(code, style = MaterialTheme.typography.labelSmall.copy(
+                                        color = if (isSelected) AlimGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 9.sp
+                                    ))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Toggle Bar (Sign In / Sign Up)
             if (!isOtpMode) {
+                AnimatedVisibility(visible = !isGuestMode) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -232,6 +298,7 @@ fun AuthScreen(
                         Text("Sign Up", color = if (isSignUp) Color.White else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                     }
                 }
+                }
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
@@ -247,7 +314,7 @@ fun AuthScreen(
             }
 
             // Dynamic User Form
-            if (isOtpMode) {
+            if (!isGuestMode && isOtpMode) {
                 Text("Enter the 6-digit code sent to $phoneNumber", style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
@@ -261,7 +328,7 @@ fun AuthScreen(
                         focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
-            } else if (isPhoneMode) {
+            } else if (!isGuestMode && isPhoneMode) {
                 OutlinedTextField(
                     value = phoneNumber,
                     onValueChange = { phoneNumber = it; localError = null },
@@ -274,7 +341,7 @@ fun AuthScreen(
                         focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
-            } else {
+            } else if (!isGuestMode) {
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it; localError = null },
@@ -310,7 +377,7 @@ fun AuthScreen(
             }
 
             // Profile Setup snippet for Sign Up
-            AnimatedVisibility(visible = isSignUp && !isOtpMode) {
+            AnimatedVisibility(visible = !isGuestMode && isSignUp && !isOtpMode) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -431,7 +498,13 @@ fun AuthScreen(
                 onClick = {
                     keyboardController?.hide()
                     localError = null
-                    if (isOtpMode) {
+                    if (isGuestMode) {
+                        if (name.isBlank()) {
+                            localError = "Enter your name to continue"
+                        } else {
+                            authViewModel.continueAsGuest(name, selectedCurrency)
+                        }
+                    } else if (isOtpMode) {
                         try {
                             val credential = PhoneAuthProvider.getCredential(verificationId, otpCode)
                             authViewModel.signInWithCredential(
@@ -478,6 +551,7 @@ fun AuthScreen(
                     CircularProgressIndicator(color = AlimWhite, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 } else {
                     val btnText = when {
+                        isGuestMode -> "Continue as Guest"
                         isOtpMode -> "Verify & Continue"
                         isPhoneMode -> "Send SMS Code"
                         isSignUp -> "Create Account"
@@ -497,18 +571,44 @@ fun AuthScreen(
                 }
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Toggle Phone/Email button
-                OutlinedButton(
-                    onClick = { 
-                        isPhoneMode = !isPhoneMode
-                        localError = null
-                    },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
-                ) {
-                    Text(if (isPhoneMode) "Continue with Email" else "Continue with Phone", fontWeight = FontWeight.Bold)
+                if (isGuestMode) {
+                    OutlinedButton(
+                        onClick = {
+                            isGuestMode = false
+                            localError = null
+                        },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
+                    ) {
+                        Text("Sign in for cloud backup", fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = { 
+                            isPhoneMode = !isPhoneMode
+                            localError = null
+                        },
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
+                    ) {
+                        Text(if (isPhoneMode) "Continue with Email" else "Continue with Phone", fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TextButton(
+                        onClick = {
+                            isGuestMode = true
+                            isPhoneMode = false
+                            isSignUp = false
+                            localError = null
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Use without signing in", color = AlimGreen, fontWeight = FontWeight.Bold)
+                    }
                 }
                 
             } else {
