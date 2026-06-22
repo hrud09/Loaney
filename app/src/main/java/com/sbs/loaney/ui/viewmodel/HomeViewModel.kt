@@ -1,5 +1,7 @@
 package com.sbs.loaney.ui.viewmodel
 
+import com.sbs.loaney.util.AnalyticsHelper
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sbs.loaney.data.local.dao.LoanWithPayments
@@ -48,8 +50,6 @@ data class HomeUiState(
     val userProfilePhoto: String? = null,
     val hasSeenTutorial: Boolean = true // Default true to avoid showing it while loading
 )
-
-import com.sbs.loaney.util.AnalyticsHelper
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(

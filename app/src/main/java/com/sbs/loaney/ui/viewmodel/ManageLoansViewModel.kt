@@ -1,5 +1,7 @@
 package com.sbs.loaney.ui.viewmodel
 
+import com.sbs.loaney.util.AnalyticsHelper
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sbs.loaney.data.local.dao.LoanWithPayments
@@ -42,8 +44,6 @@ data class ManageLoansUiState(
     val linkedUserName: String? = null,
     val emailLinkStatus: EmailLinkStatus = EmailLinkStatus.IDLE
 )
-
-import com.sbs.loaney.util.AnalyticsHelper
 
 @HiltViewModel
 class ManageLoansViewModel @Inject constructor(

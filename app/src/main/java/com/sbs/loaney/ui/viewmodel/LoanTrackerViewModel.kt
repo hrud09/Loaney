@@ -1,5 +1,7 @@
 package com.sbs.loaney.ui.viewmodel
 
+import com.sbs.loaney.util.AnalyticsHelper
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sbs.loaney.data.local.dao.LoanWithPayments
@@ -28,8 +30,6 @@ enum class DeletionReason {
     MISTAKE,
     OTHER
 }
-
-import com.sbs.loaney.util.AnalyticsHelper
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel

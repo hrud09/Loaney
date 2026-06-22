@@ -1,5 +1,7 @@
 package com.sbs.loaney.ui.viewmodel
 
+import com.sbs.loaney.util.AnalyticsHelper
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sbs.loaney.data.repository.AuthRepository
@@ -15,8 +17,6 @@ sealed class AuthState {
     object Success : AuthState()
     data class Error(val message: String) : AuthState()
 }
-
-import com.sbs.loaney.util.AnalyticsHelper
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
