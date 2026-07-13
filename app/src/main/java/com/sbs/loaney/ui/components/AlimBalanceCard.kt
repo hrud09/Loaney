@@ -4,9 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,8 +35,7 @@ fun AlimBalanceCard(
     onNavigateToHistoryScreen: () -> Unit,
     onReportClick: () -> Unit,
     onCalendarClick: () -> Unit,
-    onEmiClick: () -> Unit,
-    onSavingsClick: () -> Unit,
+    onToolsClick: () -> Unit,
     onPositionedCalendar: (LayoutCoordinates) -> Unit = {},
     onPositionedQuickActions: (LayoutCoordinates) -> Unit = {},
     onPositionedReport: (LayoutCoordinates) -> Unit = {}
@@ -166,14 +163,12 @@ fun AlimBalanceCard(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Quick Actions Row. Scrolls horizontally: six actions no longer fit on a
-                    // phone width, and SpaceBetween would squash the labels.
+                    // Quick Actions Row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
                             .onGloballyPositioned { onPositionedQuickActions(it) },
-                        horizontalArrangement = Arrangement.spacedBy(20.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         AlimCardAction(Icons.Default.Add, stringResource(id = R.string.lend), onClick = { onNavigateToAddLoan("LEND") })
                         AlimCardAction(Icons.Default.Remove, stringResource(id = R.string.borrow), onClick = { onNavigateToAddLoan("BORROW") })
@@ -181,8 +176,7 @@ fun AlimBalanceCard(
                         Box(modifier = Modifier.onGloballyPositioned { onPositionedReport(it) }) {
                             AlimCardAction(Icons.Default.BarChart, stringResource(id = R.string.report), onClick = onReportClick)
                         }
-                        AlimCardAction(Icons.Default.Calculate, "EMI", onClick = onEmiClick)
-                        AlimCardAction(Icons.Default.Savings, "Savings", onClick = onSavingsClick)
+                        AlimCardAction(Icons.Default.Build, "Tools", onClick = onToolsClick)
                     }
                 }
             }

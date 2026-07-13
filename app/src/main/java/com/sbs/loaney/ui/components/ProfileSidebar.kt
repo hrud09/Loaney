@@ -35,7 +35,7 @@ fun ProfileSidebarContent(
     onNavigateToSettings: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToShop: () -> Unit,
-    onNavigateToDeposit: () -> Unit,
+    onNavigateToTools: () -> Unit,
     onSignOutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -217,9 +217,9 @@ fun ProfileSidebarContent(
             onClick = onNavigateToHistory
         )
         SidebarMenuItem(
-            icon = Icons.Default.Savings,
-            label = "DPS & FDR",
-            onClick = onNavigateToDeposit
+            icon = Icons.Default.Build,
+            label = "Tools",
+            onClick = onNavigateToTools
         )
         SidebarMenuItem(
             icon = Icons.Default.Settings,

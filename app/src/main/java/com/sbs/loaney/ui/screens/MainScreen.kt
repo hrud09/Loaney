@@ -3,6 +3,7 @@ package com.sbs.loaney.ui.screens
 import com.sbs.loaney.ui.screens.ShopScreen
 import com.sbs.loaney.ui.screens.DepositScreen
 import com.sbs.loaney.ui.screens.EmiScreen
+import com.sbs.loaney.ui.screens.ToolsScreen
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -178,9 +179,9 @@ fun MainScreen(
                         restoreState = true
                     }
                 },
-                onNavigateToDeposit = {
+                onNavigateToTools = {
                     scope.launch { drawerState.close() }
-                    navController.navigate(Screen.Deposit.route) {
+                    navController.navigate(Screen.Tools.route) {
                         launchSingleTop = true
                     }
                 },
@@ -338,8 +339,7 @@ fun MainScreen(
                             navController.navigate(Screen.History.route)
                         },
                         onProfileClick = { scope.launch { drawerState.open() } },
-                        onNavigateToEmi = { navController.navigate(Screen.Emi.route) },
-                        onNavigateToDeposit = { navController.navigate(Screen.Deposit.route) }
+                        onNavigateToTools = { navController.navigate(Screen.Tools.route) }
                     )
                 }
                 composable(
@@ -462,6 +462,13 @@ fun MainScreen(
                 composable(Screen.Deposit.route) {
                     DepositScreen(
                         onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+                composable(Screen.Tools.route) {
+                    ToolsScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToEmi = { navController.navigate(Screen.Emi.route) },
+                        onNavigateToDeposit = { navController.navigate(Screen.Deposit.route) }
                     )
                 }
             }
@@ -772,6 +779,7 @@ private fun getRoutePosition(route: String?): Int {
         route?.startsWith(Screen.Settings.route) == true -> 5
         route?.startsWith(Screen.Emi.route) == true -> 6
         route?.startsWith(Screen.Deposit.route) == true -> 7
+        route?.startsWith(Screen.Tools.route) == true -> 8
         else -> 10
     }
 }
