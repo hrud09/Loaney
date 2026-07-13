@@ -28,6 +28,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val HAS_SEEN_TUTORIAL = booleanPreferencesKey("has_seen_tutorial")
         val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
+        val DRAFT_BANK_ACCOUNT = stringPreferencesKey("draft_bank_account")
     }
 
     // --- Flows ---
@@ -127,6 +128,14 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.AUTO_BACKUP_ENABLED] ?: false
         }
 
+    val draftBankAccountFlow: Flow<String?> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.DRAFT_BANK_ACCOUNT]
+        }
+
     // --- Updaters ---
     suspend fun setThemeMode(mode: Int) {
         dataStore.edit { preferences ->
@@ -209,6 +218,16 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setAutoBackupEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.AUTO_BACKUP_ENABLED] = enabled
+        }
+    }
+
+    suspend fun saveDraftBankAccount(json: String?) {
+        dataStore.edit { preferences ->
+            if (json == null) {
+                preferences.remove(PreferencesKeys.DRAFT_BANK_ACCOUNT)
+            } else {
+                preferences[PreferencesKeys.DRAFT_BANK_ACCOUNT] = json
+            }
         }
     }
 }

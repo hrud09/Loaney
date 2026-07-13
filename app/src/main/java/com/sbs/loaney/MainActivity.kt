@@ -1,9 +1,15 @@
 package com.sbs.loaney
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.sbs.loaney.ui.screens.MainScreen
@@ -25,14 +31,27 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    companion object {
+        /** Set by LoanReminderWorker's "Send reminder" notification action. */
+        const val EXTRA_REMIND_LOAN_ID = "remind_loan_id"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         splashScreen.setKeepOnScreenCondition { keepSplashScreen }
-        
+
         super.onCreate(savedInstanceState)
+
+        val remindLoanId = intent?.getLongExtra(EXTRA_REMIND_LOAN_ID, -1L)
+            ?.takeIf { it > 0L }
 
         enableEdgeToEdge()
         setContent {
+            // POST_NOTIFICATIONS is declared in the manifest but was never requested at
+            // runtime, so on Android 13+ every loan reminder was being dropped with a
+            // silently-swallowed SecurityException.
+            RequestNotificationPermission()
+
             val themeMode by settingsRepository.themeModeFlow.collectAsState(initial = 1)
             val accentColor by settingsRepository.accentColorFlow.collectAsState(initial = 0)
             val isDarkTheme = when (themeMode) {
@@ -72,9 +91,27 @@ class MainActivity : ComponentActivity() {
                     com.sbs.loaney.ui.navigation.Screen.Onboarding.route
                 }
             }
-            MainScreen(startDestination = startDest)
+            MainScreen(startDestination = startDest, remindLoanId = remindLoanId)
                 }
             }
         }
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun RequestNotificationPermission() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { /* Declining is fine; reminders just stay silent. */ }
+
+    LaunchedEffect(Unit) {
+        val granted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!granted) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 }

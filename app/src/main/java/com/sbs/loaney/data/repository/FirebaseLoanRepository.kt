@@ -8,6 +8,9 @@ import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.data.local.entity.LoanEntity
 import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
+import com.sbs.loaney.data.local.entity.EmiEntity
+import com.sbs.loaney.data.local.entity.DepositEntity
+import com.sbs.loaney.data.model.BankAccountShare
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
 import kotlinx.coroutines.channels.awaitClose
@@ -417,4 +420,45 @@ class FirebaseLoanRepository @Inject constructor(
     override suspend fun deleteBankAccount(account: BankAccountEntity) {
         getUserDocRef().collection(BANK_ACCOUNTS_COLLECTION).document(account.id.toString()).delete().await()
     }
+
+    override suspend fun getBankAccountByShareId(shareId: String): BankAccountEntity? {
+        return try {
+            val uid = auth.currentUser?.uid ?: return null
+            val doc = firestore.collection("users").document(uid)
+                .collection("sharedBankAccounts").document(shareId).get().await()
+            val share = doc.toObject(BankAccountShare::class.java)
+            share?.toEntity()
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseLoanRepository", "Error getting bank account by share ID: ${e.message}", e)
+            null
+        }
+    }
+
+    override suspend fun deleteBankAccountByShareId(shareId: String) {
+        try {
+            val uid = auth.currentUser?.uid ?: return
+            firestore.collection("users").document(uid)
+                .collection("sharedBankAccounts").document(shareId).delete().await()
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseLoanRepository", "Error deleting bank account by share ID: ${e.message}", e)
+        }
+    }
+
+    // EMI Operations (Stubs for Firebase compilation)
+    override fun getAllEmis(): Flow<List<EmiEntity>> = flowOf(emptyList())
+
+    override suspend fun insertEmi(emi: EmiEntity): Long = 0L
+
+    override suspend fun updateEmi(emi: EmiEntity) {}
+
+    override suspend fun deleteEmi(emi: EmiEntity) {}
+
+    // Deposit Operations (Stubs for Firebase compilation)
+    override fun getAllDeposits(): Flow<List<DepositEntity>> = flowOf(emptyList())
+
+    override suspend fun insertDeposit(deposit: DepositEntity): Long = 0L
+
+    override suspend fun updateDeposit(deposit: DepositEntity) {}
+
+    override suspend fun deleteDeposit(deposit: DepositEntity) {}
 }

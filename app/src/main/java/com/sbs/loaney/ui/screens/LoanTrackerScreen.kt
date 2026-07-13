@@ -33,6 +33,7 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -114,6 +115,7 @@ fun generateQrCodeBitmap(text: String, size: Int): ImageBitmap? {
 fun LoanTrackerScreen(
     loanId: Long,
     onNavigateBack: () -> Unit,
+    autoOpenReminder: Boolean = false,
     viewModel: LoanTrackerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -130,6 +132,18 @@ fun LoanTrackerScreen(
     var isImageExpanded by remember { mutableStateOf(false) }
     var showEditLoanSheet by remember { mutableStateOf(false) }
     var showReminderSheet by remember { mutableStateOf(false) }
+
+    // Came in from the notification's "Send reminder" action: open the picker as soon as the
+    // loan has actually loaded, otherwise the sheet has nothing to build a message from.
+    // Latch it — selectedLoan re-emits on every edit (toggling auto-remind, adding a payment),
+    // and without the latch the sheet would spring back open each time the user dismissed it.
+    var autoOpenHandled by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(autoOpenReminder, uiState.selectedLoan) {
+        if (autoOpenReminder && !autoOpenHandled && uiState.selectedLoan != null) {
+            showReminderSheet = true
+            autoOpenHandled = true
+        }
+    }
 
     // Loaney Pie reward overlay
     var showRewardOverlay by remember { mutableStateOf(false) }
@@ -410,6 +424,49 @@ fun LoanTrackerScreen(
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Send Reminder", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        // Auto-reminders can only reach the other party by email, and only make
+                        // sense on money we lent out. Hide the control entirely otherwise, rather
+                        // than offering a switch that would silently do nothing.
+                        val trackedLoan = uiState.selectedLoan?.loan
+                        if (trackedLoan != null &&
+                            trackedLoan.type == LoanType.LEND &&
+                            !trackedLoan.email.isNullOrBlank()
+                        ) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        "Auto-remind by email",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        if (trackedLoan.autoRemindEnabled) {
+                                            "We'll email ${trackedLoan.personName} when this is due, and every 3 days while it's overdue."
+                                        } else {
+                                            "Email ${trackedLoan.personName} automatically when this falls due."
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Switch(
+                                    checked = trackedLoan.autoRemindEnabled,
+                                    onCheckedChange = { viewModel.setAutoRemind(it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = AlimWhite,
+                                        checkedTrackColor = AlimGreen
+                                    )
+                                )
                             }
                         }
                     }

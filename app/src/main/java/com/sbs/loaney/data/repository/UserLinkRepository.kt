@@ -32,6 +32,9 @@ class UserLinkRepository @Inject constructor() {
         private const val TAG = "UserLinkRepository"
         private const val USERS_COLLECTION = "users"
         private const val NOTIFICATIONS_SUBCOLLECTION = "loanNotifications"
+
+        /** LinkedLoanNotification.loanType discriminator for due-date reminders. */
+        const val REMINDER_TYPE = "REMINDER"
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -225,12 +228,119 @@ class UserLinkRepository @Inject constructor() {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
+    // Automated due-date reminders to the borrower
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Emails the borrower that a loan is due or overdue, via the same `mail` collection
+     * the Trigger Email extension already watches. This is the only channel that reaches
+     * someone who does not have Loaney installed — auto-SMS and auto-WhatsApp are not
+     * possible for a consumer app (Play's SMS policy / WhatsApp Business API).
+     *
+     * Only ever called for loans the owner explicitly opted in, and rate-limited by the
+     * caller via LoanEntity.lastReminderSentAt.
+     */
+    suspend fun sendReminderEmail(
+        recipientEmail: String,
+        amount: Double,
+        currency: String,
+        dueDateMillis: Long,
+        daysOverdue: Int
+    ) {
+        val currentUser = auth.currentUser ?: return
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION)
+                .document(currentUser.uid)
+                .get()
+                .await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+
+            val dateFormat = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
+            val dueDateString = dateFormat.format(java.util.Date(dueDateMillis))
+            val formattedAmount = String.format(java.util.Locale.getDefault(), "%,.0f", amount)
+
+            val subject: String
+            val body: String
+            if (daysOverdue > 0) {
+                val dayWord = if (daysOverdue == 1) "day" else "days"
+                subject = "Reminder: $currency$formattedAmount to $senderName is overdue"
+                body = "Hi there,\n\nThis is a friendly reminder that $currency$formattedAmount you owe " +
+                        "$senderName was due on $dueDateString — $daysOverdue $dayWord ago.\n\n" +
+                        "If you have already settled it, please ignore this message.\n\n" +
+                        "Sent automatically by Loaney on behalf of $senderName."
+            } else {
+                subject = "Reminder: $currency$formattedAmount to $senderName is due tomorrow"
+                body = "Hi there,\n\nThis is a friendly reminder that $currency$formattedAmount you owe " +
+                        "$senderName is due on $dueDateString.\n\n" +
+                        "If you have already settled it, please ignore this message.\n\n" +
+                        "Sent automatically by Loaney on behalf of $senderName."
+            }
+
+            val emailDoc = mapOf(
+                "to" to recipientEmail,
+                "message" to mapOf("subject" to subject, "text" to body)
+            )
+
+            firestore.collection("mail").add(emailDoc).await()
+            Log.d(TAG, "Reminder email queued for: $recipientEmail")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to queue reminder email: ${e.message}")
+        }
+    }
+
+    /** In-app reminder for a borrower who is a registered Loaney user. */
+    suspend fun sendReminderNotification(
+        recipientUid: String,
+        loanId: Long,
+        amount: Double,
+        currency: String,
+        dueDateMillis: Long
+    ) {
+        val currentUser = auth.currentUser ?: return
+        if (currentUser.uid == recipientUid) return
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION)
+                .document(currentUser.uid)
+                .get()
+                .await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+
+            val notification = LinkedLoanNotification(
+                id = "reminder_$loanId",
+                senderName = senderName,
+                senderUid = currentUser.uid,
+                loanType = REMINDER_TYPE,
+                amount = amount,
+                currency = currency,
+                promisedReturnDateMillis = dueDateMillis,
+                createdAt = System.currentTimeMillis(),
+                isRead = false
+            )
+
+            firestore.collection(USERS_COLLECTION)
+                .document(recipientUid)
+                .collection(NOTIFICATIONS_SUBCOLLECTION)
+                .document("reminder_$loanId")
+                .set(notification)
+                .await()
+
+            Log.d(TAG, "Reminder notification sent to UID: $recipientUid")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send reminder notification: ${e.message}")
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
     // Write bank account share notification to recipient
     // ──────────────────────────────────────────────────────────────────────────
 
     suspend fun sendBankAccountNotification(
         recipientUid: String,
-        account: com.sbs.loaney.data.local.entity.BankAccountEntity
+        account: com.sbs.loaney.data.local.entity.BankAccountEntity,
+        shareId: String? = null,
+        permission: com.sbs.loaney.data.model.SharePermission? = null
     ) {
         val currentUser = auth.currentUser ?: return
         val senderUid = currentUser.uid
@@ -262,7 +372,9 @@ class UserLinkRepository @Inject constructor() {
                 isCard = account.isCard,
                 isMfs = account.isMfs,
                 mfsProvider = account.mfsProvider,
-                qrCodeUri = account.qrCodeUri
+                qrCodeUri = account.qrCodeUri,
+                shareId = shareId,
+                sharePermission = permission?.name
             )
 
             firestore.collection(USERS_COLLECTION)

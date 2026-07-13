@@ -25,10 +25,13 @@ sealed class Screen(val route: String) {
                 (if (rel != null) "&rel=${android.net.Uri.encode(rel)}" else "")
     }
     object Settings : Screen("settings")
-    object LoanDetail : Screen("loan_detail/{loanId}") {
-        fun createRoute(loanId: Long) = "loan_detail/$loanId"
+    object LoanDetail : Screen("loan_detail/{loanId}?remind={remind}") {
+        fun createRoute(loanId: Long, remind: Boolean = false) = "loan_detail/$loanId?remind=$remind"
     }
     object Shop : Screen("shop")
     object History : Screen("history")
     object Notifications : Screen("notifications")
+    object Emi : Screen("emi")
+    object Deposit : Screen("deposit")
+    object Tools : Screen("tools")
 }

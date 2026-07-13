@@ -15,6 +15,7 @@ import kotlinx.coroutines.tasks.await
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
 import com.sbs.loaney.data.repository.SettingsRepository
+import com.sbs.loaney.data.repository.UserLinkRepository
 import com.sbs.loaney.data.repository.dataStore
 import kotlinx.coroutines.flow.first
 import java.util.Calendar
@@ -29,6 +30,12 @@ class LoanReminderWorker(
         const val CHANNEL_ID = "loan_reminders"
         const val CHANNEL_NAME = "Loan Reminders"
         const val WORK_NAME = "loan_reminder_check"
+
+        /**
+         * Don't email the same borrower every single morning. Once every 3 days is enough to
+         * be useful without turning an automated nudge into harassment.
+         */
+        private const val REMINDER_COOLDOWN_MS = 3L * 24 * 60 * 60 * 1000
 
         fun createNotificationChannel(context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -108,6 +115,11 @@ class LoanReminderWorker(
             add(Calendar.DAY_OF_MONTH, 1)
         }.time
 
+        // UserLinkRepository has a no-arg constructor, so the plain (non-Hilt) WorkManager
+        // factory used for this worker can build it directly.
+        val userLinkRepository = UserLinkRepository()
+        val now = System.currentTimeMillis()
+
         var notificationId = 1000
 
         for (item in loansWithPayments) {
@@ -126,55 +138,113 @@ class LoanReminderWorker(
             val deadline = loan.promisedReturnDate
             val loanTypeLabel = if (loan.type == LoanType.LEND) "lent to" else "borrowed from"
 
-            // Deadline is tomorrow → "due tomorrow" notification
             val deadlineCal = Calendar.getInstance().apply { time = deadline }
             val tomorrowCal = Calendar.getInstance().apply { time = tomorrow }
-            
-            if (deadlineCal.get(Calendar.YEAR) == tomorrowCal.get(Calendar.YEAR) &&
-                deadlineCal.get(Calendar.DAY_OF_YEAR) == tomorrowCal.get(Calendar.DAY_OF_YEAR)
-            ) {
+
+            val isDueTomorrow = deadlineCal.get(Calendar.YEAR) == tomorrowCal.get(Calendar.YEAR) &&
+                    deadlineCal.get(Calendar.DAY_OF_YEAR) == tomorrowCal.get(Calendar.DAY_OF_YEAR)
+            val isOverdue = deadline.before(today)
+            val daysOverdue = if (isOverdue) {
+                ((today.time - deadline.time) / (1000 * 60 * 60 * 24)).toInt()
+            } else 0
+
+            if (!isDueTomorrow && !isOverdue) continue
+
+            // We can only chase the other party on money we LENT. On a BORROW, the person
+            // who owes is the user themselves, so there is nobody to remind but them.
+            val canChase = loan.type == LoanType.LEND &&
+                    (loan.phoneNumber.isNotBlank() || !loan.email.isNullOrBlank())
+
+            val amountText = "$currencySymbol${String.format("%,.0f", remaining)}"
+
+            if (isDueTomorrow) {
                 sendNotification(
                     id = notificationId++,
                     title = "⏰ Loan Due Tomorrow",
-                    message = "${currencySymbol}${String.format("%,.0f", remaining)} $loanTypeLabel ${loan.personName} is due tomorrow!"
+                    message = "$amountText $loanTypeLabel ${loan.personName} is due tomorrow!",
+                    remindLoanId = if (canChase) loan.id else null
                 )
             }
 
-            // Deadline has passed → "overdue" notification
-            if (deadline.before(today)) {
-                val daysOverdue = ((today.time - deadline.time) / (1000 * 60 * 60 * 24)).toInt()
+            if (isOverdue) {
                 sendNotification(
                     id = notificationId++,
                     title = "🚨 Overdue Loan",
-                    message = "${currencySymbol}${String.format("%,.0f", remaining)} $loanTypeLabel ${loan.personName} is $daysOverdue day${if (daysOverdue > 1) "s" else ""} overdue!"
+                    message = "$amountText $loanTypeLabel ${loan.personName} is $daysOverdue day${if (daysOverdue > 1) "s" else ""} overdue!",
+                    remindLoanId = if (canChase) loan.id else null
                 )
+            }
+
+            // Opt-in automatic email to the borrower. Never fires unless the owner turned it
+            // on for this specific loan, and never more than once per cooldown window.
+            val email = loan.email
+            val cooledDown = (loan.lastReminderSentAt ?: 0L) + REMINDER_COOLDOWN_MS <= now
+            if (loan.type == LoanType.LEND && loan.autoRemindEnabled && !email.isNullOrBlank() && cooledDown) {
+                userLinkRepository.sendReminderEmail(
+                    recipientEmail = email,
+                    amount = remaining,
+                    currency = currencySymbol,
+                    dueDateMillis = deadline.time,
+                    daysOverdue = daysOverdue
+                )
+
+                // If they're a Loaney user too, put it in their app as well.
+                userLinkRepository.lookupUidByEmail(email)?.let { uid ->
+                    userLinkRepository.sendReminderNotification(
+                        recipientUid = uid,
+                        loanId = loan.id,
+                        amount = remaining,
+                        currency = currencySymbol,
+                        dueDateMillis = deadline.time
+                    )
+                }
+
+                db.loanDao().updateLoan(loan.copy(lastReminderSentAt = now))
             }
         }
 
         return Result.success()
     }
 
-    private fun sendNotification(id: Int, title: String, message: String) {
-        val intent = Intent(applicationContext, MainActivity::class.java).apply {
+    /**
+     * @param remindLoanId when non-null, adds a "Send reminder" action that deep-links into
+     *        that loan and opens the channel picker, so chasing someone is one tap from the
+     *        notification rather than five taps into the app.
+     */
+    private fun sendNotification(id: Int, title: String, message: String, remindLoanId: Long?) {
+        val openIntent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-        val pendingIntent = PendingIntent.getActivity(
-            applicationContext, id, intent,
+        val contentIntent = PendingIntent.getActivity(
+            applicationContext, id, openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(contentIntent)
             .setAutoCancel(true)
-            .build()
+
+        if (remindLoanId != null) {
+            val remindIntent = Intent(applicationContext, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                putExtra(MainActivity.EXTRA_REMIND_LOAN_ID, remindLoanId)
+            }
+            // Distinct request code, otherwise FLAG_UPDATE_CURRENT would overwrite the
+            // content intent above and both taps would land in the same place.
+            val remindPendingIntent = PendingIntent.getActivity(
+                applicationContext, 500_000 + remindLoanId.toInt(), remindIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            builder.addAction(0, "Send reminder", remindPendingIntent)
+        }
 
         try {
-            NotificationManagerCompat.from(applicationContext).notify(id, notification)
+            NotificationManagerCompat.from(applicationContext).notify(id, builder.build())
             com.google.firebase.analytics.FirebaseAnalytics.getInstance(applicationContext)
                 .logEvent("reminder_notification_sent", null)
         } catch (e: SecurityException) {

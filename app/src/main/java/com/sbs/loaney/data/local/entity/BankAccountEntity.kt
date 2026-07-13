@@ -16,5 +16,12 @@ data class BankAccountEntity(
     val isCard: Boolean = false, // Flag indicating if it's a card or a generic bank account
     val isMfs: Boolean = false, // Flag indicating if it's a mobile financial service (bKash, Nagad, etc.)
     val mfsProvider: String? = null, // The provider name (e.g., "bKash", "Nagad", "Rocket")
-    val qrCodeUri: String? = null // URI string for the QR code image
-)
+    val qrCodeUri: String? = null, // URI string for the QR code image
+    val ownerUid: String? = null,
+    val ownerName: String? = null,
+    val shareId: String? = null,
+    val sharePermission: String? = null,
+    val isSharedIncoming: Boolean = false
+) {
+    val isOwnedByMe: Boolean get() = !isSharedIncoming && ownerUid == null
+}

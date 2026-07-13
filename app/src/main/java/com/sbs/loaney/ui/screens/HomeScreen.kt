@@ -100,6 +100,7 @@ fun HomeScreen(
     onNavigateToHistory: (String?) -> Unit,
     onNavigateToHistoryScreen: () -> Unit,
     onProfileClick: () -> Unit,
+    onNavigateToTools: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     notificationsViewModel: com.sbs.loaney.ui.viewmodel.NotificationsViewModel = hiltViewModel()
 ) {
@@ -122,6 +123,12 @@ fun HomeScreen(
     var shareEmail by remember { mutableStateOf("") }
     val shareStatus by viewModel.shareStatus.collectAsState()
     val shareLinkedName by viewModel.shareLinkedName.collectAsState()
+    val outgoingShares by viewModel.outgoingShares.collectAsState()
+
+    LaunchedEffect(accountToShare?.id) {
+        accountToShare?.let { viewModel.observeSharesForAccount(it) }
+            ?: viewModel.clearOutgoingSharesObservation()
+    }
 
     val bankAccounts = uiState.bankAccounts
     val allLoans by remember(uiState.lentLoans, uiState.borrowedLoans) {
@@ -153,71 +160,61 @@ fun HomeScreen(
         var profileCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
         var notificationCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
         var balanceCardCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
-        var calendarCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
         var quickActionsCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
-        var reportCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+        var toolsCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
         var bankSectionCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
-        
-        var showTutorial by remember { mutableStateOf(false) }
-
-        // Start tutorial if not seen and data is loaded
-        LaunchedEffect(uiState.isLoading, uiState.hasSeenTutorial) {
-            if (!uiState.isLoading && !uiState.hasSeenTutorial) {
-                showTutorial = true
-            }
-        }
 
         val tutorialSteps = remember(
-            profileCoords, notificationCoords, balanceCardCoords, 
-            calendarCoords, quickActionsCoords, reportCoords, bankSectionCoords
+            balanceCardCoords, quickActionsCoords, toolsCoords,
+            bankSectionCoords, notificationCoords, profileCoords
         ) {
-            listOfNotNull(
+            listOf(
                 TutorialStep(
-                    title = "Personalize Your Experience",
-                    description = "Welcome! Tap your profile to customize the app theme, language, and currency to your liking.",
-                    targetCoordinates = profileCoords
-                ),
-                notificationCoords?.let {
-                    TutorialStep(
-                        title = "Smart Notifications",
-                        description = "Stay informed! We'll notify you here about upcoming loan deadlines and partial payments.",
-                        targetCoordinates = it
-                    )
-                },
-                TutorialStep(
-                    title = "Your Financial Hub",
-                    description = "This card displays your total given and taken amounts, keeping you informed about your financial status.",
+                    title = "Everything you're owed, in one place",
+                    description = "This card totals what you've given out and what you've taken, so you always know where you stand.",
                     targetCoordinates = balanceCardCoords
                 ),
-                calendarCoords?.let {
-                    TutorialStep(
-                        title = "Transaction Timeline",
-                        description = "View your financial history on a timeline. The calendar highlights all your past and future transaction dates.",
-                        targetCoordinates = it
-                    )
-                },
-                quickActionsCoords?.let {
-                    TutorialStep(
-                        title = "Fast Tracking",
-                        description = "Lend or Borrow money in seconds. Tap these buttons to quickly record a new transaction with any contact.",
-                        targetCoordinates = it
-                    )
-                },
-                reportCoords?.let {
-                    TutorialStep(
-                        title = "Detailed Analytics",
-                        description = "Need a summary? Generate and view detailed reports of all your transactions to keep things transparent.",
-                        targetCoordinates = it
-                    )
-                },
-                bankSectionCoords?.let {
-                    TutorialStep(
-                        title = "Digital Wallet",
-                        description = "Link your bank accounts or Mobile Finance Services (MFS) for quick access to your account details and QR codes.",
-                        targetCoordinates = it
-                    )
-                }
+                TutorialStep(
+                    title = "Record a loan in seconds",
+                    description = "Tap Give when you lend money and Take when you borrow. History and Report show you everything you've recorded.",
+                    targetCoordinates = quickActionsCoords
+                ),
+                TutorialStep(
+                    title = "Do the math before you commit",
+                    description = "Tools holds the EMI calculator for instalments, and the DPS & FDR calculator for working out what a savings deposit will mature to.",
+                    targetCoordinates = toolsCoords
+                ),
+                TutorialStep(
+                    title = "Keep your accounts handy",
+                    description = "Link a bank account, card, or mobile wallet like bKash. You can share an account with someone you trust, and get paid faster.",
+                    targetCoordinates = bankSectionCoords
+                ),
+                TutorialStep(
+                    title = "Never miss a due date",
+                    description = "We'll remind you here when a loan is coming due, and when someone repays you.",
+                    targetCoordinates = notificationCoords
+                ),
+                TutorialStep(
+                    title = "Make it yours",
+                    description = "Open your profile to change the currency, language, and theme. That's the tour — you're all set.",
+                    targetCoordinates = profileCoords
+                )
             )
+        }
+
+        // Hold the tutorial until every target has been measured. Starting earlier means the
+        // step list grows underneath the user as onGloballyPositioned fires one target at a
+        // time, which shifts the step they're reading and makes the counter jump.
+        val allTargetsMeasured = balanceCardCoords != null && quickActionsCoords != null &&
+                toolsCoords != null && bankSectionCoords != null &&
+                notificationCoords != null && profileCoords != null
+
+        var showTutorial by remember { mutableStateOf(false) }
+
+        LaunchedEffect(uiState.isLoading, uiState.hasSeenTutorial, allTargetsMeasured) {
+            if (!uiState.isLoading && !uiState.hasSeenTutorial && allTargetsMeasured) {
+                showTutorial = true
+            }
         }
 
         Box(modifier = Modifier.fillMaxSize().padding(padding).background(MaterialTheme.colorScheme.background)) {
@@ -246,9 +243,9 @@ fun HomeScreen(
                             onNavigateToHistoryScreen = onNavigateToHistoryScreen,
                             onReportClick = { onNavigateToHistory(null) },
                             onCalendarClick = { showFeaturedCalendar = true },
-                            onPositionedCalendar = { calendarCoords = it },
+                            onToolsClick = onNavigateToTools,
                             onPositionedQuickActions = { quickActionsCoords = it },
-                            onPositionedReport = { reportCoords = it }
+                            onPositionedTools = { toolsCoords = it }
                         )
                     }
 
@@ -261,11 +258,6 @@ fun HomeScreen(
                     ) {
                         Spacer(modifier = Modifier.height(16.dp))
 
-                    if (allLoans.isEmpty()) {
-                        Box(modifier = Modifier.padding(horizontal = 20.dp)) {
-                            HomeZeroState(onNavigateToAddLoan = { onNavigateToAddLoan("LEND") })
-                        }
-                     }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -347,16 +339,18 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            items(bankAccounts, key = { it.id }) { account ->
+                            items(bankAccounts, key = { "${it.id}_${it.shareId}" }) { account ->
                                 BankAccountCard(
                                     account = account,
                                     context = context,
                                     onDelete = { accountToDelete = it },
-                                    onEdit = { 
-                                        accountToEdit = it
-                                        showAddBankSheet = true
+                                    onEdit = {
+                                        if (account.isOwnedByMe) {
+                                            accountToEdit = it
+                                            showAddBankSheet = true
+                                        }
                                     },
-                                    onShare = { accountToShare = it }
+                                    onShare = { if (account.isOwnedByMe) accountToShare = it }
                                 )
                             }
                         }
@@ -372,6 +366,8 @@ fun HomeScreen(
     if (showAddBankSheet) {
         AddBankAccountBottomSheet(
             editingAccount = accountToEdit,
+            userName = uiState.userName,
+            draftJson = uiState.draftBankAccountJson,
             onDismiss = { 
                 showAddBankSheet = false
                 accountToEdit = null
@@ -409,24 +405,47 @@ fun HomeScreen(
                 }
                 showAddBankSheet = false
                 accountToEdit = null
+            },
+            onSaveDraft = { draftJson ->
+                viewModel.saveDraftBankAccount(draftJson)
+            },
+            onClearDraft = {
+                viewModel.saveDraftBankAccount(null)
             }
         )
     }
 
     if (accountToDelete != null) {
+        val isSharedIncoming = accountToDelete!!.isSharedIncoming
         AlertDialog(
             onDismissRequest = { accountToDelete = null },
-            title = { Text("Delete Bank Account") },
-            text = { Text("Are you sure you want to delete this bank account? This action cannot be undone.") },
+            title = {
+                Text(if (isSharedIncoming) "Remove Shared Account" else "Delete Bank Account")
+            },
+            text = {
+                Text(
+                    if (isSharedIncoming) {
+                        "Remove this shared account from your wallet? The owner will still have their account."
+                    } else {
+                        "Are you sure you want to delete this bank account? This action cannot be undone."
+                    }
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        accountToDelete?.let { viewModel.deleteBankAccount(it) }
+                        accountToDelete?.let {
+                            if (it.isSharedIncoming) {
+                                viewModel.removeSharedAccountLocally(it)
+                            } else {
+                                viewModel.deleteBankAccount(it)
+                            }
+                        }
                         accountToDelete = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete")
+                    Text(if (isSharedIncoming) "Remove" else "Delete")
                 }
             },
             dismissButton = {
@@ -438,75 +457,31 @@ fun HomeScreen(
     }
  
      if (accountToShare != null) {
-         AlertDialog(
-             onDismissRequest = { 
+         ShareAccountBottomSheet(
+             account = accountToShare!!,
+             shareEmail = shareEmail,
+             onShareEmailChange = {
+                 shareEmail = it
+                 viewModel.checkShareEmail(it)
+             },
+             shareStatus = shareStatus,
+             shareLinkedName = shareLinkedName,
+             outgoingShares = outgoingShares,
+             onShare = { permission ->
+                 accountToShare?.let { account ->
+                     viewModel.shareBankAccount(account, shareEmail, permission) {
+                         accountToShare = null
+                         shareEmail = ""
+                         Toast.makeText(context, "Account shared successfully!", Toast.LENGTH_SHORT).show()
+                     }
+                 }
+             },
+             onRevokeShare = { viewModel.revokeShare(it) },
+             onDismiss = {
                  accountToShare = null
                  shareEmail = ""
                  viewModel.resetShareEmailStatus()
-             },
-             title = { Text("Share ${if (accountToShare!!.isCard) "Card" else if (accountToShare!!.isMfs) "MFS Account" else "Bank Account"}") },
-             text = {
-                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                     Text("Enter the email of the person you want to share this account with:")
-                     
-                     OutlinedTextField(
-                         value = shareEmail,
-                         onValueChange = {
-                             shareEmail = it
-                             viewModel.checkShareEmail(it)
-                         },
-                         label = { Text("Recipient Email") },
-                         singleLine = true,
-                         shape = RoundedCornerShape(12.dp),
-                         modifier = Modifier.fillMaxWidth(),
-                         colors = OutlinedTextFieldDefaults.colors(
-                             focusedBorderColor = AlimGreen,
-                             focusedContainerColor = Color.White,
-                             unfocusedContainerColor = Color.White
-                         )
-                     )
-                     
-                     when (shareStatus) {
-                         EmailLinkStatus.CHECKING -> {
-                             Text("Checking database...", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
-                         }
-                         EmailLinkStatus.FOUND -> {
-                             Text("Registered user found: $shareLinkedName", color = AlimGreen, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                         }
-                         EmailLinkStatus.NOT_FOUND -> {
-                             Text("No registered Loaney account found. An email invitation will be sent instead.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                         }
-                         else -> {}
-                     }
-                 }
-             },
-             confirmButton = {
-                 Button(
-                     onClick = {
-                         accountToShare?.let {
-                             viewModel.shareBankAccount(it, shareEmail) {
-                                 accountToShare = null
-                                 shareEmail = ""
-                                 Toast.makeText(context, "Account shared successfully!", Toast.LENGTH_SHORT).show()
-                             }
-                         }
-                     },
-                     colors = ButtonDefaults.buttonColors(containerColor = AlimGreen),
-                     enabled = shareEmail.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(shareEmail).matches() && shareStatus != EmailLinkStatus.CHECKING
-                 ) {
-                     Text("Share", color = Color.White)
-                 }
-             },
-             dismissButton = {
-                 TextButton(
-                     onClick = { 
-                         accountToShare = null
-                         shareEmail = ""
-                         viewModel.resetShareEmailStatus()
-                     }
-                 ) {
-                     Text("Cancel")
-                 }
+                 viewModel.clearOutgoingSharesObservation()
              }
          )
      }

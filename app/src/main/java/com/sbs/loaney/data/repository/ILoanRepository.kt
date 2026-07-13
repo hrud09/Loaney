@@ -5,6 +5,8 @@ import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.data.local.entity.LoanEntity
 import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
+import com.sbs.loaney.data.local.entity.EmiEntity
+import com.sbs.loaney.data.local.entity.DepositEntity
 import com.sbs.loaney.data.model.LoanType
 import kotlinx.coroutines.flow.Flow
 
@@ -30,4 +32,18 @@ interface ILoanRepository {
     suspend fun insertBankAccount(account: BankAccountEntity): Long
     suspend fun updateBankAccount(account: BankAccountEntity)
     suspend fun deleteBankAccount(account: BankAccountEntity)
+    suspend fun getBankAccountByShareId(shareId: String): BankAccountEntity?
+    suspend fun deleteBankAccountByShareId(shareId: String)
+
+    // EMI Operations
+    fun getAllEmis(): Flow<List<EmiEntity>>
+    suspend fun insertEmi(emi: EmiEntity): Long
+    suspend fun updateEmi(emi: EmiEntity)
+    suspend fun deleteEmi(emi: EmiEntity)
+
+    // Deposit Operations (DPS/FDR)
+    fun getAllDeposits(): Flow<List<DepositEntity>>
+    suspend fun insertDeposit(deposit: DepositEntity): Long
+    suspend fun updateDeposit(deposit: DepositEntity)
+    suspend fun deleteDeposit(deposit: DepositEntity)
 }

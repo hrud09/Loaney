@@ -1,6 +1,9 @@
 package com.sbs.loaney.ui.screens
 
 import com.sbs.loaney.ui.screens.ShopScreen
+import com.sbs.loaney.ui.screens.DepositScreen
+import com.sbs.loaney.ui.screens.EmiScreen
+import com.sbs.loaney.ui.screens.ToolsScreen
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -69,9 +72,18 @@ data class ScannedLoanData(
 @Composable
 fun MainScreen(
     startDestination: String = Screen.Home.route,
+    remindLoanId: Long? = null,
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
+
+    // Arrived from the "Send reminder" action on a due-date notification: jump straight to
+    // that loan with the channel picker already open.
+    LaunchedEffect(remindLoanId) {
+        if (remindLoanId != null) {
+            navController.navigate(Screen.LoanDetail.createRoute(remindLoanId, remind = true))
+        }
+    }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -174,6 +186,12 @@ fun MainScreen(
                         popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
+                    }
+                },
+                onNavigateToTools = {
+                    scope.launch { drawerState.close() }
+                    navController.navigate(Screen.Tools.route) {
+                        launchSingleTop = true
                     }
                 },
                 onSignOutClick = {
@@ -329,7 +347,8 @@ fun MainScreen(
                         onNavigateToHistoryScreen = {
                             navController.navigate(Screen.History.route)
                         },
-                        onProfileClick = { scope.launch { drawerState.open() } }
+                        onProfileClick = { scope.launch { drawerState.open() } },
+                        onNavigateToTools = { navController.navigate(Screen.Tools.route) }
                     )
                 }
                 composable(
@@ -428,12 +447,20 @@ fun MainScreen(
                 }
                 composable(
                     route = Screen.LoanDetail.route,
-                    arguments = listOf(navArgument("loanId") { type = NavType.LongType })
+                    arguments = listOf(
+                        navArgument("loanId") { type = NavType.LongType },
+                        navArgument("remind") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        }
+                    )
                 ) { backStackEntry ->
                     val loanId = backStackEntry.arguments?.getLong("loanId") ?: return@composable
+                    val remind = backStackEntry.arguments?.getBoolean("remind") ?: false
                     LoanTrackerScreen(
                         loanId = loanId,
-                        onNavigateBack = { navController.popBackStack() }
+                        onNavigateBack = { navController.popBackStack() },
+                        autoOpenReminder = remind
                     )
                 }
                 composable(Screen.History.route) {
@@ -442,6 +469,23 @@ fun MainScreen(
                         onNavigateToDetail = { loanId ->
                             navController.navigate(Screen.LoanDetail.createRoute(loanId))
                         }
+                    )
+                }
+                composable(Screen.Emi.route) {
+                    EmiScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+                composable(Screen.Deposit.route) {
+                    DepositScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+                composable(Screen.Tools.route) {
+                    ToolsScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToEmi = { navController.navigate(Screen.Emi.route) },
+                        onNavigateToDeposit = { navController.navigate(Screen.Deposit.route) }
                     )
                 }
             }
@@ -750,6 +794,9 @@ private fun getRoutePosition(route: String?): Int {
         route?.startsWith("add_loan") == true -> 3
         route?.startsWith(Screen.Shop.route) == true -> 4
         route?.startsWith(Screen.Settings.route) == true -> 5
+        route?.startsWith(Screen.Emi.route) == true -> 6
+        route?.startsWith(Screen.Deposit.route) == true -> 7
+        route?.startsWith(Screen.Tools.route) == true -> 8
         else -> 10
     }
 }

@@ -35,6 +35,7 @@ fun ProfileSidebarContent(
     onNavigateToSettings: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToShop: () -> Unit,
+    onNavigateToTools: () -> Unit,
     onSignOutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -214,6 +215,11 @@ fun ProfileSidebarContent(
             icon = Icons.AutoMirrored.Filled.List,
             label = "Transaction History",
             onClick = onNavigateToHistory
+        )
+        SidebarMenuItem(
+            icon = Icons.Default.Build,
+            label = "Tools",
+            onClick = onNavigateToTools
         )
         SidebarMenuItem(
             icon = Icons.Default.Settings,
