@@ -11,18 +11,21 @@ import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.data.local.entity.EmiEntity
+import com.sbs.loaney.data.local.entity.DepositEntity
 import com.sbs.loaney.data.local.dao.BankAccountDao
 import com.sbs.loaney.data.local.dao.EmiDao
+import com.sbs.loaney.data.local.dao.DepositDao
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class, BankAccountEntity::class, EmiEntity::class], version = 10, exportSchema = false)
+@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class, BankAccountEntity::class, EmiEntity::class, DepositEntity::class], version = 11, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun loanDao(): LoanDao
     abstract fun bankAccountDao(): BankAccountDao
     abstract fun emiDao(): EmiDao
+    abstract fun depositDao(): DepositDao
 
     companion object {
         @Volatile
@@ -97,6 +100,29 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `deposits` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `type` TEXT NOT NULL,
+                        `bankName` TEXT NOT NULL,
+                        `monthlyDeposit` REAL NOT NULL,
+                        `principalAmount` REAL NOT NULL,
+                        `annualRate` REAL NOT NULL,
+                        `tenureMonths` INTEGER NOT NULL,
+                        `maturityAmount` REAL NOT NULL,
+                        `startDate` INTEGER NOT NULL,
+                        `maturityDate` INTEGER NOT NULL,
+                        `associatedBankAccountId` INTEGER,
+                        `isMatured` INTEGER NOT NULL DEFAULT 0,
+                        `notes` TEXT NOT NULL DEFAULT '',
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """.trimIndent())
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -111,7 +137,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_6_7, 
                     MIGRATION_7_8, 
                     MIGRATION_8_9,
-                    MIGRATION_9_10
+                    MIGRATION_9_10,
+                    MIGRATION_10_11
                 )
                 .fallbackToDestructiveMigration()
                 .build()
