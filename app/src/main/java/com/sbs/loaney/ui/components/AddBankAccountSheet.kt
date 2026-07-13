@@ -177,6 +177,7 @@ fun AddBankAccountBottomSheet(
     val isFullyFilled = accountName.isNotBlank() && accountNumber.isNotBlank() && (selectedTab == 2 || bankName.isNotBlank())
     
     var showCloseConfirmation by remember { mutableStateOf(false) }
+    val showPromptOnClose = editingAccount == null && (hasChanges || draft != null)
     
     val mfsProviders = listOf("bKash", "Nagad", "Rocket", "Upay")
 
@@ -221,7 +222,7 @@ fun AddBankAccountBottomSheet(
         skipPartiallyExpanded = true,
         confirmValueChange = { sheetValue ->
             if (sheetValue == SheetValue.Hidden) {
-                if (editingAccount == null && (draft != null || hasChanges)) {
+                if (showPromptOnClose) {
                     showCloseConfirmation = true
                     false
                 } else {
@@ -233,13 +234,17 @@ fun AddBankAccountBottomSheet(
         }
     )
 
-    BackHandler(enabled = editingAccount == null && (draft != null || hasChanges)) {
-        showCloseConfirmation = true
+    BackHandler(enabled = showPromptOnClose || showCloseConfirmation) {
+        if (showCloseConfirmation) {
+            showCloseConfirmation = false
+        } else {
+            showCloseConfirmation = true
+        }
     }
 
     ModalBottomSheet(
         onDismissRequest = {
-            if (editingAccount == null && (draft != null || hasChanges)) {
+            if (showPromptOnClose) {
                 showCloseConfirmation = true
             } else {
                 onDismiss()
@@ -257,12 +262,29 @@ fun AddBankAccountBottomSheet(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                if (editingAccount != null) "Edit Bank Account" else stringResource(id = R.string.add_bank_account), 
-                style = MaterialTheme.typography.headlineSmall, 
-                fontWeight = FontWeight.Bold, 
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    if (editingAccount != null) "Edit Bank Account" else stringResource(id = R.string.add_bank_account), 
+                    style = MaterialTheme.typography.headlineSmall, 
+                    fontWeight = FontWeight.Bold, 
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                IconButton(
+                    onClick = {
+                        if (showPromptOnClose) {
+                            showCloseConfirmation = true
+                        } else {
+                            onDismiss()
+                        }
+                    }
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Close")
+                }
+            }
 
             // Segmented Toggle
             Row(
