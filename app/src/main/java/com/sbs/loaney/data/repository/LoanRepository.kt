@@ -6,13 +6,16 @@ import com.sbs.loaney.data.local.entity.LoanEntity
 import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.local.entity.BankAccountEntity
+import com.sbs.loaney.data.local.entity.EmiEntity
 import com.sbs.loaney.data.local.dao.BankAccountDao
+import com.sbs.loaney.data.local.dao.EmiDao
 import com.sbs.loaney.data.model.LoanType
 import kotlinx.coroutines.flow.Flow
 
 class LoanRepository(
     private val loanDao: LoanDao,
-    private val bankAccountDao: BankAccountDao
+    private val bankAccountDao: BankAccountDao,
+    private val emiDao: EmiDao
 ) : ILoanRepository {
     override fun getAllLoans(): Flow<List<LoanWithPayments>> = loanDao.getAllLoans()
 
@@ -89,4 +92,13 @@ class LoanRepository(
 
     override suspend fun deleteBankAccountByShareId(shareId: String) =
         bankAccountDao.deleteByShareId(shareId)
+
+    // EMI Operations
+    override fun getAllEmis(): Flow<List<EmiEntity>> = emiDao.getAllEmis()
+
+    override suspend fun insertEmi(emi: EmiEntity): Long = emiDao.insertEmi(emi)
+
+    override suspend fun updateEmi(emi: EmiEntity) = emiDao.updateEmi(emi)
+
+    override suspend fun deleteEmi(emi: EmiEntity) = emiDao.deleteEmi(emi)
 }

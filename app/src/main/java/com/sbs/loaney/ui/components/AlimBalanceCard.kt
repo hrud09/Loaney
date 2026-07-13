@@ -35,6 +35,7 @@ fun AlimBalanceCard(
     onNavigateToHistoryScreen: () -> Unit,
     onReportClick: () -> Unit,
     onCalendarClick: () -> Unit,
+    onEmiClick: () -> Unit,
     onPositionedCalendar: (LayoutCoordinates) -> Unit = {},
     onPositionedQuickActions: (LayoutCoordinates) -> Unit = {},
     onPositionedReport: (LayoutCoordinates) -> Unit = {}
@@ -175,6 +176,7 @@ fun AlimBalanceCard(
                         Box(modifier = Modifier.onGloballyPositioned { onPositionedReport(it) }) {
                             AlimCardAction(Icons.Default.BarChart, stringResource(id = R.string.report), onClick = onReportClick)
                         }
+                        AlimCardAction(Icons.Default.Calculate, "EMI", onClick = onEmiClick)
                     }
                 }
             }

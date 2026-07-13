@@ -8,6 +8,7 @@ import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.data.local.entity.LoanEntity
 import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
+import com.sbs.loaney.data.local.entity.EmiEntity
 import com.sbs.loaney.data.model.BankAccountShare
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
@@ -441,4 +442,13 @@ class FirebaseLoanRepository @Inject constructor(
             android.util.Log.e("FirebaseLoanRepository", "Error deleting bank account by share ID: ${e.message}", e)
         }
     }
+
+    // EMI Operations (Stubs for Firebase compilation)
+    override fun getAllEmis(): Flow<List<EmiEntity>> = flowOf(emptyList())
+
+    override suspend fun insertEmi(emi: EmiEntity): Long = 0L
+
+    override suspend fun updateEmi(emi: EmiEntity) {}
+
+    override suspend fun deleteEmi(emi: EmiEntity) {}
 }

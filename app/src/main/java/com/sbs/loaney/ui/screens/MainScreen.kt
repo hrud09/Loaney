@@ -1,6 +1,7 @@
 package com.sbs.loaney.ui.screens
 
 import com.sbs.loaney.ui.screens.ShopScreen
+import com.sbs.loaney.ui.screens.EmiScreen
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -329,7 +330,8 @@ fun MainScreen(
                         onNavigateToHistoryScreen = {
                             navController.navigate(Screen.History.route)
                         },
-                        onProfileClick = { scope.launch { drawerState.open() } }
+                        onProfileClick = { scope.launch { drawerState.open() } },
+                        onNavigateToEmi = { navController.navigate(Screen.Emi.route) }
                     )
                 }
                 composable(
@@ -442,6 +444,11 @@ fun MainScreen(
                         onNavigateToDetail = { loanId ->
                             navController.navigate(Screen.LoanDetail.createRoute(loanId))
                         }
+                    )
+                }
+                composable(Screen.Emi.route) {
+                    EmiScreen(
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
             }
@@ -750,6 +757,7 @@ private fun getRoutePosition(route: String?): Int {
         route?.startsWith("add_loan") == true -> 3
         route?.startsWith(Screen.Shop.route) == true -> 4
         route?.startsWith(Screen.Settings.route) == true -> 5
+        route?.startsWith(Screen.Emi.route) == true -> 6
         else -> 10
     }
 }
