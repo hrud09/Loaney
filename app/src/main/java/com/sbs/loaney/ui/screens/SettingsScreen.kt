@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.LocaleList
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
@@ -229,6 +230,16 @@ fun SettingsScreen(
                             title = stringResource(id = R.string.push_notifications),
                             isChecked = uiState.notificationsEnabled,
                             onToggle = { viewModel.setNotificationsEnabled(it) }
+                        )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
+                        SettingsItem(
+                            icon = Icons.AutoMirrored.Filled.HelpOutline,
+                            title = "Replay app tour",
+                            subtitle = "Walk through the home screen again",
+                            onClick = {
+                                viewModel.replayTutorial()
+                                Toast.makeText(context, "The tour will start on the home screen", Toast.LENGTH_SHORT).show()
+                            }
                         )
                     }
 

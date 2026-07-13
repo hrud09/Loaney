@@ -36,9 +36,8 @@ fun AlimBalanceCard(
     onReportClick: () -> Unit,
     onCalendarClick: () -> Unit,
     onToolsClick: () -> Unit,
-    onPositionedCalendar: (LayoutCoordinates) -> Unit = {},
     onPositionedQuickActions: (LayoutCoordinates) -> Unit = {},
-    onPositionedReport: (LayoutCoordinates) -> Unit = {}
+    onPositionedTools: (LayoutCoordinates) -> Unit = {}
 ) {
     var isBalanceVisible by remember { mutableStateOf(true) }
 
@@ -156,7 +155,6 @@ fun AlimBalanceCard(
                             tint = AlimWhite,
                             modifier = Modifier
                                 .size(24.dp)
-                                .onGloballyPositioned { onPositionedCalendar(it) }
                                 .clickable { onCalendarClick() }
                         )
                     }
@@ -173,10 +171,10 @@ fun AlimBalanceCard(
                         AlimCardAction(Icons.Default.Add, stringResource(id = R.string.lend), onClick = { onNavigateToAddLoan("LEND") })
                         AlimCardAction(Icons.Default.Remove, stringResource(id = R.string.borrow), onClick = { onNavigateToAddLoan("BORROW") })
                         AlimCardAction(Icons.Default.History, stringResource(id = R.string.history), onClick = onNavigateToHistoryScreen)
-                        Box(modifier = Modifier.onGloballyPositioned { onPositionedReport(it) }) {
-                            AlimCardAction(Icons.Default.BarChart, stringResource(id = R.string.report), onClick = onReportClick)
+                        AlimCardAction(Icons.Default.BarChart, stringResource(id = R.string.report), onClick = onReportClick)
+                        Box(modifier = Modifier.onGloballyPositioned { onPositionedTools(it) }) {
+                            AlimCardAction(Icons.Default.Build, "Tools", onClick = onToolsClick)
                         }
-                        AlimCardAction(Icons.Default.Build, "Tools", onClick = onToolsClick)
                     }
                 }
             }

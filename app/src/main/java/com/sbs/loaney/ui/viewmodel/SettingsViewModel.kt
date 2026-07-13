@@ -97,6 +97,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /** Clears the seen flag so the home screen runs the tour again on the next visit. */
+    fun replayTutorial() {
+        viewModelScope.launch {
+            settingsRepository.setHasSeenTutorial(false)
+        }
+    }
+
     fun setUserName(name: String) {
         viewModelScope.launch {
             settingsRepository.setUserName(name)

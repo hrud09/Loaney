@@ -160,71 +160,61 @@ fun HomeScreen(
         var profileCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
         var notificationCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
         var balanceCardCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
-        var calendarCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
         var quickActionsCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
-        var reportCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+        var toolsCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
         var bankSectionCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
-        
-        var showTutorial by remember { mutableStateOf(false) }
-
-        // Start tutorial if not seen and data is loaded
-        LaunchedEffect(uiState.isLoading, uiState.hasSeenTutorial) {
-            if (!uiState.isLoading && !uiState.hasSeenTutorial) {
-                showTutorial = true
-            }
-        }
 
         val tutorialSteps = remember(
-            profileCoords, notificationCoords, balanceCardCoords, 
-            calendarCoords, quickActionsCoords, reportCoords, bankSectionCoords
+            balanceCardCoords, quickActionsCoords, toolsCoords,
+            bankSectionCoords, notificationCoords, profileCoords
         ) {
-            listOfNotNull(
+            listOf(
                 TutorialStep(
-                    title = "Personalize Your Experience",
-                    description = "Welcome! Tap your profile to customize the app theme, language, and currency to your liking.",
-                    targetCoordinates = profileCoords
-                ),
-                notificationCoords?.let {
-                    TutorialStep(
-                        title = "Smart Notifications",
-                        description = "Stay informed! We'll notify you here about upcoming loan deadlines and partial payments.",
-                        targetCoordinates = it
-                    )
-                },
-                TutorialStep(
-                    title = "Your Financial Hub",
-                    description = "This card displays your total given and taken amounts, keeping you informed about your financial status.",
+                    title = "Everything you're owed, in one place",
+                    description = "This card totals what you've given out and what you've taken, so you always know where you stand.",
                     targetCoordinates = balanceCardCoords
                 ),
-                calendarCoords?.let {
-                    TutorialStep(
-                        title = "Transaction Timeline",
-                        description = "View your financial history on a timeline. The calendar highlights all your past and future transaction dates.",
-                        targetCoordinates = it
-                    )
-                },
-                quickActionsCoords?.let {
-                    TutorialStep(
-                        title = "Fast Tracking",
-                        description = "Lend or Borrow money in seconds. Tap these buttons to quickly record a new transaction with any contact.",
-                        targetCoordinates = it
-                    )
-                },
-                reportCoords?.let {
-                    TutorialStep(
-                        title = "Detailed Analytics",
-                        description = "Need a summary? Generate and view detailed reports of all your transactions to keep things transparent.",
-                        targetCoordinates = it
-                    )
-                },
-                bankSectionCoords?.let {
-                    TutorialStep(
-                        title = "Digital Wallet",
-                        description = "Link your bank accounts or Mobile Finance Services (MFS) for quick access to your account details and QR codes.",
-                        targetCoordinates = it
-                    )
-                }
+                TutorialStep(
+                    title = "Record a loan in seconds",
+                    description = "Tap Give when you lend money and Take when you borrow. History and Report show you everything you've recorded.",
+                    targetCoordinates = quickActionsCoords
+                ),
+                TutorialStep(
+                    title = "Do the math before you commit",
+                    description = "Tools holds the EMI calculator for instalments, and the DPS & FDR calculator for working out what a savings deposit will mature to.",
+                    targetCoordinates = toolsCoords
+                ),
+                TutorialStep(
+                    title = "Keep your accounts handy",
+                    description = "Link a bank account, card, or mobile wallet like bKash. You can share an account with someone you trust, and get paid faster.",
+                    targetCoordinates = bankSectionCoords
+                ),
+                TutorialStep(
+                    title = "Never miss a due date",
+                    description = "We'll remind you here when a loan is coming due, and when someone repays you.",
+                    targetCoordinates = notificationCoords
+                ),
+                TutorialStep(
+                    title = "Make it yours",
+                    description = "Open your profile to change the currency, language, and theme. That's the tour — you're all set.",
+                    targetCoordinates = profileCoords
+                )
             )
+        }
+
+        // Hold the tutorial until every target has been measured. Starting earlier means the
+        // step list grows underneath the user as onGloballyPositioned fires one target at a
+        // time, which shifts the step they're reading and makes the counter jump.
+        val allTargetsMeasured = balanceCardCoords != null && quickActionsCoords != null &&
+                toolsCoords != null && bankSectionCoords != null &&
+                notificationCoords != null && profileCoords != null
+
+        var showTutorial by remember { mutableStateOf(false) }
+
+        LaunchedEffect(uiState.isLoading, uiState.hasSeenTutorial, allTargetsMeasured) {
+            if (!uiState.isLoading && !uiState.hasSeenTutorial && allTargetsMeasured) {
+                showTutorial = true
+            }
         }
 
         Box(modifier = Modifier.fillMaxSize().padding(padding).background(MaterialTheme.colorScheme.background)) {
@@ -254,9 +244,8 @@ fun HomeScreen(
                             onReportClick = { onNavigateToHistory(null) },
                             onCalendarClick = { showFeaturedCalendar = true },
                             onToolsClick = onNavigateToTools,
-                            onPositionedCalendar = { calendarCoords = it },
                             onPositionedQuickActions = { quickActionsCoords = it },
-                            onPositionedReport = { reportCoords = it }
+                            onPositionedTools = { toolsCoords = it }
                         )
                     }
 
