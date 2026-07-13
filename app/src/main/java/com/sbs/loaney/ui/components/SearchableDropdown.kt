@@ -19,12 +19,22 @@ fun SearchableDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var filterQuery by remember { mutableStateOf(value) }
 
-    // Filter options based on the current input value
-    val filteredOptions = if (value.isBlank()) {
+    LaunchedEffect(value) {
+        if (value.isBlank()) {
+            filterQuery = ""
+        } else if (value != filterQuery) {
+            kotlinx.coroutines.delay(2000L)
+            filterQuery = value
+        }
+    }
+
+    // Filter options based on the debounced filterQuery
+    val filteredOptions = if (filterQuery.isBlank()) {
         options
     } else {
-        options.filter { it.contains(value, ignoreCase = true) }
+        options.filter { it.contains(filterQuery, ignoreCase = true) }
     }
 
     ExposedDropdownMenuBox(
@@ -54,6 +64,7 @@ fun SearchableDropdown(
                         text = { Text(option) },
                         onClick = {
                             onValueChange(option)
+                            filterQuery = option
                             expanded = false
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
@@ -62,7 +73,10 @@ fun SearchableDropdown(
             } else {
                 DropdownMenuItem(
                     text = { Text("Use custom: \"$value\"") },
-                    onClick = { expanded = false },
+                    onClick = { 
+                        filterQuery = value
+                        expanded = false 
+                    },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                 )
             }

@@ -38,6 +38,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
 
 data class AddBankAccountRequest(
     val accountName: String,
@@ -219,7 +221,7 @@ fun AddBankAccountBottomSheet(
         skipPartiallyExpanded = true,
         confirmValueChange = { sheetValue ->
             if (sheetValue == SheetValue.Hidden) {
-                if (editingAccount == null && hasChanges) {
+                if (editingAccount == null && (draft != null || hasChanges)) {
                     showCloseConfirmation = true
                     false
                 } else {
@@ -231,13 +233,13 @@ fun AddBankAccountBottomSheet(
         }
     )
 
-    BackHandler(enabled = editingAccount == null && hasChanges) {
+    BackHandler(enabled = editingAccount == null && (draft != null || hasChanges)) {
         showCloseConfirmation = true
     }
 
     ModalBottomSheet(
         onDismissRequest = {
-            if (editingAccount == null && hasChanges) {
+            if (editingAccount == null && (draft != null || hasChanges)) {
                 showCloseConfirmation = true
             } else {
                 onDismiss()
