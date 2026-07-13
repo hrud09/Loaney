@@ -83,4 +83,10 @@ class LoanRepository(
     override suspend fun updateBankAccount(account: BankAccountEntity) = bankAccountDao.updateBankAccount(account)
 
     override suspend fun deleteBankAccount(account: BankAccountEntity) = bankAccountDao.deleteBankAccount(account)
+
+    override suspend fun getBankAccountByShareId(shareId: String): BankAccountEntity? =
+        bankAccountDao.getByShareId(shareId)
+
+    override suspend fun deleteBankAccountByShareId(shareId: String) =
+        bankAccountDao.deleteByShareId(shareId)
 }

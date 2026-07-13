@@ -15,7 +15,7 @@ import com.sbs.loaney.data.local.dao.BankAccountDao
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class, BankAccountEntity::class], version = 8, exportSchema = false)
+@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class, BankAccountEntity::class], version = 9, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun loanDao(): LoanDao
@@ -62,6 +62,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE bank_accounts ADD COLUMN ownerUid TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE bank_accounts ADD COLUMN ownerName TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE bank_accounts ADD COLUMN shareId TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE bank_accounts ADD COLUMN sharePermission TEXT DEFAULT NULL")
+                db.execSQL("ALTER TABLE bank_accounts ADD COLUMN isSharedIncoming INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -69,7 +79,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "loaney_database"
                 )
-                .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                .addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

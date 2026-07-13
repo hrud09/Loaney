@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sbs.loaney.data.model.LinkedLoanNotification
 import com.sbs.loaney.data.repository.UserLinkRepository
+import com.sbs.loaney.data.repository.BankAccountShareRepository
 import com.sbs.loaney.data.repository.ILoanRepository
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     private val userLinkRepository: UserLinkRepository,
-    private val repository: ILoanRepository
+    private val repository: ILoanRepository,
+    private val shareRepository: BankAccountShareRepository
 ) : ViewModel() {
 
     val notifications: StateFlow<List<LinkedLoanNotification>> = userLinkRepository
@@ -55,6 +57,20 @@ class NotificationsViewModel @Inject constructor(
             )
             repository.insertBankAccount(account)
             userLinkRepository.deleteNotification(notification.id)
+        }
+    }
+
+    fun acceptSharedBankAccount(notification: LinkedLoanNotification) {
+        viewModelScope.launch {
+            val shareId = notification.shareId ?: return@launch
+            val entity = shareRepository.acceptShare(shareId)
+            val existing = repository.getBankAccountByShareId(shareId)
+            if (existing == null) {
+                repository.insertBankAccount(entity)
+            } else {
+                repository.updateBankAccount(entity.copy(id = existing.id))
+            }
+            userLinkRepository.markNotificationRead(notification.id)
         }
     }
 }

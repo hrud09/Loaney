@@ -80,6 +80,32 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // ── Bank account / card sharing (outgoing grants) ─────────────────────
+    // Owner manages shares. Recipients can read and mark acceptance.
+    match /users/{ownerId}/bankAccountShares/{shareId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == ownerId ||
+        resource.data.sharedWithUid == request.auth.uid
+      );
+      allow create, delete: if request.auth != null && request.auth.uid == ownerId;
+      allow update: if request.auth != null && (
+        request.auth.uid == ownerId ||
+        (
+          request.auth.uid == resource.data.sharedWithUid &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'acceptedAt'])
+        )
+      );
+    }
+
+    // ── Bank account / card sharing (incoming mirror) ─────────────────────
+    // Any authenticated user can CREATE a pending share on a recipient's tree.
+    // Only the recipient can read, accept, or remove their incoming shares.
+    match /users/{userId}/sharedBankAccounts/{shareId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
     // ── Cross-user loan notifications ─────────────────────────────────────
     // Any authenticated user can WRITE a notification to another user's
     // loanNotifications subcollection (so the sender can notify the recipient).
@@ -135,6 +161,33 @@ Here is exactly how the app optimizes your free tier usage for Loan data:
    This hierarchical design prevents you from having to do costly database-wide searches.
 
 **In summary:** As long as you followed Step 3 to enable **Cloud Firestore** and applied the security rule, your app will instantly and securely backup all Loan Data to the cloud 100% for free!
+
+---
+
+## Bank Account & Card Sharing
+
+Loaney supports sharing bank accounts, credit cards, and MFS wallets with other Loaney users.
+
+### Firestore paths
+
+| Path | Purpose |
+|------|---------|
+| `users/{ownerUid}/bankAccountShares/{shareId}` | Outgoing share grants managed by the account owner |
+| `users/{recipientUid}/sharedBankAccounts/{shareId}` | Incoming share mirror for the recipient |
+
+### How it works
+
+1. **Share** — Owner picks a recipient email and permission level (`VIEW` or `USE`).
+2. **Notify** — Registered users receive an in-app notification; everyone gets an email with account details.
+3. **Accept** — Recipient taps **Accept** to link a live shared account that stays synced when the owner updates it.
+4. **Copy to wallet** — Recipient can still import a one-time local copy without linking.
+5. **Revoke** — Owner removes access from the share sheet; the recipient's linked copy is removed automatically.
+
+### Required Firestore index
+
+If Firestore prompts for a composite index on `bankAccountShares`, create one for:
+- Collection: `bankAccountShares` (collection group or subcollection)
+- Fields: `accountLocalId` Ascending, `createdAt` Descending
 
 *Enjoy your fully synchronized, cloud-ready application!*
 

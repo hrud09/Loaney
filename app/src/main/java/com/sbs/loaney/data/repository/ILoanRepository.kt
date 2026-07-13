@@ -30,4 +30,6 @@ interface ILoanRepository {
     suspend fun insertBankAccount(account: BankAccountEntity): Long
     suspend fun updateBankAccount(account: BankAccountEntity)
     suspend fun deleteBankAccount(account: BankAccountEntity)
+    suspend fun getBankAccountByShareId(shareId: String): BankAccountEntity?
+    suspend fun deleteBankAccountByShareId(shareId: String)
 }

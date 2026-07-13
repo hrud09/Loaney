@@ -99,7 +99,7 @@ fun BankAccountCard(
                     }
                 }
                 
-                // Delete overlay
+                // Delete / remove overlay
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -112,6 +112,7 @@ fun BankAccountCard(
                     Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White, modifier = Modifier.size(16.dp))
                 }
 
+                if (account.isOwnedByMe) {
                 // Edit overlay
                 Box(
                     modifier = Modifier
@@ -136,6 +137,7 @@ fun BankAccountCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.Share, contentDescription = "Share", tint = Color.White, modifier = Modifier.size(16.dp))
+                }
                 }
 
                 // Copy All overlay
@@ -174,21 +176,31 @@ fun BankAccountCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = account.bankName,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = contentColor
-                        ),
-                        maxLines = 1,
-                        modifier = Modifier.weight(1f).clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            clipboardManager.setPrimaryClip(ClipData.newPlainText("Bank Name", account.bankName))
-                            Toast.makeText(context, "Name Copied!", Toast.LENGTH_SHORT).show()
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = account.bankName,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = contentColor
+                            ),
+                            maxLines = 1,
+                            modifier = Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                clipboardManager.setPrimaryClip(ClipData.newPlainText("Bank Name", account.bankName))
+                                Toast.makeText(context, "Name Copied!", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                        if (account.isSharedIncoming && !account.ownerName.isNullOrBlank()) {
+                            Text(
+                                text = "Shared by ${account.ownerName}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
-                    )
+                    }
                     
                     if (account.isMfs && !account.qrCodeUri.isNullOrBlank()) {
                         Box(
@@ -228,7 +240,8 @@ fun BankAccountCard(
                     
                     val displayNum = when {
                         account.isCard -> account.accountNumber.chunked(4).joinToString(" ")
-                        else -> account.accountNumber
+                        account.isMfs -> account.accountNumber
+                        else -> "ACC ${account.accountNumber}"
                     }
                     Text(
                         text = displayNum,

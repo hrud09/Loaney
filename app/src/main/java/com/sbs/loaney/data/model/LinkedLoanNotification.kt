@@ -49,6 +49,10 @@ data class LinkedLoanNotification(
     val mfsProvider: String? = null,
     val qrCodeUri: String? = null,
 
+    /** Persistent share ID when this notification represents a live share grant. */
+    val shareId: String? = null,
+    val sharePermission: String? = null,
+
     // PDF attachment (Base64 encoded string)
     val pdfBase64: String? = null
 )

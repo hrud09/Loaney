@@ -95,6 +95,12 @@
     <string name="branch_optional">Branch (Optional)</string>
     <string name="swift_optional">SWIFT (Optional)</string>
     <string name="save_bank_account">Save Bank Account</string>
+    <string name="share_account">Share Account</string>
+    <string name="shared_by">Shared by %1$s</string>
+    <string name="share_permission_view">View only</string>
+    <string name="share_permission_use">Use in payments</string>
+    <string name="accept_share">Accept</string>
+    <string name="copy_to_wallet">Copy to wallet</string>
 
     <!-- Loan Tracker Screen -->
     <string name="delete_loan_title">Delete Loan</string>

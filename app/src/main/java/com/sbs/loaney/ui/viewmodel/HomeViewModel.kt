@@ -25,12 +25,17 @@ import com.sbs.loaney.data.model.CalendarEventType
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.sbs.loaney.data.repository.UserLinkRepository
+import com.sbs.loaney.data.repository.BankAccountShareRepository
+import com.sbs.loaney.data.model.SharePermission
+import com.sbs.loaney.data.model.BankAccountShare
+import com.sbs.loaney.data.model.ShareStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -48,7 +53,8 @@ data class HomeUiState(
     val userName: String = "Sajibur",
     val currencySymbol: String = "৳",
     val userProfilePhoto: String? = null,
-    val hasSeenTutorial: Boolean = true // Default true to avoid showing it while loading
+    val hasSeenTutorial: Boolean = true, // Default true to avoid showing it while loading
+    val draftBankAccountJson: String? = null
 )
 
 @HiltViewModel
@@ -56,6 +62,7 @@ class HomeViewModel @Inject constructor(
     private val repository: ILoanRepository,
     private val settingsRepository: SettingsRepository,
     private val userLinkRepository: UserLinkRepository,
+    private val shareRepository: BankAccountShareRepository,
     private val analyticsHelper: AnalyticsHelper
 ) : ViewModel() {
 
@@ -66,7 +73,11 @@ class HomeViewModel @Inject constructor(
     private val _shareLinkedName = MutableStateFlow<String?>(null)
     val shareLinkedName = _shareLinkedName.asStateFlow()
 
+    private val _outgoingShares = MutableStateFlow<List<BankAccountShare>>(emptyList())
+    val outgoingShares = _outgoingShares.asStateFlow()
+
     private var shareLookupJob: Job? = null
+    private var outgoingSharesJob: Job? = null
 
     fun checkShareEmail(email: String) {
         shareLookupJob?.cancel()
@@ -94,18 +105,66 @@ class HomeViewModel @Inject constructor(
         _shareLinkedName.value = null
     }
 
-    fun shareBankAccount(account: BankAccountEntity, email: String, onComplete: () -> Unit) {
-        viewModelScope.launch {
-            val trimmed = email.trim()
-            val recipientUid = userLinkRepository.lookupUidByEmail(trimmed)
-            if (recipientUid != null) {
-                userLinkRepository.sendBankAccountNotification(recipientUid, account)
+    fun observeSharesForAccount(account: BankAccountEntity) {
+        outgoingSharesJob?.cancel()
+        if (account.isSharedIncoming) {
+            _outgoingShares.value = emptyList()
+            return
+        }
+        outgoingSharesJob = viewModelScope.launch {
+            shareRepository.observeOutgoingShares(account.id).collect { shares ->
+                _outgoingShares.value = shares
             }
-            // Queue email notification
-            userLinkRepository.sendBankAccountEmail(trimmed, account)
-            
+        }
+    }
+
+    fun clearOutgoingSharesObservation() {
+        outgoingSharesJob?.cancel()
+        _outgoingShares.value = emptyList()
+    }
+
+    fun shareBankAccount(account: BankAccountEntity, email: String, permission: SharePermission, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            shareRepository.shareAccount(account, email, permission)
             resetShareEmailStatus()
             onComplete()
+        }
+    }
+
+    fun revokeShare(share: BankAccountShare) {
+        viewModelScope.launch {
+            shareRepository.revokeShare(share)
+            repository.deleteBankAccountByShareId(share.shareId)
+        }
+    }
+
+    init {
+        viewModelScope.launch {
+            shareRepository.observeIncomingShares().collect { shares ->
+                syncIncomingShares(shares)
+            }
+        }
+    }
+
+    private suspend fun syncIncomingShares(shares: List<BankAccountShare>) {
+        val activeShareIds = shares
+            .filter { it.statusEnum == ShareStatus.ACTIVE || it.statusEnum == ShareStatus.PENDING }
+            .map { it.shareId }
+            .toSet()
+
+        val localAccounts = repository.getAllBankAccounts().first()
+        localAccounts
+            .filter { it.isSharedIncoming && it.shareId != null && it.shareId !in activeShareIds }
+            .forEach { repository.deleteBankAccount(it) }
+
+        shares.filter { it.statusEnum == ShareStatus.ACTIVE }.forEach { share ->
+            val existing = repository.getBankAccountByShareId(share.shareId)
+            val entity = share.toEntity(forIncoming = true)
+            if (existing == null) {
+                repository.insertBankAccount(entity)
+            } else {
+                repository.updateBankAccount(entity.copy(id = existing.id))
+            }
         }
     }
 
@@ -119,7 +178,8 @@ class HomeViewModel @Inject constructor(
         settingsRepository.userNameFlow,
         settingsRepository.currencySymbolFlow,
         settingsRepository.userProfilePhotoFlow,
-        settingsRepository.hasSeenTutorialFlow
+        settingsRepository.hasSeenTutorialFlow,
+        settingsRepository.draftBankAccountFlow
     ) { args ->
         val summary = args[0] as HomeUiState
         val accounts = args[1] as List<BankAccountEntity>
@@ -127,13 +187,15 @@ class HomeViewModel @Inject constructor(
         val currency = args[3] as String
         val photo = args[4] as String?
         val hasSeen = args[5] as Boolean
+        val draftJson = args[6] as String?
 
         summary.copy(
             bankAccounts = accounts,
             userName = name,
             currencySymbol = currency,
             userProfilePhoto = photo,
-            hasSeenTutorial = hasSeen
+            hasSeenTutorial = hasSeen,
+            draftBankAccountJson = draftJson
         )
     }.stateIn(
         scope = viewModelScope,
@@ -285,6 +347,15 @@ class HomeViewModel @Inject constructor(
 
     fun deleteBankAccount(account: BankAccountEntity) {
         viewModelScope.launch {
+            if (account.isOwnedByMe) {
+                shareRepository.removeSharesForAccount(account)
+            }
+            repository.deleteBankAccount(account)
+        }
+    }
+
+    fun removeSharedAccountLocally(account: BankAccountEntity) {
+        viewModelScope.launch {
             repository.deleteBankAccount(account)
         }
     }
@@ -292,12 +363,21 @@ class HomeViewModel @Inject constructor(
     fun updateBankAccount(account: BankAccountEntity) {
         viewModelScope.launch {
             repository.updateBankAccount(account)
+            if (account.isOwnedByMe) {
+                shareRepository.syncAccountToShares(account)
+            }
         }
     }
 
     fun setHasSeenTutorial(completed: Boolean) {
         viewModelScope.launch {
             settingsRepository.setHasSeenTutorial(completed)
+        }
+    }
+
+    fun saveDraftBankAccount(draftJson: String?) {
+        viewModelScope.launch {
+            settingsRepository.saveDraftBankAccount(draftJson)
         }
     }
 }

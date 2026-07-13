@@ -34,6 +34,10 @@ import coil.compose.AsyncImage
 import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.ui.theme.neubrutalistCard
+import androidx.activity.compose.BackHandler
+import androidx.compose.ui.text.style.TextAlign
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 data class AddBankAccountRequest(
     val accountName: String,
@@ -48,31 +52,129 @@ data class AddBankAccountRequest(
     val qrCodeUri: String?
 )
 
+@Serializable
+data class DraftBankAccount(
+    val accountName: String = "",
+    val accountNumber: String = "",
+    val bankName: String = "",
+    val branchName: String? = null,
+    val swiftCode: String? = null,
+    val coverImageUri: String? = null,
+    val selectedTab: Int = 0,
+    val mfsProvider: String? = null,
+    val qrCodeUri: String? = null
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddBankAccountBottomSheet(
     editingAccount: BankAccountEntity? = null,
+    userName: String = "",
+    draftJson: String? = null,
     onDismiss: () -> Unit,
-    onAdd: (AddBankAccountRequest) -> Unit
+    onAdd: (AddBankAccountRequest) -> Unit,
+    onSaveDraft: (String) -> Unit = {},
+    onClearDraft: () -> Unit = {}
 ) {
-    var accountName by remember { mutableStateOf(editingAccount?.accountName ?: "") }
-    var accountNumber by remember { mutableStateOf(editingAccount?.accountNumber ?: "") }
-    var bankName by remember { mutableStateOf(editingAccount?.bankName ?: "") }
+    // Parse draft if editingAccount is null
+    val draft = remember(draftJson) {
+        if (editingAccount == null && !draftJson.isNullOrBlank()) {
+            try {
+                Json.decodeFromString<DraftBankAccount>(draftJson)
+            } catch (e: Exception) {
+                null
+            }
+        } else {
+            null
+        }
+    }
+
+    var accountName by remember { 
+        mutableStateOf(
+            editingAccount?.accountName 
+                ?: draft?.accountName 
+                ?: ""
+        ) 
+    }
+    var accountNumber by remember { 
+        mutableStateOf(
+            editingAccount?.accountNumber 
+                ?: draft?.accountNumber 
+                ?: ""
+        ) 
+    }
+    var bankName by remember { 
+        mutableStateOf(
+            editingAccount?.bankName 
+                ?: draft?.bankName 
+                ?: ""
+        ) 
+    }
     var selectedCountry by remember { mutableStateOf("") }
-    var branchName by remember { mutableStateOf(editingAccount?.branchName ?: "") }
-    var swiftCode by remember { mutableStateOf(editingAccount?.swiftCode ?: "") }
-    var proofUri by remember { mutableStateOf<Uri?>(editingAccount?.coverImageUri?.let { Uri.parse(it) }) }
+    var branchName by remember { 
+        mutableStateOf(
+            editingAccount?.branchName 
+                ?: draft?.branchName 
+                ?: ""
+        ) 
+    }
+    var swiftCode by remember { 
+        mutableStateOf(
+            editingAccount?.swiftCode 
+                ?: draft?.swiftCode 
+                ?: ""
+        ) 
+    }
+    var proofUri by remember { 
+        mutableStateOf<Uri?>(
+            (editingAccount?.coverImageUri ?: draft?.coverImageUri)?.let { Uri.parse(it) }
+        ) 
+    }
     var selectedTab by remember { 
         mutableIntStateOf(
             when {
                 editingAccount?.isMfs == true -> 2
                 editingAccount?.isCard == true -> 1
+                editingAccount == null && draft != null -> draft.selectedTab
                 else -> 0
             }
         ) 
     } // 0: Bank, 1: Card, 2: MFS
-    var mfsProvider by remember { mutableStateOf(editingAccount?.mfsProvider ?: "bKash") }
-    var qrCodeUri by remember { mutableStateOf<Uri?>(editingAccount?.qrCodeUri?.let { Uri.parse(it) }) }
+    var mfsProvider by remember { 
+        mutableStateOf(
+            editingAccount?.mfsProvider 
+                ?: draft?.mfsProvider 
+                ?: "bKash"
+        ) 
+    }
+    var qrCodeUri by remember { 
+        mutableStateOf<Uri?>(
+            (editingAccount?.qrCodeUri ?: draft?.qrCodeUri)?.let { Uri.parse(it) }
+        ) 
+    }
+
+    val currentMfsProvider = if (selectedTab == 2) mfsProvider else null
+    val currentBankName = if (selectedTab == 2) mfsProvider else bankName
+    
+    val currentDraft = DraftBankAccount(
+        accountName = accountName,
+        accountNumber = accountNumber,
+        bankName = currentBankName,
+        branchName = branchName.ifBlank { null },
+        swiftCode = swiftCode.ifBlank { null },
+        coverImageUri = if (selectedTab == 2) null else proofUri?.toString(),
+        selectedTab = selectedTab,
+        mfsProvider = currentMfsProvider,
+        qrCodeUri = if (selectedTab == 2) qrCodeUri?.toString() else null
+    )
+    
+    val defaultDraft = DraftBankAccount()
+    val baseDraft = draft ?: defaultDraft
+    
+    val hasChanges = currentDraft != baseDraft && currentDraft != defaultDraft
+    val isFullyFilled = accountName.isNotBlank() && accountNumber.isNotBlank() && (selectedTab == 2 || bankName.isNotBlank())
+    
+    var showCloseConfirmation by remember { mutableStateOf(false) }
     
     val mfsProviders = listOf("bKash", "Nagad", "Rocket", "Upay")
 
@@ -113,9 +215,35 @@ fun AddBankAccountBottomSheet(
         }
     }
 
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { sheetValue ->
+            if (sheetValue == SheetValue.Hidden) {
+                if (editingAccount == null && hasChanges) {
+                    showCloseConfirmation = true
+                    false
+                } else {
+                    true
+                }
+            } else {
+                true
+            }
+        }
+    )
+
+    BackHandler(enabled = editingAccount == null && hasChanges) {
+        showCloseConfirmation = true
+    }
+
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        onDismissRequest = {
+            if (editingAccount == null && hasChanges) {
+                showCloseConfirmation = true
+            } else {
+                onDismiss()
+            }
+        },
+        sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.background,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
@@ -238,11 +366,13 @@ fun AddBankAccountBottomSheet(
                         options = banksForCountry
                     )
                 } else {
-                    CustomLightTextField(
+                    val cardIssuers = listOf("Visa", "Mastercard", "American Express", "Discover", "JCB", "UnionPay")
+                    SearchableDropdown(
                         value = bankName,
                         onValueChange = { bankName = it },
                         label = "Card Issuer (e.g. Visa, Mastercard)",
-                        leadingIcon = Icons.Default.CreditCard
+                        leadingIcon = Icons.Default.CreditCard,
+                        options = cardIssuers
                     )
                 }
             }
@@ -255,7 +385,8 @@ fun AddBankAccountBottomSheet(
                     2 -> "Account Holder Name"
                     else -> stringResource(id = R.string.account_holder_name_hint)
                 },
-                leadingIcon = Icons.Default.Person
+                leadingIcon = Icons.Default.Person,
+                placeholder = if (selectedTab == 1) userName else null
             )
 
             if (selectedTab == 2) {
@@ -343,6 +474,7 @@ fun AddBankAccountBottomSheet(
                         mfsProvider = if (selectedTab == 2) mfsProvider else null,
                         qrCodeUri = if (selectedTab == 2) qrCodeUri?.toString() else null
                     ))
+                    onClearDraft()
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = CircleShape,
@@ -359,6 +491,128 @@ fun AddBankAccountBottomSheet(
                     }
                 }
                 Text(actionLabel, fontWeight = FontWeight.Bold)
+            }
+
+            if (showCloseConfirmation) {
+                if (isFullyFilled) {
+                    AlertDialog(
+                        onDismissRequest = { showCloseConfirmation = false },
+                        title = { Text("Save Card/Account?") },
+                        text = { Text("You have filled in all required fields. Choose how you would like to proceed:") },
+                        confirmButton = {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        showCloseConfirmation = false
+                                        onAdd(AddBankAccountRequest(
+                                            accountName = accountName,
+                                            accountNumber = accountNumber,
+                                            bankName = if (selectedTab == 2) mfsProvider else bankName,
+                                            branchName = if (selectedTab == 0) branchName.ifBlank { null } else null,
+                                            swiftCode = if (selectedTab == 0) swiftCode.ifBlank { null } else null,
+                                            coverImageUri = if (selectedTab == 2) null else proofUri?.toString(),
+                                            isCard = selectedTab == 1,
+                                            isMfs = selectedTab == 2,
+                                            mfsProvider = if (selectedTab == 2) mfsProvider else null,
+                                            qrCodeUri = if (selectedTab == 2) qrCodeUri?.toString() else null
+                                        ))
+                                        onClearDraft()
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Save Account")
+                                }
+                                
+                                OutlinedButton(
+                                    onClick = {
+                                        showCloseConfirmation = false
+                                        val draftJson = Json.encodeToString(currentDraft)
+                                        onSaveDraft(draftJson)
+                                        onDismiss()
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Save as Draft")
+                                }
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    TextButton(
+                                        onClick = {
+                                            showCloseConfirmation = false
+                                            onClearDraft()
+                                            onDismiss()
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                    ) {
+                                        Text("Discard", textAlign = TextAlign.Center)
+                                    }
+                                    
+                                    TextButton(
+                                        onClick = { showCloseConfirmation = false },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Keep Editing", textAlign = TextAlign.Center)
+                                    }
+                                }
+                            }
+                        }
+                    )
+                } else {
+                    AlertDialog(
+                        onDismissRequest = { showCloseConfirmation = false },
+                        title = { Text("Save Draft?") },
+                        text = { Text("The form is not fully filled. Would you like to save it as a draft so you can finish it later?") },
+                        confirmButton = {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        showCloseConfirmation = false
+                                        val draftJson = Json.encodeToString(currentDraft)
+                                        onSaveDraft(draftJson)
+                                        onDismiss()
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Save as Draft")
+                                }
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    TextButton(
+                                        onClick = {
+                                            showCloseConfirmation = false
+                                            onClearDraft()
+                                            onDismiss()
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                    ) {
+                                        Text("Discard", textAlign = TextAlign.Center)
+                                    }
+                                    
+                                    TextButton(
+                                        onClick = { showCloseConfirmation = false },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Keep Editing", textAlign = TextAlign.Center)
+                                    }
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
     }

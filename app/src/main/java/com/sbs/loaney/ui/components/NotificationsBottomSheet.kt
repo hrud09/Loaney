@@ -97,7 +97,8 @@ fun NotificationsBottomSheet(
                                     viewModel.markAsRead(notification.id)
                                 }
                             },
-                            onImportClick = { viewModel.importSharedBankAccount(notification) }
+                            onImportClick = { viewModel.importSharedBankAccount(notification) },
+                            onAcceptShareClick = { viewModel.acceptSharedBankAccount(notification) }
                         )
                     }
                 }
@@ -111,7 +112,8 @@ private fun NotificationItem(
     notification: LinkedLoanNotification,
     onDeleteClick: () -> Unit,
     onNotificationClick: () -> Unit,
-    onImportClick: () -> Unit
+    onImportClick: () -> Unit,
+    onAcceptShareClick: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     val context = LocalContext.current
@@ -194,19 +196,32 @@ private fun NotificationItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
 
-                // Shared Bank Account import action
+                // Shared Bank Account actions
                 if (isShareType) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = onImportClick,
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                        modifier = Modifier.height(32.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
-                    ) {
-                        Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Import", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (!notification.shareId.isNullOrBlank()) {
+                            Button(
+                                onClick = onAcceptShareClick,
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                modifier = Modifier.height(32.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
+                            ) {
+                                Text("Accept", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = onImportClick,
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                            modifier = Modifier.height(32.dp),
+                            border = BorderStroke(1.dp, AlimGreen)
+                        ) {
+                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp), tint = AlimGreen)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Copy to wallet", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
+                        }
                     }
                 }
 

@@ -22,4 +22,10 @@ interface BankAccountDao {
 
     @Delete
     suspend fun deleteBankAccount(account: BankAccountEntity)
+
+    @Query("SELECT * FROM bank_accounts WHERE shareId = :shareId LIMIT 1")
+    suspend fun getByShareId(shareId: String): BankAccountEntity?
+
+    @Query("DELETE FROM bank_accounts WHERE shareId = :shareId")
+    suspend fun deleteByShareId(shareId: String)
 }

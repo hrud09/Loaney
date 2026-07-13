@@ -230,7 +230,9 @@ class UserLinkRepository @Inject constructor() {
 
     suspend fun sendBankAccountNotification(
         recipientUid: String,
-        account: com.sbs.loaney.data.local.entity.BankAccountEntity
+        account: com.sbs.loaney.data.local.entity.BankAccountEntity,
+        shareId: String? = null,
+        permission: com.sbs.loaney.data.model.SharePermission? = null
     ) {
         val currentUser = auth.currentUser ?: return
         val senderUid = currentUser.uid
@@ -262,7 +264,9 @@ class UserLinkRepository @Inject constructor() {
                 isCard = account.isCard,
                 isMfs = account.isMfs,
                 mfsProvider = account.mfsProvider,
-                qrCodeUri = account.qrCodeUri
+                qrCodeUri = account.qrCodeUri,
+                shareId = shareId,
+                sharePermission = permission?.name
             )
 
             firestore.collection(USERS_COLLECTION)
