@@ -28,5 +28,9 @@ data class LoanEntity(
     val witness: String? = null,
     @ColumnInfo(name = "isDeleted") val deleted: Boolean = false,
     val removedAt: Long? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    /** Opt-in: email the borrower automatically when this loan is due or overdue. */
+    val autoRemindEnabled: Boolean = false,
+    /** Cooldown marker so the daily worker can't email the same person every morning. */
+    val lastReminderSentAt: Long? = null
 )

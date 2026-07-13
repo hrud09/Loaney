@@ -72,9 +72,18 @@ data class ScannedLoanData(
 @Composable
 fun MainScreen(
     startDestination: String = Screen.Home.route,
+    remindLoanId: Long? = null,
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
+
+    // Arrived from the "Send reminder" action on a due-date notification: jump straight to
+    // that loan with the channel picker already open.
+    LaunchedEffect(remindLoanId) {
+        if (remindLoanId != null) {
+            navController.navigate(Screen.LoanDetail.createRoute(remindLoanId, remind = true))
+        }
+    }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -438,12 +447,20 @@ fun MainScreen(
                 }
                 composable(
                     route = Screen.LoanDetail.route,
-                    arguments = listOf(navArgument("loanId") { type = NavType.LongType })
+                    arguments = listOf(
+                        navArgument("loanId") { type = NavType.LongType },
+                        navArgument("remind") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        }
+                    )
                 ) { backStackEntry ->
                     val loanId = backStackEntry.arguments?.getLong("loanId") ?: return@composable
+                    val remind = backStackEntry.arguments?.getBoolean("remind") ?: false
                     LoanTrackerScreen(
                         loanId = loanId,
-                        onNavigateBack = { navController.popBackStack() }
+                        onNavigateBack = { navController.popBackStack() },
+                        autoOpenReminder = remind
                     )
                 }
                 composable(Screen.History.route) {

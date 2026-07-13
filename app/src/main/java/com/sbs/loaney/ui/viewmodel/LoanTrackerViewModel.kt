@@ -93,6 +93,15 @@ class LoanTrackerViewModel @Inject constructor(
         }
     }
 
+    /** Opt this loan in or out of automatic due-date reminder emails to the borrower. */
+    fun setAutoRemind(enabled: Boolean) {
+        val loanId = _selectedLoanId.value ?: return
+        viewModelScope.launch {
+            val current = repository.getLoanById(loanId).firstOrNull() ?: return@launch
+            repository.updateLoan(current.loan.copy(autoRemindEnabled = enabled))
+        }
+    }
+
     fun deleteLoan(loan: LoanEntity) {
         viewModelScope.launch {
             repository.softDeleteLoan(loan.id)
