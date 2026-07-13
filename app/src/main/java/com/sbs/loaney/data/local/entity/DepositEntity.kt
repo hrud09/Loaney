@@ -18,5 +18,7 @@ data class DepositEntity(
     val associatedBankAccountId: Long?,
     val isMatured: Boolean = false,
     val notes: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val compoundingsPerYear: Int = 4,   // Quarterly is the norm for Bangladeshi banks
+    val taxRatePercent: Double = 10.0   // AIT on interest: 10% with TIN, 15% without
 )

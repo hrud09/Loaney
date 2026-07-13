@@ -19,7 +19,7 @@ import com.sbs.loaney.data.local.dao.DepositDao
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class, BankAccountEntity::class, EmiEntity::class, DepositEntity::class], version = 11, exportSchema = false)
+@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class, BankAccountEntity::class, EmiEntity::class, DepositEntity::class], version = 12, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun loanDao(): LoanDao
@@ -123,6 +123,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE deposits ADD COLUMN compoundingsPerYear INTEGER NOT NULL DEFAULT 4")
+                db.execSQL("ALTER TABLE deposits ADD COLUMN taxRatePercent REAL NOT NULL DEFAULT 10.0")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -138,9 +145,12 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_7_8, 
                     MIGRATION_8_9,
                     MIGRATION_9_10,
-                    MIGRATION_10_11
+                    MIGRATION_10_11,
+                    MIGRATION_11_12
                 )
-                .fallbackToDestructiveMigration()
+                // No fallbackToDestructiveMigration: this database is the source of truth
+                // for the user's loans and savings, and there is no cloud backup to restore
+                // from. A missing migration must fail loudly, not silently wipe their data.
                 .build()
                 INSTANCE = instance
                 instance

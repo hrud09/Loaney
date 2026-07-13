@@ -32,4 +32,5 @@ sealed class Screen(val route: String) {
     object History : Screen("history")
     object Notifications : Screen("notifications")
     object Emi : Screen("emi")
+    object Deposit : Screen("deposit")
 }

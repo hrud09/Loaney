@@ -35,6 +35,7 @@ fun ProfileSidebarContent(
     onNavigateToSettings: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToShop: () -> Unit,
+    onNavigateToDeposit: () -> Unit,
     onSignOutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -214,6 +215,11 @@ fun ProfileSidebarContent(
             icon = Icons.AutoMirrored.Filled.List,
             label = "Transaction History",
             onClick = onNavigateToHistory
+        )
+        SidebarMenuItem(
+            icon = Icons.Default.Savings,
+            label = "DPS & FDR",
+            onClick = onNavigateToDeposit
         )
         SidebarMenuItem(
             icon = Icons.Default.Settings,

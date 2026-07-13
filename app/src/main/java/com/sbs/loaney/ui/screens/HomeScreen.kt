@@ -101,6 +101,7 @@ fun HomeScreen(
     onNavigateToHistoryScreen: () -> Unit,
     onProfileClick: () -> Unit,
     onNavigateToEmi: () -> Unit,
+    onNavigateToDeposit: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     notificationsViewModel: com.sbs.loaney.ui.viewmodel.NotificationsViewModel = hiltViewModel()
 ) {
@@ -254,6 +255,7 @@ fun HomeScreen(
                             onReportClick = { onNavigateToHistory(null) },
                             onCalendarClick = { showFeaturedCalendar = true },
                             onEmiClick = onNavigateToEmi,
+                            onSavingsClick = onNavigateToDeposit,
                             onPositionedCalendar = { calendarCoords = it },
                             onPositionedQuickActions = { quickActionsCoords = it },
                             onPositionedReport = { reportCoords = it }

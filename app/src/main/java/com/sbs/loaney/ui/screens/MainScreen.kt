@@ -1,6 +1,7 @@
 package com.sbs.loaney.ui.screens
 
 import com.sbs.loaney.ui.screens.ShopScreen
+import com.sbs.loaney.ui.screens.DepositScreen
 import com.sbs.loaney.ui.screens.EmiScreen
 
 import androidx.compose.animation.*
@@ -177,6 +178,12 @@ fun MainScreen(
                         restoreState = true
                     }
                 },
+                onNavigateToDeposit = {
+                    scope.launch { drawerState.close() }
+                    navController.navigate(Screen.Deposit.route) {
+                        launchSingleTop = true
+                    }
+                },
                 onSignOutClick = {
                     showLogoutDialog = true
                 }
@@ -331,7 +338,8 @@ fun MainScreen(
                             navController.navigate(Screen.History.route)
                         },
                         onProfileClick = { scope.launch { drawerState.open() } },
-                        onNavigateToEmi = { navController.navigate(Screen.Emi.route) }
+                        onNavigateToEmi = { navController.navigate(Screen.Emi.route) },
+                        onNavigateToDeposit = { navController.navigate(Screen.Deposit.route) }
                     )
                 }
                 composable(
@@ -448,6 +456,11 @@ fun MainScreen(
                 }
                 composable(Screen.Emi.route) {
                     EmiScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+                composable(Screen.Deposit.route) {
+                    DepositScreen(
                         onNavigateBack = { navController.popBackStack() }
                     )
                 }
@@ -758,6 +771,7 @@ private fun getRoutePosition(route: String?): Int {
         route?.startsWith(Screen.Shop.route) == true -> 4
         route?.startsWith(Screen.Settings.route) == true -> 5
         route?.startsWith(Screen.Emi.route) == true -> 6
+        route?.startsWith(Screen.Deposit.route) == true -> 7
         else -> 10
     }
 }
