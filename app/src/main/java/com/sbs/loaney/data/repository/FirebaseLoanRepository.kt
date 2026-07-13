@@ -9,6 +9,7 @@ import com.sbs.loaney.data.local.entity.LoanEntity
 import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.local.entity.EmiEntity
+import com.sbs.loaney.data.local.entity.DepositEntity
 import com.sbs.loaney.data.model.BankAccountShare
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
@@ -451,4 +452,13 @@ class FirebaseLoanRepository @Inject constructor(
     override suspend fun updateEmi(emi: EmiEntity) {}
 
     override suspend fun deleteEmi(emi: EmiEntity) {}
+
+    // Deposit Operations (Stubs for Firebase compilation)
+    override fun getAllDeposits(): Flow<List<DepositEntity>> = flowOf(emptyList())
+
+    override suspend fun insertDeposit(deposit: DepositEntity): Long = 0L
+
+    override suspend fun updateDeposit(deposit: DepositEntity) {}
+
+    override suspend fun deleteDeposit(deposit: DepositEntity) {}
 }

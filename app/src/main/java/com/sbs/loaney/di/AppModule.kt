@@ -27,9 +27,10 @@ object AppModule {
     @Singleton
     fun provideLoanRepository(appDatabase: AppDatabase): ILoanRepository {
         return LoanRepository(
-            appDatabase.loanDao(), 
-            appDatabase.bankAccountDao(), 
-            appDatabase.emiDao()
+            appDatabase.loanDao(),
+            appDatabase.bankAccountDao(),
+            appDatabase.emiDao(),
+            appDatabase.depositDao()
         )
     }
 
