@@ -43,13 +43,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
+import androidx.annotation.DrawableRes
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
@@ -59,6 +56,7 @@ import com.sbs.loaney.ui.viewmodel.AuthState
 import com.sbs.loaney.ui.viewmodel.AuthViewModel
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(
     onAuthSuccess: () -> Unit,
@@ -80,6 +78,7 @@ fun AuthScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var address by remember { mutableStateOf("") }
     var dateOfBirth by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     var verificationId by remember { mutableStateOf("") }
     var localError by remember { mutableStateOf<String?>(null) }
@@ -105,8 +104,11 @@ fun AuthScreen(
         }
     }
 
-
-
+    // A Facebook sign-in can outlive this Activity — the Custom Tab may hand control back to a
+    // freshly recreated process. Pick the result back up instead of stranding the user.
+    LaunchedEffect(Unit) {
+        authViewModel.checkPendingFacebookAuth()
+    }
 
 
     // --- Image Picker Setup ---
@@ -438,18 +440,77 @@ fun AuthScreen(
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = dateOfBirth,
-                        onValueChange = { dateOfBirth = it; localError = null },
-                        label = { Text("Date of Birth (Optional)") },
-                        leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null, tint = AlimGreen) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AlimGreen, focusedContainerColor = MaterialTheme.colorScheme.surface, unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showDatePicker = true }
+                    ) {
+                        OutlinedTextField(
+                            value = dateOfBirth,
+                            onValueChange = {},
+                            label = { Text("Birth Year (Optional)") },
+                            leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null, tint = AlimGreen) },
+                            singleLine = true,
+                            readOnly = true,
+                            enabled = false,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                disabledLeadingIconColor = AlimGreen,
+                                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledContainerColor = MaterialTheme.colorScheme.surface
+                            )
                         )
-                    )
+                    }
+
+                    if (showDatePicker) {
+                        val datePickerState = rememberDatePickerState()
+                        DatePickerDialog(
+                            onDismissRequest = { showDatePicker = false },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    datePickerState.selectedDateMillis?.let { millis ->
+                                        val calendar = java.util.Calendar.getInstance().apply { timeInMillis = millis }
+                                        val birthYear = calendar.get(java.util.Calendar.YEAR)
+                                        dateOfBirth = birthYear.toString()
+                                        localError = null
+                                    }
+                                    showDatePicker = false
+                                }) {
+                                    Text("OK", color = AlimGreen, fontWeight = FontWeight.Bold)
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showDatePicker = false }) {
+                                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        ) {
+                            DatePicker(
+                                state = datePickerState,
+                                colors = DatePickerDefaults.colors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                                    headlineContentColor = MaterialTheme.colorScheme.onBackground,
+                                    weekdayContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    subheadContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    navigationContentColor = MaterialTheme.colorScheme.onBackground,
+                                    yearContentColor = MaterialTheme.colorScheme.onBackground,
+                                    currentYearContentColor = AlimGreen,
+                                    selectedYearContentColor = Color.White,
+                                    selectedYearContainerColor = AlimGreen,
+                                    dayContentColor = MaterialTheme.colorScheme.onBackground,
+                                    selectedDayContentColor = Color.White,
+                                    selectedDayContainerColor = AlimGreen,
+                                    todayContentColor = AlimGreen,
+                                    todayDateBorderColor = AlimGreen
+                                )
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
@@ -585,11 +646,53 @@ fun AuthScreen(
                         Text("Sign in for cloud backup", fontWeight = FontWeight.Bold)
                     }
                 } else {
+                    // Google and Facebook each cover sign-up and sign-in in one tap, so they stay
+                    // put whichever side of the Log In / Sign Up toggle we are on. The typed name
+                    // and currency only seed a profile that does not exist yet.
+                    SocialSignInButton(
+                        text = "Continue with Google",
+                        iconRes = R.drawable.ic_google_logo,
+                        enabled = !isMainLoading,
+                        onClick = {
+                            keyboardController?.hide()
+                            localError = null
+                            if (activity == null) {
+                                localError = "Could not start Google sign-in"
+                            } else {
+                                authViewModel.signInWithGoogle(
+                                    activity = activity,
+                                    name = name.takeIf { it.isNotBlank() },
+                                    currency = selectedCurrency
+                                )
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    SocialSignInButton(
+                        text = "Continue with Facebook",
+                        iconRes = R.drawable.ic_facebook_logo,
+                        enabled = !isMainLoading,
+                        onClick = {
+                            keyboardController?.hide()
+                            localError = null
+                            if (activity == null) {
+                                localError = "Could not start Facebook sign-in"
+                            } else {
+                                authViewModel.signInWithFacebook(
+                                    activity = activity,
+                                    name = name.takeIf { it.isNotBlank() },
+                                    currency = selectedCurrency
+                                )
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(
-                        onClick = { 
+                        onClick = {
                             isPhoneMode = !isPhoneMode
                             localError = null
                         },
+                        enabled = !isMainLoading,
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
@@ -620,5 +723,32 @@ fun AuthScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
         }
+    }
+}
+
+@Composable
+private fun SocialSignInButton(
+    text: String,
+    @DrawableRes iconRes: Int,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth().height(50.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            // Both logos carry their own brand colours; tinting would flatten them to one shade.
+            tint = Color.Unspecified,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(text, fontWeight = FontWeight.Bold)
     }
 }
