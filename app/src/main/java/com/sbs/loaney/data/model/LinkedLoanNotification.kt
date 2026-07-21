@@ -53,6 +53,25 @@ data class LinkedLoanNotification(
     val shareId: String? = null,
     val sharePermission: String? = null,
 
-    // PDF attachment (Base64 encoded string)
-    val pdfBase64: String? = null
+    val pdfBase64: String? = null,
+    
+    // Linking and Syncing fields
+    /**
+     * Type of notification: 
+     * "LOAN_REQUEST" (default/legacy), "UPDATE_PROPOSAL", "LINK_ACCEPTED", "UPDATE_ACCEPTED", "UPDATE_REJECTED"
+     */
+    val notificationType: String = "LOAN_REQUEST",
+    
+    /** JSON string representing the proposed changes to the loan entity (e.g. amount, date, status) */
+    val proposedChangesJson: String? = null,
+    
+    /** The ID of the loan in the SENDER'S collection */
+    val senderLoanId: String? = null,
+    
+    /** The ID of the loan in the RECIPIENT'S collection */
+    val recipientLoanId: String? = null,
+    
+    // System notification fields
+    val title: String? = null,
+    val message: String? = null
 )

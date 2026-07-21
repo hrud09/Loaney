@@ -98,7 +98,11 @@ fun NotificationsBottomSheet(
                                 }
                             },
                             onImportClick = { viewModel.importSharedBankAccount(notification) },
-                            onAcceptShareClick = { viewModel.acceptSharedBankAccount(notification) }
+                            onAcceptShareClick = { viewModel.acceptSharedBankAccount(notification) },
+                            onImportLoanClick = { viewModel.importLinkedLoan(notification) },
+                            onConfirmUpdateClick = { viewModel.confirmLoanUpdate(notification) },
+                            onRejectUpdateClick = { viewModel.rejectLoanUpdate(notification) },
+                            onSyncResponseClick = { viewModel.handleSyncResponse(notification) }
                         )
                     }
                 }
@@ -113,7 +117,11 @@ private fun NotificationItem(
     onDeleteClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onImportClick: () -> Unit,
-    onAcceptShareClick: () -> Unit
+    onAcceptShareClick: () -> Unit,
+    onImportLoanClick: () -> Unit,
+    onConfirmUpdateClick: () -> Unit,
+    onRejectUpdateClick: () -> Unit,
+    onSyncResponseClick: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
     val context = LocalContext.current
@@ -173,20 +181,42 @@ private fun NotificationItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                } else {
-                    val actionText = if (notification.loanType == "LEND") "wants to borrow" else "lent you"
+                } else if (notification.notificationType == "SYSTEM_REMINDER") {
                     Text(
-                        text = "${notification.senderName} $actionText ${notification.currency}${notification.amount}",
+                        text = notification.title ?: "Reminder",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = notification.message ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AlimDark
+                    )
+                } else {
+                    val actionText = when (notification.notificationType) {
+                        "UPDATE_PROPOSAL" -> "proposed changes to the loan"
+                        "LINK_ACCEPTED" -> "linked to your loan"
+                        "UPDATE_ACCEPTED" -> "accepted your proposed changes"
+                        "UPDATE_REJECTED" -> "rejected your proposed changes"
+                        else -> if (notification.loanType == "LEND") "wants to borrow" else "lent you"
+                    }
+                    
+                    Text(
+                        text = "${notification.senderName} $actionText",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.Bold,
                         color = AlimDark
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Return: ${dateFormat.format(Date(notification.promisedReturnDateMillis))}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (notification.notificationType == "LOAN_REQUEST" || notification.notificationType == "UPDATE_PROPOSAL") {
+                        Text(
+                            text = "Amount: ${notification.currency}${notification.amount}\nReturn: ${dateFormat.format(Date(notification.promisedReturnDateMillis))}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 
                 Spacer(modifier = Modifier.height(2.dp))
@@ -240,6 +270,59 @@ private fun NotificationItem(
                         Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(16.dp), tint = AlimGreen)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("View PDF", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
+                    }
+                }
+
+                // Two-Way Sync Actions
+                if (!isShareType) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        when (notification.notificationType) {
+                            "LOAN_REQUEST" -> {
+                                OutlinedButton(
+                                    onClick = onImportLoanClick,
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                    modifier = Modifier.height(32.dp),
+                                    border = BorderStroke(1.dp, AlimGreen)
+                                ) {
+                                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp), tint = AlimGreen)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Import & Link", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
+                                }
+                            }
+                            "UPDATE_PROPOSAL" -> {
+                                Button(
+                                    onClick = onConfirmUpdateClick,
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                    modifier = Modifier.height(32.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
+                                ) {
+                                    Text("Confirm", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                                OutlinedButton(
+                                    onClick = onRejectUpdateClick,
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                    modifier = Modifier.height(32.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                                ) {
+                                    Text("Reject", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                            "LINK_ACCEPTED", "UPDATE_ACCEPTED", "UPDATE_REJECTED" -> {
+                                Button(
+                                    onClick = onSyncResponseClick,
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                    modifier = Modifier.height(32.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
+                                ) {
+                                    Text("Acknowledge", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                            }
+                        }
                     }
                 }
             }

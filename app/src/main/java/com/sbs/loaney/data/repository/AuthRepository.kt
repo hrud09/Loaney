@@ -138,19 +138,7 @@ class AuthRepository @Inject constructor(
         dateOfBirth: String? = null
     ): Result<Unit> {
         return try {
-            val authResult = try {
-                auth.signInWithCredential(credential).await()
-            } catch (e: Exception) {
-                if (credential.provider == com.google.firebase.auth.FacebookAuthProvider.PROVIDER_ID) {
-                    try {
-                        auth.signInWithEmailAndPassword("facebook_user@example.com", "facebook_secure_pwd").await()
-                    } catch (signInErr: Exception) {
-                        auth.createUserWithEmailAndPassword("facebook_user@example.com", "facebook_secure_pwd").await()
-                    }
-                } else {
-                    throw e
-                }
-            }
+            val authResult = auth.signInWithCredential(credential).await()
             val userId = authResult.user?.uid ?: throw Exception("Login failed")
 
             val document = try {
@@ -224,7 +212,7 @@ class AuthRepository @Inject constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(friendly(e))
         }
     }
 
@@ -311,7 +299,27 @@ class AuthRepository @Inject constructor(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(friendly(e))
         }
+    }
+
+    /**
+     * Firebase's raw provider exceptions read like stack traces. Rewrite the ones a user can
+     * actually act on; pass everything else through untouched.
+     */
+    private fun friendly(e: Throwable): Throwable = when (e) {
+        // Firebase defaults to one account per email address. Signing in with Google or Facebook
+        // using an address that already registered via email/password lands here.
+        is com.google.firebase.auth.FirebaseAuthUserCollisionException -> Exception(
+            "An account already exists with this email address. Sign in using the method you " +
+                "originally registered with."
+        )
+        is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException -> Exception(
+            "That sign-in attempt was rejected. Please try again."
+        )
+        is com.google.firebase.FirebaseNetworkException -> Exception(
+            "No internet connection. Check your network and try again."
+        )
+        else -> e
     }
 }

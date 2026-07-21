@@ -42,63 +42,88 @@ class UserLinkRepository @Inject constructor() {
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
-     * Queries Firestore for a registered user whose `email` field matches [targetEmail].
-     * Returns the UID string if found, or null if the email is not registered in Loaney.
-     *
-     * Strategy:
-     * 1. Try lowercase (canonical form — how emails are stored going forward).
-     * 2. If no result, try the exact casing provided (safety net for legacy accounts).
-     *
-     * NOTE: This requires the Firestore security rules to allow authenticated users
-     * to READ the /users collection.  See FirebaseGuide.md for the updated rules.
+     * Queries Firestore for a registered user matching either [email] or [phone].
+     * Returns the UID string if found, or null if neither is registered.
      */
-    suspend fun lookupUidByEmail(targetEmail: String): String? {
-        val trimmed = targetEmail.trim()
-        val lowercase = trimmed.lowercase()
-        return try {
-            val searchEmails = listOf(lowercase, trimmed).distinct()
-            val snapshot = firestore.collection(USERS_COLLECTION)
-                .whereIn("email", searchEmails)
-                .limit(1)
-                .get()
-                .await()
+    suspend fun lookupUid(email: String? = null, phone: String? = null): String? {
+        val trimmedEmail = email?.trim()?.takeIf { it.isNotBlank() }
+        val lowercaseEmail = trimmedEmail?.lowercase()
+        val trimmedPhone = phone?.trim()?.takeIf { it.isNotBlank() }
 
-            if (snapshot.isEmpty) null else snapshot.documents.first().id
+        if (trimmedEmail == null && trimmedPhone == null) return null
+
+        return try {
+            if (trimmedEmail != null) {
+                val searchEmails = listOf(lowercaseEmail, trimmedEmail).distinct()
+                val snapshot = firestore.collection(USERS_COLLECTION)
+                    .whereIn("email", searchEmails)
+                    .limit(1)
+                    .get()
+                    .await()
+                if (!snapshot.isEmpty) return snapshot.documents.first().id
+            }
+
+            if (trimmedPhone != null) {
+                val snapshot = firestore.collection(USERS_COLLECTION)
+                    .whereEqualTo("phone", trimmedPhone)
+                    .limit(1)
+                    .get()
+                    .await()
+                if (!snapshot.isEmpty) return snapshot.documents.first().id
+            }
+            null
         } catch (e: Exception) {
             if (e.message?.contains("PERMISSION_DENIED") == true) {
-                Log.e(TAG, "Email lookup PERMISSION_DENIED — Firestore rules need updating. See FirebaseGuide.md")
+                Log.e(TAG, "Lookup PERMISSION_DENIED — Firestore rules need updating. See FirebaseGuide.md")
             } else {
-                Log.e(TAG, "Email lookup failed: ${e.message}")
+                Log.e(TAG, "Lookup failed: ${e.message}")
             }
             null
         }
     }
 
     /**
-     * Same as [lookupUidByEmail] but also returns the display name of the found user.
+     * Same as [lookupUid] but also returns the display name of the found user.
      * Returns Pair(uid, name) or null.
      */
-    suspend fun lookupUserByEmail(targetEmail: String): Pair<String, String>? {
-        val trimmed = targetEmail.trim()
-        val lowercase = trimmed.lowercase()
-        return try {
-            val searchEmails = listOf(lowercase, trimmed).distinct()
-            val snapshot = firestore.collection(USERS_COLLECTION)
-                .whereIn("email", searchEmails)
-                .limit(1)
-                .get()
-                .await()
+    suspend fun lookupUser(email: String? = null, phone: String? = null): Pair<String, String>? {
+        val trimmedEmail = email?.trim()?.takeIf { it.isNotBlank() }
+        val lowercaseEmail = trimmedEmail?.lowercase()
+        val trimmedPhone = phone?.trim()?.takeIf { it.isNotBlank() }
 
-            if (snapshot.isEmpty) null else {
-                val doc = snapshot.documents.first()
-                val name = doc.getString("name") ?: "Loaney User"
-                Pair(doc.id, name)
+        if (trimmedEmail == null && trimmedPhone == null) return null
+
+        return try {
+            if (trimmedEmail != null) {
+                val searchEmails = listOf(lowercaseEmail, trimmedEmail).distinct()
+                val snapshot = firestore.collection(USERS_COLLECTION)
+                    .whereIn("email", searchEmails)
+                    .limit(1)
+                    .get()
+                    .await()
+                if (!snapshot.isEmpty) {
+                    val doc = snapshot.documents.first()
+                    return Pair(doc.id, doc.getString("name") ?: "Loaney User")
+                }
             }
+
+            if (trimmedPhone != null) {
+                val snapshot = firestore.collection(USERS_COLLECTION)
+                    .whereEqualTo("phone", trimmedPhone)
+                    .limit(1)
+                    .get()
+                    .await()
+                if (!snapshot.isEmpty) {
+                    val doc = snapshot.documents.first()
+                    return Pair(doc.id, doc.getString("name") ?: "Loaney User")
+                }
+            }
+            null
         } catch (e: Exception) {
             if (e.message?.contains("PERMISSION_DENIED") == true) {
-                Log.e(TAG, "User lookup PERMISSION_DENIED — Firestore rules need updating. See FirebaseGuide.md")
+                Log.e(TAG, "Lookup PERMISSION_DENIED — Firestore rules need updating. See FirebaseGuide.md")
             } else {
-                Log.e(TAG, "User lookup failed: ${e.message}")
+                Log.e(TAG, "Lookup failed: ${e.message}")
             }
             null
         }
@@ -143,10 +168,12 @@ class UserLinkRepository @Inject constructor() {
                 .await()
             val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
 
+            val notificationId = "${senderUid}_${loanId}_${System.currentTimeMillis()}"
             val notification = LinkedLoanNotification(
-                id = loanId.toString(),
+                id = notificationId,
                 senderName = senderName,
                 senderUid = senderUid,
+                senderLoanId = loanId.toString(),
                 loanType = loanType,
                 amount = amount,
                 currency = currency,
@@ -159,13 +186,114 @@ class UserLinkRepository @Inject constructor() {
             firestore.collection(USERS_COLLECTION)
                 .document(recipientUid)
                 .collection(NOTIFICATIONS_SUBCOLLECTION)
-                .document(loanId.toString())
+                .document(notificationId)
                 .set(notification)
                 .await()
 
             Log.d(TAG, "Loan notification sent to UID: $recipientUid")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send loan notification: ${e.message}")
+        }
+    }
+
+    /**
+     * Sends a specialized notification for Two-Way Sync events (Importing, Updating, Accepting).
+     */
+    suspend fun sendLoanSyncNotification(
+        recipientUid: String,
+        notificationId: String,
+        loanType: String,
+        notificationType: String,
+        proposedChangesJson: String? = null,
+        senderLoanId: String? = null,
+        recipientLoanId: String? = null,
+        amount: Double = 0.0,
+        currency: String = "৳",
+        promisedReturnDateMillis: Long = 0L
+    ) {
+        val currentUser = auth.currentUser ?: return
+        val senderUid = currentUser.uid
+
+        // Prevent sending a notification to yourself.
+        if (senderUid == recipientUid) return
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION)
+                .document(senderUid)
+                .get()
+                .await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+
+            val notification = LinkedLoanNotification(
+                id = notificationId,
+                senderName = senderName,
+                senderUid = senderUid,
+                loanType = loanType,
+                amount = amount,
+                currency = currency,
+                promisedReturnDateMillis = promisedReturnDateMillis,
+                createdAt = System.currentTimeMillis(),
+                isRead = false,
+                notificationType = notificationType,
+                proposedChangesJson = proposedChangesJson,
+                senderLoanId = senderLoanId,
+                recipientLoanId = recipientLoanId
+            )
+
+            firestore.collection(USERS_COLLECTION)
+                .document(recipientUid)
+                .collection(NOTIFICATIONS_SUBCOLLECTION)
+                .document(notificationId)
+                .set(notification)
+                .await()
+
+            Log.d(TAG, "Loan sync notification ($notificationType) sent to UID: $recipientUid")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send loan sync notification: ${e.message}")
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Write email notification to `mail` collection
+    // ──────────────────────────────────────────────────────────────────────────
+    
+    /**
+     * Backs up a local system reminder to Firestore if the user is logged in.
+     */
+    suspend fun backupSystemNotification(
+        notificationId: String,
+        title: String,
+        message: String,
+        loanId: Long?
+    ) {
+        val currentUser = auth.currentUser ?: return
+        val senderUid = currentUser.uid
+
+        try {
+            val notification = LinkedLoanNotification(
+                id = notificationId,
+                senderName = "Loaney",
+                senderUid = "system",
+                loanType = "SYSTEM",
+                notificationType = "SYSTEM_REMINDER",
+                createdAt = System.currentTimeMillis(),
+                isRead = false,
+                title = title,
+                message = message,
+                senderLoanId = loanId?.toString(),
+                recipientLoanId = loanId?.toString()
+            )
+
+            firestore.collection(USERS_COLLECTION)
+                .document(senderUid)
+                .collection(NOTIFICATIONS_SUBCOLLECTION)
+                .document(notificationId)
+                .set(notification)
+                .await()
+
+            Log.d(TAG, "System notification backed up to UID: $senderUid")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to backup system notification: ${e.message}")
         }
     }
 

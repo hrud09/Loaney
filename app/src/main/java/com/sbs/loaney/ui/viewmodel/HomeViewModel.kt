@@ -79,17 +79,30 @@ class HomeViewModel @Inject constructor(
     private var shareLookupJob: Job? = null
     private var outgoingSharesJob: Job? = null
 
-    fun checkShareEmail(email: String) {
+    fun checkShareIdentifier(identifier: String) {
         shareLookupJob?.cancel()
-        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (identifier.isBlank()) {
             _shareStatus.value = EmailLinkStatus.IDLE
             _shareLinkedName.value = null
             return
         }
+        
+        val isEmail = android.util.Patterns.EMAIL_ADDRESS.matcher(identifier).matches()
+        val isPhone = android.util.Patterns.PHONE.matcher(identifier).matches()
+        
+        if (!isEmail && !isPhone) {
+            _shareStatus.value = EmailLinkStatus.IDLE
+            _shareLinkedName.value = null
+            return
+        }
+        
+        val emailArg = if (isEmail) identifier else null
+        val phoneArg = if (isPhone) identifier else null
+
         shareLookupJob = viewModelScope.launch {
             _shareStatus.value = EmailLinkStatus.CHECKING
             delay(600L)
-            val result = userLinkRepository.lookupUserByEmail(email)
+            val result = userLinkRepository.lookupUser(email = emailArg, phone = phoneArg)
             if (result != null) {
                 _shareLinkedName.value = result.second
                 _shareStatus.value = EmailLinkStatus.FOUND
@@ -182,6 +195,7 @@ class HomeViewModel @Inject constructor(
         settingsRepository.draftBankAccountFlow
     ) { args ->
         val summary = args[0] as HomeUiState
+        @Suppress("UNCHECKED_CAST")
         val accounts = args[1] as List<BankAccountEntity>
         val name = args[2] as String
         val currency = args[3] as String

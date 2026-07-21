@@ -182,4 +182,5 @@
     <string name="restore_loan_msg">Do you want to restore the loan for %1$s?</string>
     <string name="delete_permanently_title">Delete Permanently?</string>
     <string name="delete_permanently_msg">Are you sure you want to permanently delete the loan for %1$s? This action cannot be undone.</string>
+    <string name="widget_description">See what you\'re owed at a glance, and record a new loan in one tap.</string>
 </resources>

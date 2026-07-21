@@ -73,6 +73,7 @@ data class ScannedLoanData(
 fun MainScreen(
     startDestination: String = Screen.Home.route,
     remindLoanId: Long? = null,
+    addLoanType: String? = null,
     settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
@@ -82,6 +83,13 @@ fun MainScreen(
     LaunchedEffect(remindLoanId) {
         if (remindLoanId != null) {
             navController.navigate(Screen.LoanDetail.createRoute(remindLoanId, remind = true))
+        }
+    }
+
+    // Arrived from the home screen widget's Give/Take button.
+    LaunchedEffect(addLoanType) {
+        if (addLoanType != null) {
+            navController.navigate(Screen.AddLoan.createRoute(type = addLoanType))
         }
     }
     val navBackStackEntry by navController.currentBackStackEntryAsState()

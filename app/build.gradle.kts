@@ -97,6 +97,12 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
     implementation(libs.play.services.auth)
+
+    // Google Sign-In (Credential Manager)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+
     implementation(libs.google.api.client.android)
     implementation(libs.google.api.services.drive)
     implementation(libs.google.http.client.gson)
@@ -120,6 +126,10 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
+
+    // Glance (home screen widget)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

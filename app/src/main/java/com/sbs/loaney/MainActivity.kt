@@ -34,6 +34,9 @@ class MainActivity : ComponentActivity() {
     companion object {
         /** Set by LoanReminderWorker's "Send reminder" notification action. */
         const val EXTRA_REMIND_LOAN_ID = "remind_loan_id"
+
+        /** Set by the home screen widget's Give/Take buttons. "LEND" or "BORROW". */
+        const val EXTRA_ADD_LOAN_TYPE = "add_loan_type"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +47,7 @@ class MainActivity : ComponentActivity() {
 
         val remindLoanId = intent?.getLongExtra(EXTRA_REMIND_LOAN_ID, -1L)
             ?.takeIf { it > 0L }
+        val addLoanType = intent?.getStringExtra(EXTRA_ADD_LOAN_TYPE)
 
         enableEdgeToEdge()
         setContent {
@@ -91,7 +95,11 @@ class MainActivity : ComponentActivity() {
                     com.sbs.loaney.ui.navigation.Screen.Onboarding.route
                 }
             }
-            MainScreen(startDestination = startDest, remindLoanId = remindLoanId)
+            MainScreen(
+                startDestination = startDest,
+                remindLoanId = remindLoanId,
+                addLoanType = addLoanType
+            )
                 }
             }
         }

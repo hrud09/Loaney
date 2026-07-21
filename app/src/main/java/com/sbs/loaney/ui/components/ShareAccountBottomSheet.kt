@@ -74,7 +74,7 @@ fun ShareAccountBottomSheet(
             OutlinedTextField(
                 value = shareEmail,
                 onValueChange = onShareEmailChange,
-                label = { Text("Recipient Email") },
+                label = { Text("Recipient Email or Phone") },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
