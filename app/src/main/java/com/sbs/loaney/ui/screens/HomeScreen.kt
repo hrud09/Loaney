@@ -462,7 +462,7 @@ fun HomeScreen(
              shareEmail = shareEmail,
              onShareEmailChange = {
                  shareEmail = it
-                 viewModel.checkShareEmail(it)
+                 viewModel.checkShareIdentifier(it)
              },
              shareStatus = shareStatus,
              shareLinkedName = shareLinkedName,

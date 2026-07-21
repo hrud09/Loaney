@@ -32,5 +32,10 @@ data class LoanEntity(
     /** Opt-in: email the borrower automatically when this loan is due or overdue. */
     val autoRemindEnabled: Boolean = false,
     /** Cooldown marker so the daily worker can't email the same person every morning. */
-    val lastReminderSentAt: Long? = null
+    val lastReminderSentAt: Long? = null,
+    
+    // Linking and Syncing fields
+    val linkedOwnerUid: String? = null,
+    val linkedLoanId: String? = null,
+    val pendingUpdateJson: String? = null
 )

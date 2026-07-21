@@ -11,7 +11,9 @@ import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.repository.ILoanRepository
 import com.sbs.loaney.data.repository.SettingsRepository
+import com.sbs.loaney.data.repository.UserLinkRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -36,7 +38,8 @@ enum class DeletionReason {
 class LoanTrackerViewModel @Inject constructor(
     private val repository: ILoanRepository,
     private val settingsRepository: SettingsRepository,
-    private val analyticsHelper: AnalyticsHelper
+    private val analyticsHelper: AnalyticsHelper,
+    private val userLinkRepository: UserLinkRepository
 ) : ViewModel() {
 
     private val _selectedLoanId = MutableStateFlow<Long?>(null)
@@ -213,8 +216,28 @@ class LoanTrackerViewModel @Inject constructor(
                 proofUri = proofUri,
                 profilePhotoUri = profilePhotoUri
             )
-            repository.updateLoan(updatedLoan)
-            updateLoanStatus(loanId)
+            
+            if (currentLoan.linkedOwnerUid != null) {
+                // If it's a linked loan, propose changes instead of immediate save
+                val pendingJson = Gson().toJson(updatedLoan)
+                val newLoan = currentLoan.copy(pendingUpdateJson = pendingJson)
+                repository.updateLoan(newLoan)
+                
+                // Send notification to the linked user
+                userLinkRepository.sendLoanSyncNotification(
+                    recipientUid = currentLoan.linkedOwnerUid,
+                    notificationId = "update_${System.currentTimeMillis()}",
+                    loanType = "UPDATE_PROPOSAL", // Sender proposes update
+                    notificationType = "UPDATE_PROPOSAL",
+                    proposedChangesJson = pendingJson,
+                    senderLoanId = currentLoan.id.toString(),
+                    recipientLoanId = currentLoan.linkedLoanId,
+                    amount = updatedLoan.amount
+                )
+            } else {
+                repository.updateLoan(updatedLoan)
+                updateLoanStatus(loanId)
+            }
         }
     }
 

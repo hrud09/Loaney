@@ -68,6 +68,16 @@ class LoanRepository(
         ))
     }
 
+    override suspend fun acceptLoanLink(loanId: Long, linkedOwnerUid: String, linkedLoanId: String) {
+        val loanWithPayments = loanDao.getLoanByIdOnce(loanId)
+        if (loanWithPayments != null) {
+            loanDao.updateLoan(loanWithPayments.loan.copy(
+                linkedOwnerUid = linkedOwnerUid,
+                linkedLoanId = linkedLoanId
+            ))
+        }
+    }
+
     override fun getDeletedLoans(): Flow<List<LoanWithPayments>> = loanDao.getDeletedLoans()
 
     override suspend fun deleteLoan(loan: LoanEntity) = loanDao.deleteLoan(loan)

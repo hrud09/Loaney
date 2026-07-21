@@ -31,16 +31,23 @@ class BankAccountShareRepository @Inject constructor(
 
     suspend fun shareAccount(
         account: BankAccountEntity,
-        recipientEmail: String,
+        recipientIdentifier: String,
         permission: SharePermission
     ): Result<BankAccountShare> {
         val currentUser = auth.currentUser ?: return Result.failure(IllegalStateException("Not signed in"))
-        val trimmedEmail = recipientEmail.trim().lowercase()
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()) {
-            return Result.failure(IllegalArgumentException("Invalid email"))
+        val trimmedIdentifier = recipientIdentifier.trim().lowercase()
+        
+        val isEmail = android.util.Patterns.EMAIL_ADDRESS.matcher(trimmedIdentifier).matches()
+        val isPhone = android.util.Patterns.PHONE.matcher(trimmedIdentifier).matches()
+
+        if (!isEmail && !isPhone) {
+            return Result.failure(IllegalArgumentException("Invalid identifier"))
         }
 
-        val recipient = userLinkRepository.lookupUserByEmail(trimmedEmail)
+        val emailArg = if (isEmail) trimmedIdentifier else null
+        val phoneArg = if (isPhone) trimmedIdentifier else null
+
+        val recipient = userLinkRepository.lookupUser(email = emailArg, phone = phoneArg)
         val shareId = "${account.id}_${System.currentTimeMillis()}"
 
         val ownerDoc = firestore.collection(USERS).document(currentUser.uid).get().await()
@@ -52,8 +59,8 @@ class BankAccountShareRepository @Inject constructor(
             ownerUid = currentUser.uid,
             ownerName = ownerName,
             recipientUid = recipient?.first ?: "",
-            recipientEmail = trimmedEmail,
-            recipientName = recipient?.second ?: trimmedEmail,
+            recipientEmail = trimmedIdentifier,
+            recipientName = recipient?.second ?: trimmedIdentifier,
             permission = permission
         )
 
@@ -76,7 +83,9 @@ class BankAccountShareRepository @Inject constructor(
                 userLinkRepository.sendBankAccountNotification(recipient.first, account, shareId, permission)
             }
 
-            userLinkRepository.sendBankAccountEmail(trimmedEmail, account)
+            if (isEmail) {
+                userLinkRepository.sendBankAccountEmail(trimmedIdentifier, account)
+            }
             Log.d(TAG, "Share created: $shareId")
             Result.success(share)
         } catch (e: Exception) {

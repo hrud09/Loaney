@@ -504,6 +504,29 @@ fun LoanTrackerScreen(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
+                // Pending Update Banner
+                if (loan.pendingUpdateJson != null) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = AmberWarn.copy(alpha = 0.1f),
+                        border = BorderStroke(1.dp, AmberWarn.copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Info, contentDescription = null, tint = AmberWarn)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "An update to this loan's details is pending confirmation from the linked user.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
                 // Header Card - Clean White Card
                 Surface(
                     modifier = Modifier.fillMaxWidth(),

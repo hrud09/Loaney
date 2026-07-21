@@ -158,20 +158,36 @@ class LoanReminderWorker(
             val amountText = "$currencySymbol${String.format("%,.0f", remaining)}"
 
             if (isDueTomorrow) {
+                val title = "⏰ Loan Due Tomorrow"
+                val message = "$amountText $loanTypeLabel ${loan.personName} is due tomorrow!"
                 sendNotification(
                     id = notificationId++,
-                    title = "⏰ Loan Due Tomorrow",
-                    message = "$amountText $loanTypeLabel ${loan.personName} is due tomorrow!",
+                    title = title,
+                    message = message,
                     remindLoanId = if (canChase) loan.id else null
+                )
+                userLinkRepository.backupSystemNotification(
+                    notificationId = "due_tomorrow_${loan.id}_${today.time}",
+                    title = title,
+                    message = message,
+                    loanId = loan.id
                 )
             }
 
             if (isOverdue) {
+                val title = "🚨 Overdue Loan"
+                val message = "$amountText $loanTypeLabel ${loan.personName} is $daysOverdue day${if (daysOverdue > 1) "s" else ""} overdue!"
                 sendNotification(
                     id = notificationId++,
-                    title = "🚨 Overdue Loan",
-                    message = "$amountText $loanTypeLabel ${loan.personName} is $daysOverdue day${if (daysOverdue > 1) "s" else ""} overdue!",
+                    title = title,
+                    message = message,
                     remindLoanId = if (canChase) loan.id else null
+                )
+                userLinkRepository.backupSystemNotification(
+                    notificationId = "overdue_${loan.id}_${today.time}",
+                    title = title,
+                    message = message,
+                    loanId = loan.id
                 )
             }
 
@@ -179,17 +195,21 @@ class LoanReminderWorker(
             // on for this specific loan, and never more than once per cooldown window.
             val email = loan.email
             val cooledDown = (loan.lastReminderSentAt ?: 0L) + REMINDER_COOLDOWN_MS <= now
-            if (loan.type == LoanType.LEND && loan.autoRemindEnabled && !email.isNullOrBlank() && cooledDown) {
-                userLinkRepository.sendReminderEmail(
-                    recipientEmail = email,
-                    amount = remaining,
-                    currency = currencySymbol,
-                    dueDateMillis = deadline.time,
-                    daysOverdue = daysOverdue
-                )
+            val hasIdentifier = !email.isNullOrBlank() || loan.phoneNumber.isNotBlank()
+            
+            if (loan.type == LoanType.LEND && loan.autoRemindEnabled && hasIdentifier && cooledDown) {
+                if (!email.isNullOrBlank()) {
+                    userLinkRepository.sendReminderEmail(
+                        recipientEmail = email,
+                        amount = remaining,
+                        currency = currencySymbol,
+                        dueDateMillis = deadline.time,
+                        daysOverdue = daysOverdue
+                    )
+                }
 
                 // If they're a Loaney user too, put it in their app as well.
-                userLinkRepository.lookupUidByEmail(email)?.let { uid ->
+                userLinkRepository.lookupUid(email = email, phone = loan.phoneNumber)?.let { uid ->
                     userLinkRepository.sendReminderNotification(
                         recipientUid = uid,
                         loanId = loan.id,

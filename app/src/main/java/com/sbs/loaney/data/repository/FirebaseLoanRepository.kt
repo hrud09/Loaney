@@ -204,6 +204,14 @@ class FirebaseLoanRepository @Inject constructor(
         }
     }
 
+    override suspend fun acceptLoanLink(loanId: Long, linkedOwnerUid: String, linkedLoanId: String) {
+        val updates = mapOf(
+            "linkedOwnerUid" to linkedOwnerUid,
+            "linkedLoanId" to linkedLoanId
+        )
+        getUserDocRef().collection(LOANS_COLLECTION).document(loanId.toString()).update(updates).await()
+    }
+
     override suspend fun softDeleteLoan(loanId: Long, timestamp: Long, notes: String?) {
         val updates = mutableMapOf<String, Any?>(
             "deleted" to true,

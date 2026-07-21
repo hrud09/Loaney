@@ -85,17 +85,29 @@ class ManageLoansViewModel @Inject constructor(
      * Cancels any in-flight Firestore query first, then waits 600 ms before querying
      * to avoid firing on every keystroke.
      */
-    fun checkEmailLink(email: String) {
+    fun checkEmailLink(identifier: String) {
         emailLookupJob?.cancel()
-        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (identifier.isBlank()) {
             _emailLinkStatus.value = EmailLinkStatus.IDLE
             _linkedUserName.value = null
             return
         }
+        
+        val isEmail = android.util.Patterns.EMAIL_ADDRESS.matcher(identifier).matches()
+        val isPhone = android.util.Patterns.PHONE.matcher(identifier).matches()
+        if (!isEmail && !isPhone) {
+            _emailLinkStatus.value = EmailLinkStatus.IDLE
+            _linkedUserName.value = null
+            return
+        }
+        
+        val emailArg = if (isEmail) identifier else null
+        val phoneArg = if (isPhone) identifier else null
+
         emailLookupJob = viewModelScope.launch {
             _emailLinkStatus.value = EmailLinkStatus.CHECKING
             delay(600L) // debounce: wait for the user to finish typing
-            val result = userLinkRepository.lookupUserByEmail(email)
+            val result = userLinkRepository.lookupUser(email = emailArg, phone = phoneArg)
             if (result != null) {
                 _linkedUserName.value = result.second
                 _emailLinkStatus.value = EmailLinkStatus.FOUND
@@ -154,10 +166,11 @@ class ManageLoansViewModel @Inject constructor(
             analyticsHelper.logLoanCreated(amount, type.name)
 
             // ── Cross-user notification ──────────────────────────────────────
-            // If the email belongs to a registered Loaney user, send them a
+            // If the email or phone belongs to a registered Loaney user, send them a
             // notification so they see this loan from their side as well.
-            if (!email.isNullOrBlank()) {
-                val recipientUid = userLinkRepository.lookupUidByEmail(email)
+            val hasIdentifier = !email.isNullOrBlank() || phone.isNotBlank()
+            if (hasIdentifier) {
+                val recipientUid = userLinkRepository.lookupUid(email = email, phone = phone)
                 val currencySymbol = settingsRepository.currencySymbolFlow.first()
                 
                 // Generate PDF bytes and encode to Base64
@@ -185,14 +198,16 @@ class ManageLoansViewModel @Inject constructor(
                 }
                 
                 // Always send the email notification with the attached PDF
-                userLinkRepository.sendEmailNotification(
-                    recipientEmail = email,
-                    loanType = type.name,
-                    amount = amount,
-                    currency = currencySymbol,
-                    promisedReturnDateMillis = returnDate.time,
-                    pdfBase64 = pdfBase64
-                )
+                if (!email.isNullOrBlank()) {
+                    userLinkRepository.sendEmailNotification(
+                        recipientEmail = email,
+                        loanType = type.name,
+                        amount = amount,
+                        currency = currencySymbol,
+                        promisedReturnDateMillis = returnDate.time,
+                        pdfBase64 = pdfBase64
+                    )
+                }
             }
             // ────────────────────────────────────────────────────────────────
 
