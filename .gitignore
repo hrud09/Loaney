@@ -17,3 +17,13 @@ local.properties
 /app/release
 /app/build
 *.aab
+
+# Web (Next.js)
+node_modules/
+.next/
+.next-verify/
+out/
+next-env.d.ts
+tsconfig.tsbuildinfo
+.env.local
+.env*.local

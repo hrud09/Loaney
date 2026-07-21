@@ -200,7 +200,9 @@ private fun NotificationItem(
                         "LINK_ACCEPTED" -> "linked to your loan"
                         "UPDATE_ACCEPTED" -> "accepted your proposed changes"
                         "UPDATE_REJECTED" -> "rejected your proposed changes"
-                        else -> if (notification.loanType == "LEND") "wants to borrow" else "lent you"
+                        // loanType is the *sender's* side, so it reads inverted here:
+                        // they lent → they lent you; they borrowed → they want to borrow.
+                        else -> if (notification.loanType == "LEND") "lent you" else "wants to borrow"
                     }
                     
                     Text(
