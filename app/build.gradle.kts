@@ -142,9 +142,6 @@ dependencies {
     implementation(libs.zxing.android.embedded)
 
 
-    // ML Kit Text Recognition (on-device OCR)
-    implementation(libs.mlkit.text.recognition)
-
     // Image Loading
     implementation(libs.coil.compose)
 

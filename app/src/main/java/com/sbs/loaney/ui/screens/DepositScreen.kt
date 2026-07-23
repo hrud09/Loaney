@@ -29,6 +29,8 @@ import com.sbs.loaney.data.model.BanksData
 import com.sbs.loaney.ui.components.AnimatedCurrencyText
 import com.sbs.loaney.ui.components.CustomLightTextField
 import com.sbs.loaney.ui.components.SearchableDropdown
+import com.sbs.loaney.ui.components.ToolInfoDialog
+import com.sbs.loaney.ui.components.ToolInfoType
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.DepositUiState
 import com.sbs.loaney.ui.viewmodel.DepositViewModel
@@ -59,6 +61,7 @@ fun DepositScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -76,6 +79,15 @@ fun DepositScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
+                            tint = AlimWhite
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showInfoDialog = true }) {
+                        Icon(
+                            Icons.Default.Info,
+                            contentDescription = "Deposit Info",
                             tint = AlimWhite
                         )
                     }
@@ -140,6 +152,13 @@ fun DepositScreen(
                 }
             }
         }
+    }
+
+    if (showInfoDialog) {
+        ToolInfoDialog(
+            toolType = ToolInfoType.DPS_FDR,
+            onDismiss = { showInfoDialog = false }
+        )
     }
 }
 

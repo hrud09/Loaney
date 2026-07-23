@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -37,8 +38,11 @@ fun ProfileSidebarContent(
     onNavigateToShop: () -> Unit,
     onNavigateToTools: () -> Unit,
     onSignOutClick: () -> Unit,
+    onSignInClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // Guest sessions never create a Firebase auth user, so a null currentUser means "guest".
+    val isGuest = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser == null
     Column(
         modifier = modifier
             .fillMaxHeight()
@@ -230,11 +234,19 @@ fun ProfileSidebarContent(
 
         // Pinned Bottom Section
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        SidebarMenuItem(
-            icon = Icons.AutoMirrored.Filled.Logout,
-            label = "Sign Out",
-            onClick = onSignOutClick
-        )
+        if (isGuest) {
+            SidebarMenuItem(
+                icon = Icons.AutoMirrored.Filled.Login,
+                label = "Sign In",
+                onClick = onSignInClick
+            )
+        } else {
+            SidebarMenuItem(
+                icon = Icons.AutoMirrored.Filled.Logout,
+                label = "Sign Out",
+                onClick = onSignOutClick
+            )
+        }
         Spacer(Modifier.height(32.dp))
     }
 }

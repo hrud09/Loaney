@@ -1,15 +1,9 @@
 package com.sbs.loaney.ui.components
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.ContactsContract
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,28 +24,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.animation.Crossfade
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.ui.theme.neubrutalistCard
-import com.sbs.loaney.util.BankAccountOcrExtractor
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.text.style.TextAlign
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
-import java.io.File
 
 data class AddBankAccountRequest(
     val accountName: String,
@@ -204,77 +194,6 @@ fun AddBankAccountBottomSheet(
     }
 
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    var isOcrProcessing by remember { mutableStateOf(false) }
-    var ocrFieldsApplied by remember { mutableStateOf(false) }
-
-    // ── Camera capture URI (for TakePicture contract) ─────────────────
-    val cameraImageUri = remember {
-        val photoDir = File(context.cacheDir, "ocr_photos")
-        if (!photoDir.exists()) photoDir.mkdirs()
-        val photoFile = File(photoDir, "ocr_capture_${System.currentTimeMillis()}.jpg")
-        FileProvider.getUriForFile(context, "${context.packageName}.provider", photoFile)
-    }
-
-    // Shared OCR processing function
-    fun runOcrOnImage(uri: Uri) {
-        isOcrProcessing = true
-        coroutineScope.launch {
-            try {
-                val result = BankAccountOcrExtractor.extractFromImage(context, uri)
-                // Auto-fill fields that were extracted (only fill blank fields)
-                result.accountNumber?.let { if (accountNumber.isBlank()) accountNumber = it }
-                result.accountName?.let { if (accountName.isBlank()) accountName = it }
-                result.bankName?.let { if (bankName.isBlank()) bankName = it }
-                result.branchName?.let { if (branchName.isBlank()) branchName = it }
-                result.swiftCode?.let { if (swiftCode.isBlank()) swiftCode = it }
-
-                val filledCount = listOfNotNull(
-                    result.accountNumber, result.accountName, result.bankName,
-                    result.branchName, result.swiftCode
-                ).size
-
-                if (filledCount > 0) {
-                    ocrFieldsApplied = true
-                    Toast.makeText(context, "$filledCount field(s) auto-filled from image", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "No bank details found in the image", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(context, "Failed to scan image", Toast.LENGTH_SHORT).show()
-            } finally {
-                isOcrProcessing = false
-            }
-        }
-    }
-
-    // Camera capture launcher
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success: Boolean ->
-        if (success) {
-            runOcrOnImage(cameraImageUri)
-        }
-    }
-
-    // Gallery OCR picker launcher
-    val galleryOcrLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { runOcrOnImage(it) }
-    }
-
-    // Camera permission launcher
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            cameraLauncher.launch(cameraImageUri)
-        } else {
-            Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_SHORT).show()
-        }
-    }
-
     val contactLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -301,20 +220,16 @@ fun AddBankAccountBottomSheet(
         }
     }
 
+    val focusManager = LocalFocusManager.current
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(selectedTab) {
+        focusManager.clearFocus()
+        scrollState.scrollTo(0)
+    }
+
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { sheetValue ->
-            if (sheetValue == SheetValue.Hidden) {
-                if (showPromptOnClose) {
-                    showCloseConfirmation = true
-                    false
-                } else {
-                    true
-                }
-            } else {
-                true
-            }
-        }
+        skipPartiallyExpanded = true
     )
 
     BackHandler(enabled = showPromptOnClose || showCloseConfirmation) {
@@ -342,18 +257,19 @@ fun AddBankAccountBottomSheet(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 48.dp)
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                // Fixed panel height so switching tabs never resizes / re-anchors the sheet.
+                .fillMaxHeight(0.88f)
         ) {
+            // ---- Fixed header (never moves between tabs) ----
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    if (editingAccount != null) "Edit Bank Account" else stringResource(id = R.string.add_bank_account), 
-                    style = MaterialTheme.typography.headlineSmall, 
-                    fontWeight = FontWeight.Bold, 
+                    if (editingAccount != null) "Edit Bank Account" else stringResource(id = R.string.add_bank_account),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 IconButton(
@@ -369,7 +285,9 @@ fun AddBankAccountBottomSheet(
                 }
             }
 
-            // Segmented Toggle
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ---- Fixed Segmented Toggle (never moves between tabs) ----
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -392,323 +310,206 @@ fun AddBankAccountBottomSheet(
                 }
             }
 
-            // MFS Provider Chips
-            if (selectedTab == 2) {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(mfsProviders) { provider ->
-                        val isSelected = mfsProvider == provider
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { 
-                                mfsProvider = provider 
-                                bankName = provider 
-                            },
-                            label = { Text(provider) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                borderColor = Color.Transparent,
-                                selectedBorderColor = MaterialTheme.colorScheme.primary,
-                                enabled = true,
-                                selected = isSelected
-                            ),
-                            shape = CircleShape
-                        )
-                    }
-                }
-            }
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Image Picker
-            Box(
+            // ---- Scrollable tab-specific content (only this area changes) ----
+            Column(
                 modifier = Modifier
+                    .weight(1f)
                     .fillMaxWidth()
-                    .height(140.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable { launcher.launch("image/*") },
-                contentAlignment = Alignment.Center
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                val imageUri = if (selectedTab == 2) qrCodeUri else proofUri
-                if (imageUri != null) {
-                    AsyncImage(
-                        model = imageUri,
-                        contentDescription = "Upload",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        val icon = if (selectedTab == 2) Icons.Default.QrCode else Icons.Default.Image
-                        val textStr = if (selectedTab == 2) "Upload My QR Code" else stringResource(id = R.string.tap_custom_cover)
-                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(48.dp))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(textStr, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-
-            // ── OCR Scan Document Button ─────────────────────────────────
-            if (selectedTab != 2 && editingAccount == null) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
-                    )
-                ) {
+                Crossfade(
+                    targetState = selectedTab,
+                    label = "TabContentSwitch",
+                    modifier = Modifier.fillMaxWidth()
+                ) { currentTab ->
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.DocumentScanner,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                "Scan Document to Auto-fill",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
+                        // MFS Provider Chips
+                        if (currentTab == 2) {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(mfsProviders) { provider ->
+                                    val isSelected = mfsProvider == provider
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { 
+                                            mfsProvider = provider 
+                                            bankName = provider 
+                                        },
+                                        label = { Text(provider) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                                        ),
+                                        border = FilterChipDefaults.filterChipBorder(
+                                            borderColor = Color.Transparent,
+                                            selectedBorderColor = MaterialTheme.colorScheme.primary,
+                                            enabled = true,
+                                            selected = isSelected
+                                        ),
+                                        shape = CircleShape
+                                    )
+                                }
+                            }
                         }
-                        Text(
-                            "Take a photo or pick a screenshot of your bank statement, cheque, or passbook",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                            lineHeight = 16.sp
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+
+                        // Image Picker
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .clickable { launcher.launch("image/*") },
+                            contentAlignment = Alignment.Center
                         ) {
-                            OutlinedButton(
-                                onClick = {
-                                    val hasCameraPermission = ContextCompat.checkSelfPermission(
-                                        context, Manifest.permission.CAMERA
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                    if (hasCameraPermission) {
-                                        cameraLauncher.launch(cameraImageUri)
+                            val imageUri = if (currentTab == 2) qrCodeUri else proofUri
+                            if (imageUri != null) {
+                                AsyncImage(
+                                    model = imageUri,
+                                    contentDescription = "Upload",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    val icon = if (currentTab == 2) Icons.Default.QrCode else Icons.Default.Image
+                                    val textStr = if (currentTab == 2) "Upload My QR Code" else stringResource(id = R.string.tap_custom_cover)
+                                    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(48.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(textStr, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                        
+                        if (currentTab != 2) {
+                            if (currentTab == 0) {
+                                val countries = com.sbs.loaney.data.model.BanksData.countriesWithBanks.keys.toList()
+                                val banksForCountry = com.sbs.loaney.data.model.BanksData.countriesWithBanks[selectedCountry] ?: emptyList()
+                                
+                                SearchableDropdown(
+                                    value = selectedCountry,
+                                    onValueChange = { selectedCountry = it },
+                                    label = "Country (Optional)",
+                                    leadingIcon = Icons.Default.Public,
+                                    options = countries
+                                )
+                                
+                                SearchableDropdown(
+                                    value = bankName,
+                                    onValueChange = { bankName = it },
+                                    label = stringResource(id = R.string.bank_name_hint),
+                                    leadingIcon = Icons.Default.AccountBalance,
+                                    options = banksForCountry
+                                )
+                            } else {
+                                val cardIssuers = listOf("Visa", "Mastercard", "American Express", "Discover", "JCB", "UnionPay")
+                                SearchableDropdown(
+                                    value = bankName,
+                                    onValueChange = { bankName = it },
+                                    label = "Card Issuer (e.g. Visa, Mastercard)",
+                                    leadingIcon = Icons.Default.CreditCard,
+                                    options = cardIssuers
+                                )
+                            }
+                        }
+
+                        CustomLightTextField(
+                            value = accountName,
+                            onValueChange = { accountName = it },
+                            label = when (currentTab) {
+                                1 -> "Cardholder Name"
+                                2 -> "Account Holder Name"
+                                else -> stringResource(id = R.string.account_holder_name_hint)
+                            },
+                            leadingIcon = Icons.Default.Person,
+                            placeholder = if (currentTab == 1) userName else null
+                        )
+
+                        if (currentTab == 2) {
+                            // MFS Mobile Number with Contact Picker
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CustomLightTextField(
+                                    value = accountNumber,
+                                    onValueChange = {
+                                        accountNumber = it.filter { char -> char.isDigit() }.take(15)
+                                    },
+                                    label = "Mobile Number",
+                                    leadingIcon = Icons.Default.Phone,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                FilledIconButton(
+                                    onClick = { 
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_PICK).apply {
+                                            type = ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE
+                                        }
+                                        contactLauncher.launch(intent) 
+                                    },
+                                    modifier = Modifier.size(56.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                ) {
+                                    Icon(Icons.Default.Contacts, contentDescription = "Pick from Contacts", modifier = Modifier.size(24.dp))
+                                }
+                            }
+                        } else {
+                            CustomLightTextField(
+                                value = accountNumber,
+                                onValueChange = {
+                                    if (currentTab == 1) {
+                                        accountNumber = it.take(16)
                                     } else {
-                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                        accountNumber = it
                                     }
                                 },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.secondary
-                                ),
-                                border = ButtonDefaults.outlinedButtonBorder(true),
-                                enabled = !isOcrProcessing
-                            ) {
-                                Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Camera", fontWeight = FontWeight.Medium)
-                            }
-                            OutlinedButton(
-                                onClick = {
-                                    galleryOcrLauncher.launch("image/*")
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.secondary
-                                ),
-                                border = ButtonDefaults.outlinedButtonBorder(true),
-                                enabled = !isOcrProcessing
-                            ) {
-                                Icon(Icons.Default.Photo, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Gallery", fontWeight = FontWeight.Medium)
-                            }
+                                label = if (currentTab == 1) "Card Number" else stringResource(id = R.string.account_number_hint),
+                                leadingIcon = Icons.Default.DateRange,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                visualTransformation = if (currentTab == 1) CardNumberVisualTransformation() else VisualTransformation.None
+                            )
                         }
 
-                        // Processing indicator
-                        AnimatedVisibility(
-                            visible = isOcrProcessing,
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 4.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.secondary
+                        if (currentTab == 0) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                CustomLightTextField(
+                                    value = branchName ?: "",
+                                    onValueChange = { branchName = it },
+                                    label = stringResource(id = R.string.branch_optional),
+                                    leadingIcon = Icons.Default.LocationOn,
+                                    modifier = Modifier.weight(1f)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    "Scanning document...",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
-                        }
 
-                        // Success indicator
-                        AnimatedVisibility(
-                            visible = ocrFieldsApplied && !isOcrProcessing,
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 4.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = Color(0xFF4CAF50),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    "Fields auto-filled! Review below.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFF4CAF50),
-                                    fontWeight = FontWeight.Medium
+                                CustomLightTextField(
+                                    value = swiftCode ?: "",
+                                    onValueChange = { swiftCode = it },
+                                    label = stringResource(id = R.string.swift_optional),
+                                    leadingIcon = Icons.Default.Info,
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
                     }
                 }
-            }
+            } // ---- end scrollable content ----
 
-            if (selectedTab != 2) {
-                if (selectedTab == 0) {
-                    val countries = com.sbs.loaney.data.model.BanksData.countriesWithBanks.keys.toList()
-                    val banksForCountry = com.sbs.loaney.data.model.BanksData.countriesWithBanks[selectedCountry] ?: emptyList()
-                    
-                    SearchableDropdown(
-                        value = selectedCountry,
-                        onValueChange = { selectedCountry = it },
-                        label = "Country (Optional)",
-                        leadingIcon = Icons.Default.Public,
-                        options = countries
-                    )
-                    
-                    SearchableDropdown(
-                        value = bankName,
-                        onValueChange = { bankName = it },
-                        label = stringResource(id = R.string.bank_name_hint),
-                        leadingIcon = Icons.Default.AccountBalance,
-                        options = banksForCountry
-                    )
-                } else {
-                    val cardIssuers = listOf("Visa", "Mastercard", "American Express", "Discover", "JCB", "UnionPay")
-                    SearchableDropdown(
-                        value = bankName,
-                        onValueChange = { bankName = it },
-                        label = "Card Issuer (e.g. Visa, Mastercard)",
-                        leadingIcon = Icons.Default.CreditCard,
-                        options = cardIssuers
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(16.dp))
 
-            CustomLightTextField(
-                value = accountName,
-                onValueChange = { accountName = it },
-                label = when (selectedTab) {
-                    1 -> "Cardholder Name"
-                    2 -> "Account Holder Name"
-                    else -> stringResource(id = R.string.account_holder_name_hint)
-                },
-                leadingIcon = Icons.Default.Person,
-                placeholder = if (selectedTab == 1) userName else null
-            )
-
-            if (selectedTab == 2) {
-                // MFS Mobile Number with Contact Picker
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CustomLightTextField(
-                        value = accountNumber,
-                        onValueChange = {
-                            accountNumber = it.filter { char -> char.isDigit() }.take(15)
-                        },
-                        label = "Mobile Number",
-                        leadingIcon = Icons.Default.Phone,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f)
-                    )
-                    FilledIconButton(
-                        onClick = { 
-                            val intent = android.content.Intent(android.content.Intent.ACTION_PICK).apply {
-                                type = ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE
-                            }
-                            contactLauncher.launch(intent) 
-                        },
-                        modifier = Modifier.size(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    ) {
-                        Icon(Icons.Default.Contacts, contentDescription = "Pick from Contacts", modifier = Modifier.size(24.dp))
-                    }
-                }
-            } else {
-                CustomLightTextField(
-                    value = accountNumber,
-                    onValueChange = {
-                        if (selectedTab == 1) {
-                            accountNumber = it.take(16)
-                        } else {
-                            accountNumber = it
-                        }
-                    },
-                    label = if (selectedTab == 1) "Card Number" else stringResource(id = R.string.account_number_hint),
-                    leadingIcon = Icons.Default.DateRange,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    visualTransformation = if (selectedTab == 1) CardNumberVisualTransformation() else VisualTransformation.None
-                )
-            }
-
-            if (selectedTab == 0) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    CustomLightTextField(
-                        value = branchName ?: "",
-                        onValueChange = { branchName = it },
-                        label = stringResource(id = R.string.branch_optional),
-                        leadingIcon = Icons.Default.LocationOn,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    CustomLightTextField(
-                        value = swiftCode ?: "",
-                        onValueChange = { swiftCode = it },
-                        label = stringResource(id = R.string.swift_optional),
-                        leadingIcon = Icons.Default.Info,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            
+            // ---- Fixed Save button (never moves between tabs) ----
             Button(
                 onClick = {
                     onAdd(AddBankAccountRequest(

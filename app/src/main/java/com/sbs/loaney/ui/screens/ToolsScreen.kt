@@ -5,18 +5,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sbs.loaney.ui.components.ToolInfoDialog
+import com.sbs.loaney.ui.components.ToolInfoType
 import com.sbs.loaney.ui.theme.*
 
 private data class Tool(
+    val type: ToolInfoType,
     val icon: ImageVector,
     val title: String,
     val subtitle: String,
@@ -31,8 +35,11 @@ fun ToolsScreen(
     onNavigateToEmi: () -> Unit,
     onNavigateToDeposit: () -> Unit
 ) {
+    var activeInfoTool by remember { mutableStateOf<ToolInfoType?>(null) }
+
     val tools = listOf(
         Tool(
+            type = ToolInfoType.EMI_HUB,
             icon = Icons.Default.Calculate,
             title = "EMI Hub",
             subtitle = "Plan instalments and track what you owe",
@@ -40,6 +47,7 @@ fun ToolsScreen(
             onClick = onNavigateToEmi
         ),
         Tool(
+            type = ToolInfoType.DPS_FDR,
             icon = Icons.Default.Savings,
             title = "DPS & FDR",
             subtitle = "Project maturity value and track deposits",
@@ -83,13 +91,28 @@ fun ToolsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            tools.forEach { tool -> ToolCard(tool) }
+            tools.forEach { tool ->
+                ToolCard(
+                    tool = tool,
+                    onInfoClick = { activeInfoTool = tool.type }
+                )
+            }
         }
+    }
+
+    if (activeInfoTool != null) {
+        ToolInfoDialog(
+            toolType = activeInfoTool!!,
+            onDismiss = { activeInfoTool = null }
+        )
     }
 }
 
 @Composable
-private fun ToolCard(tool: Tool) {
+private fun ToolCard(
+    tool: Tool,
+    onInfoClick: () -> Unit
+) {
     Card(
         onClick = tool.onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -133,6 +156,15 @@ private fun ToolCard(tool: Tool) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            IconButton(onClick = onInfoClick) {
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = "Tool Info",
+                    tint = tool.accent
+                )
+            }
         }
     }
 }
+

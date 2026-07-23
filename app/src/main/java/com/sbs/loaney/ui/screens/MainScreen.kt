@@ -204,6 +204,12 @@ fun MainScreen(
                 },
                 onSignOutClick = {
                     showLogoutDialog = true
+                },
+                onSignInClick = {
+                    scope.launch { drawerState.close() }
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
                 }
             )
         }

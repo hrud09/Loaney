@@ -42,6 +42,8 @@ import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.EmiEntity
 import com.sbs.loaney.ui.components.CustomLightTextField
 import com.sbs.loaney.ui.components.SearchableDropdown
+import com.sbs.loaney.ui.components.ToolInfoDialog
+import com.sbs.loaney.ui.components.ToolInfoType
 import com.sbs.loaney.ui.components.bounceClick
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.BrandOffer
@@ -56,6 +58,7 @@ fun EmiScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     var showAddEmiSheet by remember { mutableStateOf(false) }
+    var showInfoDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Parameters for Add EMI Sheet (used during autofill from calculator too)
@@ -103,6 +106,15 @@ fun EmiScreen(
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
+                                tint = AlimWhite
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { showInfoDialog = true }) {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription = "EMI Info",
                                 tint = AlimWhite
                             )
                         }
@@ -345,6 +357,13 @@ fun EmiScreen(
                     }
                 }
             }
+        }
+
+        if (showInfoDialog) {
+            ToolInfoDialog(
+                toolType = ToolInfoType.EMI_HUB,
+                onDismiss = { showInfoDialog = false }
+            )
         }
     }
 }
