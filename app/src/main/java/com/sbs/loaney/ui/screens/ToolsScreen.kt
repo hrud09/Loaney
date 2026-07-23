@@ -13,8 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sbs.loaney.R
 import com.sbs.loaney.ui.components.ToolInfoDialog
 import com.sbs.loaney.ui.components.ToolInfoType
 import com.sbs.loaney.ui.theme.*
@@ -41,16 +43,16 @@ fun ToolsScreen(
         Tool(
             type = ToolInfoType.EMI_HUB,
             icon = Icons.Default.Calculate,
-            title = "EMI Hub",
-            subtitle = "Plan instalments and track what you owe",
+            title = stringResource(id = R.string.toolsscr_emi_hub_title),
+            subtitle = stringResource(id = R.string.toolsscr_emi_hub_subtitle),
             accent = CyberIndigo,
             onClick = onNavigateToEmi
         ),
         Tool(
             type = ToolInfoType.DPS_FDR,
             icon = Icons.Default.Savings,
-            title = "DPS & FDR",
-            subtitle = "Project maturity value and track deposits",
+            title = stringResource(id = R.string.toolsscr_dps_fdr_title),
+            subtitle = stringResource(id = R.string.toolsscr_dps_fdr_subtitle),
             accent = AlimGreen,
             onClick = onNavigateToDeposit
         )
@@ -61,7 +63,7 @@ fun ToolsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Tools",
+                        stringResource(id = R.string.toolsscr_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = AlimWhite

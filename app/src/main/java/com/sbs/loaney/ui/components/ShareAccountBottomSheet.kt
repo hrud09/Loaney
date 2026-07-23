@@ -14,9 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.data.model.BankAccountShare
 import com.sbs.loaney.data.model.SharePermission
@@ -43,9 +45,9 @@ fun ShareAccountBottomSheet(
     var selectedPermission by remember { mutableStateOf(SharePermission.VIEW) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val accountLabel = when {
-        account.isCard -> "Card"
-        account.isMfs -> "MFS Account"
-        else -> "Bank Account"
+        account.isCard -> stringResource(id = R.string.shareacct_type_card)
+        account.isMfs -> stringResource(id = R.string.shareacct_type_mfs)
+        else -> stringResource(id = R.string.shareacct_type_bank)
     }
 
     ModalBottomSheet(
@@ -62,7 +64,7 @@ fun ShareAccountBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Share $accountLabel",
+                text = stringResource(id = R.string.shareacct_share_title, accountLabel),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
             Text(
@@ -74,7 +76,7 @@ fun ShareAccountBottomSheet(
             OutlinedTextField(
                 value = shareEmail,
                 onValueChange = onShareEmailChange,
-                label = { Text("Recipient Email or Phone") },
+                label = { Text(stringResource(id = R.string.shareacct_recipient_email_or_phone)) },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
@@ -87,11 +89,11 @@ fun ShareAccountBottomSheet(
 
             when (shareStatus) {
                 EmailLinkStatus.CHECKING -> {
-                    Text("Checking database...", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(id = R.string.shareacct_checking_database), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
                 }
                 EmailLinkStatus.FOUND -> {
                     Text(
-                        "Registered user: $shareLinkedName",
+                        stringResource(id = R.string.shareacct_registered_user, shareLinkedName ?: ""),
                         color = AlimGreen,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold
@@ -99,7 +101,7 @@ fun ShareAccountBottomSheet(
                 }
                 EmailLinkStatus.NOT_FOUND -> {
                     Text(
-                        "No Loaney account found. An email with account details will be sent.",
+                        stringResource(id = R.string.shareacct_no_account_found),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -107,7 +109,7 @@ fun ShareAccountBottomSheet(
                 else -> {}
             }
 
-            Text("Permission", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text(stringResource(id = R.string.shareacct_permission), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SharePermission.entries.forEach { permission ->
                     FilterChip(
@@ -116,8 +118,8 @@ fun ShareAccountBottomSheet(
                         label = {
                             Text(
                                 when (permission) {
-                                    SharePermission.VIEW -> "View only"
-                                    SharePermission.USE -> "Use in payments"
+                                    SharePermission.VIEW -> stringResource(id = R.string.share_permission_view)
+                                    SharePermission.USE -> stringResource(id = R.string.share_permission_use)
                                 },
                                 fontSize = 12.sp
                             )
@@ -137,25 +139,25 @@ fun ShareAccountBottomSheet(
                 OutlinedButton(
                     onClick = {
                         val text = buildString {
-                            append("${if (account.isMfs) "Provider" else "Bank"}: ${account.bankName}\n")
-                            append("Holder: ${account.accountName}\n")
-                            append("Number: ${account.accountNumber}\n")
-                            if (!account.branchName.isNullOrBlank()) append("Branch: ${account.branchName}\n")
-                            if (!account.swiftCode.isNullOrBlank()) append("SWIFT: ${account.swiftCode}\n")
+                            append("${if (account.isMfs) context.getString(R.string.shareacct_label_provider) else context.getString(R.string.shareacct_label_bank)}: ${account.bankName}\n")
+                            append("${context.getString(R.string.shareacct_label_holder)}: ${account.accountName}\n")
+                            append("${context.getString(R.string.shareacct_label_number)}: ${account.accountNumber}\n")
+                            if (!account.branchName.isNullOrBlank()) append("${context.getString(R.string.branch)}: ${account.branchName}\n")
+                            if (!account.swiftCode.isNullOrBlank()) append("${context.getString(R.string.swift)}: ${account.swiftCode}\n")
                         }
                         val sendIntent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
                             putExtra(Intent.EXTRA_TEXT, text)
-                            putExtra(Intent.EXTRA_SUBJECT, "Shared $accountLabel from Loaney")
+                            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.shareacct_share_subject, accountLabel))
                         }
-                        context.startActivity(Intent.createChooser(sendIntent, "Share via"))
+                        context.startActivity(Intent.createChooser(sendIntent, context.getString(R.string.shareacct_share_via)))
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Other apps")
+                    Text(stringResource(id = R.string.shareacct_other_apps))
                 }
 
                 Button(
@@ -167,13 +169,13 @@ fun ShareAccountBottomSheet(
                     colors = ButtonDefaults.buttonColors(containerColor = AlimGreen),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Share", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(stringResource(id = R.string.shareacct_share), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
 
             if (outgoingShares.isNotEmpty()) {
                 Text(
-                    "Shared with",
+                    stringResource(id = R.string.shareacct_shared_with),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -196,6 +198,15 @@ private fun OutgoingShareRow(
     onRevoke: () -> Unit
 ) {
     val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+    val permissionText = when (share.permissionEnum) {
+        SharePermission.VIEW -> stringResource(id = R.string.share_permission_view)
+        SharePermission.USE -> stringResource(id = R.string.shareacct_can_use_in_payments)
+    }
+    val statusText = when (share.statusEnum) {
+        ShareStatus.PENDING -> stringResource(id = R.string.shareacct_status_pending)
+        ShareStatus.ACTIVE -> stringResource(id = R.string.status_active)
+        ShareStatus.REVOKED -> stringResource(id = R.string.shareacct_status_revoked)
+    }
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
@@ -214,20 +225,9 @@ private fun OutgoingShareRow(
                 )
                 Text(
                     text = buildString {
-                        append(
-                            when (share.permissionEnum) {
-                                SharePermission.VIEW -> "View only"
-                                SharePermission.USE -> "Can use in payments"
-                            }
-                        )
+                        append(permissionText)
                         append(" • ")
-                        append(
-                            when (share.statusEnum) {
-                                ShareStatus.PENDING -> "Pending"
-                                ShareStatus.ACTIVE -> "Active"
-                                ShareStatus.REVOKED -> "Revoked"
-                            }
-                        )
+                        append(statusText)
                         append(" • ")
                         append(dateFormat.format(Date(share.createdAt)))
                     },

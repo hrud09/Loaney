@@ -10,8 +10,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sbs.loaney.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +74,7 @@ fun SearchableDropdown(
                         }
                     } else {
                         DropdownMenuItem(
-                            text = { Text("Use custom: \"$value\"", fontWeight = FontWeight.Medium) },
+                            text = { Text(stringResource(R.string.dropdown_use_custom, value), fontWeight = FontWeight.Medium) },
                             onClick = { expanded = false },
                             contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                         )

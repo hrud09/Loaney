@@ -19,11 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.AlimDark
 import com.sbs.loaney.ui.theme.AlimGreen
 import com.sbs.loaney.ui.theme.AlimWhite
@@ -52,59 +54,59 @@ fun ToolInfoDialog(
 ) {
     val (title, icon, accentColor, sections, tipText) = when (toolType) {
         ToolInfoType.EMI_HUB -> ToolInfoData(
-            title = "EMI Hub Guide",
+            title = stringResource(id = R.string.toolinfo_emi_title),
             icon = Icons.Default.Calculate,
             accentColor = CyberIndigo,
             sections = listOf(
                 InfoSection(
-                    title = "What is EMI?",
-                    description = "An Equated Monthly Installment (EMI) is a fixed payment amount made to a bank or lender every month. It repays both the principal loan amount and accrued interest over a specified period."
+                    title = stringResource(id = R.string.toolinfo_what_is_emi_title),
+                    description = stringResource(id = R.string.toolinfo_what_is_emi_desc)
                 ),
                 InfoSection(
-                    title = "Field-by-Field Guide",
-                    description = "Understand what each input field in the calculator and tracker means:",
+                    title = stringResource(id = R.string.toolinfo_field_guide_title),
+                    description = stringResource(id = R.string.toolinfo_emi_field_guide_desc),
                     fields = listOf(
-                        FieldGuideItem("Purchase Price / Total Amount", "The full cost of the item or the total principal borrowed."),
-                        FieldGuideItem("Down Payment", "The initial cash payment made upfront. Financing is only calculated on the remaining balance (Price - Down Payment)."),
-                        FieldGuideItem("Annual Interest Rate (%)", "The annual percentage rate (APR) charged by the financial institution. Enter 0% for no-cost EMI deals."),
-                        FieldGuideItem("Tenure (Months)", "The total duration of the installment plan (e.g., 3, 6, 12, 24, 36 months)."),
-                        FieldGuideItem("Monthly Due Day", "The calendar day of the month (1-31) when your installment is due for reminder notifications.")
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_field_purchase_price), stringResource(id = R.string.toolinfo_field_purchase_price_desc)),
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_field_down_payment), stringResource(id = R.string.toolinfo_field_down_payment_desc)),
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_field_annual_interest), stringResource(id = R.string.toolinfo_field_annual_interest_desc)),
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_tenure_months), stringResource(id = R.string.toolinfo_field_emi_tenure_desc)),
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_field_monthly_due_day), stringResource(id = R.string.toolinfo_field_monthly_due_day_desc))
                     )
                 ),
                 InfoSection(
-                    title = "Hub Features",
-                    description = "• Tracker: Keep track of active EMI liabilities, log paid installments, and link them to your bank or card.\n• Calculator: Interactively simulate monthly installments and total interest with real-time donut chart visualization.\n• Offers: Discover zero-interest and special bank EMI deals."
+                    title = stringResource(id = R.string.toolinfo_hub_features_title),
+                    description = stringResource(id = R.string.toolinfo_hub_features_desc)
                 )
             ),
-            tipText = "Tip: Use the Calculator to test different down payment amounts to find a monthly installment that comfortably fits your budget."
+            tipText = stringResource(id = R.string.toolinfo_emi_tip)
         )
 
         ToolInfoType.DPS_FDR -> ToolInfoData(
-            title = "DPS & FDR Guide",
+            title = stringResource(id = R.string.toolinfo_dps_title),
             icon = Icons.Default.Savings,
             accentColor = AlimGreen,
             sections = listOf(
                 InfoSection(
-                    title = "DPS vs. FDR Explained",
-                    description = "• DPS (Deposit Pension Scheme): Regular monthly recurring deposits built over time. Ideal for systematic monthly savings.\n• FDR (Fixed Deposit Receipt): A one-time lump-sum deposit locked for a fixed term to earn higher fixed interest."
+                    title = stringResource(id = R.string.toolinfo_dps_explained_title),
+                    description = stringResource(id = R.string.toolinfo_dps_explained_desc)
                 ),
                 InfoSection(
-                    title = "Field-by-Field Guide",
-                    description = "Key parameters used to calculate maturity returns:",
+                    title = stringResource(id = R.string.toolinfo_field_guide_title),
+                    description = stringResource(id = R.string.toolinfo_dps_field_guide_desc),
                     fields = listOf(
-                        FieldGuideItem("Monthly / Deposit Amount", "For DPS, enter your monthly contribution. For FDR, enter the total one-time lump sum."),
-                        FieldGuideItem("Interest Rate (%)", "The annual interest rate offered by the bank."),
-                        FieldGuideItem("Tenure (Months)", "The total duration of the deposit in months (e.g. 12 months for 1 year, 60 months for 5 years)."),
-                        FieldGuideItem("Compounding Frequency", "How often interest is calculated and added to the principal (Monthly, Quarterly, Half-Yearly, or Yearly). More frequent compounding yields higher final returns."),
-                        FieldGuideItem("TIN (Tax Identification Number)", "In Bangladesh, having a TIN reduces the Source Tax (AIT) on interest from 15% down to 10%.")
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_field_deposit_amount), stringResource(id = R.string.toolinfo_field_deposit_amount_desc)),
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_field_interest_rate), stringResource(id = R.string.toolinfo_field_interest_rate_desc)),
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_tenure_months), stringResource(id = R.string.toolinfo_field_dps_tenure_desc)),
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_field_compounding), stringResource(id = R.string.toolinfo_field_compounding_desc)),
+                        FieldGuideItem(stringResource(id = R.string.toolinfo_field_tin), stringResource(id = R.string.toolinfo_field_tin_desc))
                     )
                 ),
                 InfoSection(
-                    title = "Premature Cashout Simulation",
-                    description = "Our engine estimates how much you would receive if you break your deposit early at a premature penalty rate."
+                    title = stringResource(id = R.string.toolinfo_premature_title),
+                    description = stringResource(id = R.string.toolinfo_premature_desc)
                 )
             ),
-            tipText = "Tip: Toggle the 'I have a TIN' switch to see how your net maturity payout increases with reduced source tax!"
+            tipText = stringResource(id = R.string.toolinfo_dps_tip)
         )
     }
 
@@ -268,7 +270,7 @@ fun ToolInfoDialog(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = AlimWhite)
                 ) {
-                    Text("Got It", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(stringResource(id = R.string.toolinfo_got_it), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }

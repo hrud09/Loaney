@@ -9,9 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.CyberIndigo
 import com.sbs.loaney.ui.theme.MutedText
 
@@ -30,7 +32,7 @@ fun HomeZeroState(onNavigateToAddLoan: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Your dashboard is empty",
+            text = stringResource(id = R.string.homezero_dashboard_empty),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -38,7 +40,7 @@ fun HomeZeroState(onNavigateToAddLoan: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Track your first lent or borrowed amount to see it here.",
+            text = stringResource(id = R.string.homezero_track_first_amount),
             style = MaterialTheme.typography.bodyMedium.copy(color = MutedText),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 48.dp)
@@ -52,7 +54,7 @@ fun HomeZeroState(onNavigateToAddLoan: () -> Unit) {
         ) {
             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Add Transaction", fontWeight = FontWeight.Bold)
+            Text(stringResource(id = R.string.homezero_add_transaction), fontWeight = FontWeight.Bold)
         }
     }
 }

@@ -16,11 +16,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.graphics.Color
+import com.sbs.loaney.R
 import com.sbs.loaney.ui.components.OnboardingIllustration
 import com.sbs.loaney.ui.components.OnboardingIllustrationType
 import com.sbs.loaney.ui.components.bounce
@@ -31,23 +33,31 @@ fun OnboardingScreen(
     onFinish: () -> Unit
 ) {
     val isDark = MaterialTheme.colorScheme.onBackground == AlimCream
-    val pages = remember(isDark) {
+
+    val welcomeTitle = stringResource(R.string.onboard_welcome_title)
+    val welcomeDesc = stringResource(R.string.onboard_welcome_desc)
+    val historyTitle = stringResource(R.string.onboard_history_title)
+    val historyDesc = stringResource(R.string.onboard_history_desc)
+    val clarityTitle = stringResource(R.string.onboard_clarity_title)
+    val clarityDesc = stringResource(R.string.onboard_clarity_desc)
+
+    val pages = remember(isDark, welcomeTitle, welcomeDesc, historyTitle, historyDesc, clarityTitle, clarityDesc) {
         listOf(
             OnboardingPage(
-                title = "Welcome to Loaney",
-                description = "Track all your lent and borrowed money in one secure place.",
+                title = welcomeTitle,
+                description = welcomeDesc,
                 type = OnboardingIllustrationType.WELCOME,
                 bgColor = if (isDark) Color(0xFF0D0D12) else AlimCream
             ),
             OnboardingPage(
-                title = "Never Forget a Debt",
-                description = "Keep a clear history of your transactions so you always know who owes who.",
+                title = historyTitle,
+                description = historyDesc,
                 type = OnboardingIllustrationType.HISTORY,
                 bgColor = if (isDark) Color(0xFF131C30) else SkyBlue.copy(alpha = 0.15f)
             ),
             OnboardingPage(
-                title = "Gain Financial Clarity",
-                description = "Visualize your balances and maintain healthy financial relationships.",
+                title = clarityTitle,
+                description = clarityDesc,
                 type = OnboardingIllustrationType.CLARITY,
                 bgColor = if (isDark) Color(0xFF0B1D16) else AlimGreen.copy(alpha = 0.1f)
             )
@@ -229,7 +239,7 @@ fun OnboardingBottomBar(
                 .bounce(interactionSource)
         ) {
             Text(
-                text = if (currentPage == pagesSize - 1) "Get Started" else "Next",
+                text = if (currentPage == pagesSize - 1) stringResource(R.string.onboard_get_started) else stringResource(R.string.onboard_next),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             )
         }

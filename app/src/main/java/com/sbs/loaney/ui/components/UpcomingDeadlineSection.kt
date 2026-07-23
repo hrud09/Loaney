@@ -102,7 +102,7 @@ fun UpcomingDeadlineSection(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = "$weekDeadlineCount this week",
+                            text = stringResource(id = R.string.deadline_count_this_week, weekDeadlineCount),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -165,7 +165,7 @@ fun UpcomingDeadlineSection(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = if (isToday) "TODAY" else dayFormat.format(date).uppercase(),
+                            text = if (isToday) stringResource(id = R.string.deadline_today) else dayFormat.format(date).uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
@@ -223,7 +223,7 @@ fun UpcomingDeadlineSection(
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            "All clear — no deadlines here!",
+                            stringResource(id = R.string.deadline_all_clear),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -267,10 +267,10 @@ fun UpcomingDeadlineCard(
     val deadlineCal = Calendar.getInstance().apply { time = item.loan.promisedReturnDate }
     val daysUntil = ((deadlineCal.timeInMillis - todayCal.timeInMillis) / (1000 * 60 * 60 * 24)).toInt()
     val urgencyLabel = when {
-        daysUntil == 0 -> "Due Today"
-        daysUntil == 1 -> "Due Tomorrow"
-        daysUntil > 1 -> "Due in $daysUntil days"
-        else -> "Overdue"
+        daysUntil == 0 -> stringResource(id = R.string.deadline_due_today)
+        daysUntil == 1 -> stringResource(id = R.string.deadline_due_tomorrow)
+        daysUntil > 1 -> stringResource(id = R.string.deadline_due_in_days, daysUntil)
+        else -> stringResource(id = R.string.status_overdue)
     }
     val urgencyColor = when {
         daysUntil == 0 -> CoralRose

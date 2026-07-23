@@ -14,9 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.ui.theme.*
 
@@ -125,7 +127,7 @@ fun WalletCardHolder(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Total Balance",
+                    text = stringResource(id = R.string.walletcard_total_balance),
                     color = NbPureWhite.copy(alpha = 0.7f),
                     style = MaterialTheme.typography.bodyMedium
                 )

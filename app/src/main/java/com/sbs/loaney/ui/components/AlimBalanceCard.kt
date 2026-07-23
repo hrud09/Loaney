@@ -173,7 +173,7 @@ fun AlimBalanceCard(
                         AlimCardAction(Icons.Default.History, stringResource(id = R.string.history), onClick = onNavigateToHistoryScreen)
                         AlimCardAction(Icons.Default.BarChart, stringResource(id = R.string.report), onClick = onReportClick)
                         Box(modifier = Modifier.onGloballyPositioned { onPositionedTools(it) }) {
-                            AlimCardAction(Icons.Default.Build, "Tools", onClick = onToolsClick)
+                            AlimCardAction(Icons.Default.Build, stringResource(id = R.string.balcard_tools), onClick = onToolsClick)
                         }
                     }
                 }

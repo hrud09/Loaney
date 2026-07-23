@@ -267,7 +267,7 @@ fun AddBankAccountBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    if (editingAccount != null) "Edit Bank Account" else stringResource(id = R.string.add_bank_account),
+                    if (editingAccount != null) stringResource(id = R.string.addbank_edit_bank_account) else stringResource(id = R.string.add_bank_account),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -295,7 +295,11 @@ fun AddBankAccountBottomSheet(
                     .padding(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                listOf(0 to "Bank Account", 1 to "Card", 2 to "MFS").forEach { (index, title) ->
+                listOf(
+                    0 to stringResource(id = R.string.addbank_tab_bank_account),
+                    1 to stringResource(id = R.string.addbank_tab_card),
+                    2 to stringResource(id = R.string.addbank_tab_mfs)
+                ).forEach { (index, title) ->
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -381,7 +385,7 @@ fun AddBankAccountBottomSheet(
                             } else {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     val icon = if (currentTab == 2) Icons.Default.QrCode else Icons.Default.Image
-                                    val textStr = if (currentTab == 2) "Upload My QR Code" else stringResource(id = R.string.tap_custom_cover)
+                                    val textStr = if (currentTab == 2) stringResource(id = R.string.addbank_upload_qr_code) else stringResource(id = R.string.tap_custom_cover)
                                     Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(48.dp))
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(textStr, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
@@ -397,7 +401,7 @@ fun AddBankAccountBottomSheet(
                                 SearchableDropdown(
                                     value = selectedCountry,
                                     onValueChange = { selectedCountry = it },
-                                    label = "Country (Optional)",
+                                    label = stringResource(id = R.string.addbank_country_optional),
                                     leadingIcon = Icons.Default.Public,
                                     options = countries
                                 )
@@ -414,7 +418,7 @@ fun AddBankAccountBottomSheet(
                                 SearchableDropdown(
                                     value = bankName,
                                     onValueChange = { bankName = it },
-                                    label = "Card Issuer (e.g. Visa, Mastercard)",
+                                    label = stringResource(id = R.string.addbank_card_issuer),
                                     leadingIcon = Icons.Default.CreditCard,
                                     options = cardIssuers
                                 )
@@ -425,8 +429,8 @@ fun AddBankAccountBottomSheet(
                             value = accountName,
                             onValueChange = { accountName = it },
                             label = when (currentTab) {
-                                1 -> "Cardholder Name"
-                                2 -> "Account Holder Name"
+                                1 -> stringResource(id = R.string.addbank_cardholder_name)
+                                2 -> stringResource(id = R.string.account_holder_name_hint)
                                 else -> stringResource(id = R.string.account_holder_name_hint)
                             },
                             leadingIcon = Icons.Default.Person,
@@ -445,7 +449,7 @@ fun AddBankAccountBottomSheet(
                                     onValueChange = {
                                         accountNumber = it.filter { char -> char.isDigit() }.take(15)
                                     },
-                                    label = "Mobile Number",
+                                    label = stringResource(id = R.string.addbank_mobile_number),
                                     leadingIcon = Icons.Default.Phone,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     modifier = Modifier.weight(1f)
@@ -477,7 +481,7 @@ fun AddBankAccountBottomSheet(
                                         accountNumber = it
                                     }
                                 },
-                                label = if (currentTab == 1) "Card Number" else stringResource(id = R.string.account_number_hint),
+                                label = if (currentTab == 1) stringResource(id = R.string.addbank_card_number) else stringResource(id = R.string.account_number_hint),
                                 leadingIcon = Icons.Default.DateRange,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 visualTransformation = if (currentTab == 1) CardNumberVisualTransformation() else VisualTransformation.None
@@ -532,11 +536,11 @@ fun AddBankAccountBottomSheet(
                 enabled = accountName.isNotBlank() && accountNumber.isNotBlank() && (selectedTab == 2 || bankName.isNotBlank())
             ) {
                 val actionLabel = if (editingAccount != null) {
-                    "Update Account"
+                    stringResource(id = R.string.addbank_update_account)
                 } else {
                     when (selectedTab) {
-                        1 -> "Save Card"
-                        2 -> "Save MFS Account"
+                        1 -> stringResource(id = R.string.addbank_save_card)
+                        2 -> stringResource(id = R.string.addbank_save_mfs_account)
                         else -> stringResource(id = R.string.save_bank_account)
                     }
                 }
@@ -547,8 +551,8 @@ fun AddBankAccountBottomSheet(
                 if (isFullyFilled) {
                     AlertDialog(
                         onDismissRequest = { showCloseConfirmation = false },
-                        title = { Text("Save Card/Account?") },
-                        text = { Text("You have filled in all required fields. Choose how you would like to proceed:") },
+                        title = { Text(stringResource(id = R.string.addbank_save_card_account_title)) },
+                        text = { Text(stringResource(id = R.string.addbank_all_fields_filled_msg)) },
                         confirmButton = {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
@@ -573,9 +577,9 @@ fun AddBankAccountBottomSheet(
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Save Account")
+                                    Text(stringResource(id = R.string.addbank_save_account))
                                 }
-                                
+
                                 OutlinedButton(
                                     onClick = {
                                         showCloseConfirmation = false
@@ -585,9 +589,9 @@ fun AddBankAccountBottomSheet(
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Save as Draft")
+                                    Text(stringResource(id = R.string.addbank_save_as_draft))
                                 }
-                                
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -601,14 +605,14 @@ fun AddBankAccountBottomSheet(
                                         modifier = Modifier.weight(1f),
                                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                                     ) {
-                                        Text("Discard", textAlign = TextAlign.Center)
+                                        Text(stringResource(id = R.string.addbank_discard), textAlign = TextAlign.Center)
                                     }
-                                    
+
                                     TextButton(
                                         onClick = { showCloseConfirmation = false },
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Keep Editing", textAlign = TextAlign.Center)
+                                        Text(stringResource(id = R.string.addbank_keep_editing), textAlign = TextAlign.Center)
                                     }
                                 }
                             }
@@ -617,8 +621,8 @@ fun AddBankAccountBottomSheet(
                 } else {
                     AlertDialog(
                         onDismissRequest = { showCloseConfirmation = false },
-                        title = { Text("Save Draft?") },
-                        text = { Text("The form is not fully filled. Would you like to save it as a draft so you can finish it later?") },
+                        title = { Text(stringResource(id = R.string.addbank_save_draft_title)) },
+                        text = { Text(stringResource(id = R.string.addbank_form_not_filled_msg)) },
                         confirmButton = {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
@@ -633,9 +637,9 @@ fun AddBankAccountBottomSheet(
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Save as Draft")
+                                    Text(stringResource(id = R.string.addbank_save_as_draft))
                                 }
-                                
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -649,14 +653,14 @@ fun AddBankAccountBottomSheet(
                                         modifier = Modifier.weight(1f),
                                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                                     ) {
-                                        Text("Discard", textAlign = TextAlign.Center)
+                                        Text(stringResource(id = R.string.addbank_discard), textAlign = TextAlign.Center)
                                     }
-                                    
+
                                     TextButton(
                                         onClick = { showCloseConfirmation = false },
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("Keep Editing", textAlign = TextAlign.Center)
+                                        Text(stringResource(id = R.string.addbank_keep_editing), textAlign = TextAlign.Center)
                                     }
                                 }
                             }

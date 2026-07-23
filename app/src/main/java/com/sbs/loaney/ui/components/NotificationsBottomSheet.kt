@@ -19,10 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sbs.loaney.R
 import com.sbs.loaney.data.model.LinkedLoanNotification
 import com.sbs.loaney.ui.theme.AlimDark
 import com.sbs.loaney.ui.theme.AlimGreen
@@ -56,7 +58,7 @@ fun NotificationsBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Notifications",
+                text = stringResource(R.string.notifsheet_notifications),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -77,7 +79,7 @@ fun NotificationsBottomSheet(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "You have no new notifications.",
+                            text = stringResource(R.string.notifsheet_no_new_notifications),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -165,25 +167,25 @@ private fun NotificationItem(
             Column(modifier = Modifier.weight(1f)) {
                 if (isShareType) {
                     val shareLabel = when (notification.loanType) {
-                        "SHARE_CARD" -> "shared a card"
-                        "SHARE_MFS" -> "shared an MFS account"
-                        else -> "shared a bank account"
+                        "SHARE_CARD" -> stringResource(R.string.notifsheet_shared_a_card)
+                        "SHARE_MFS" -> stringResource(R.string.notifsheet_shared_an_mfs_account)
+                        else -> stringResource(R.string.notifsheet_shared_a_bank_account)
                     }
                     Text(
-                        text = "${notification.senderName} $shareLabel: ${notification.bankName}",
+                        text = stringResource(R.string.notifsheet_share_message, notification.senderName, shareLabel, notification.bankName),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.Bold,
                         color = AlimDark
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Holder: ${notification.accountName}\nNo: ${notification.accountNumber}",
+                        text = stringResource(R.string.notifsheet_holder_number, notification.accountName, notification.accountNumber),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else if (notification.notificationType == "SYSTEM_REMINDER") {
                     Text(
-                        text = notification.title ?: "Reminder",
+                        text = notification.title ?: stringResource(R.string.notifsheet_reminder),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -196,17 +198,17 @@ private fun NotificationItem(
                     )
                 } else {
                     val actionText = when (notification.notificationType) {
-                        "UPDATE_PROPOSAL" -> "proposed changes to the loan"
-                        "LINK_ACCEPTED" -> "linked to your loan"
-                        "UPDATE_ACCEPTED" -> "accepted your proposed changes"
-                        "UPDATE_REJECTED" -> "rejected your proposed changes"
+                        "UPDATE_PROPOSAL" -> stringResource(R.string.notifsheet_proposed_changes)
+                        "LINK_ACCEPTED" -> stringResource(R.string.notifsheet_linked_to_loan)
+                        "UPDATE_ACCEPTED" -> stringResource(R.string.notifsheet_accepted_changes)
+                        "UPDATE_REJECTED" -> stringResource(R.string.notifsheet_rejected_changes)
                         // loanType is the *sender's* side, so it reads inverted here:
                         // they lent → they lent you; they borrowed → they want to borrow.
-                        else -> if (notification.loanType == "LEND") "lent you" else "wants to borrow"
+                        else -> if (notification.loanType == "LEND") stringResource(R.string.notifsheet_lent_you) else stringResource(R.string.notifsheet_wants_to_borrow)
                     }
-                    
+
                     Text(
-                        text = "${notification.senderName} $actionText",
+                        text = stringResource(R.string.notifsheet_sender_action, notification.senderName, actionText),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.Bold,
                         color = AlimDark
@@ -214,7 +216,7 @@ private fun NotificationItem(
                     Spacer(modifier = Modifier.height(4.dp))
                     if (notification.notificationType == "LOAN_REQUEST" || notification.notificationType == "UPDATE_PROPOSAL") {
                         Text(
-                            text = "Amount: ${notification.currency}${notification.amount}\nReturn: ${dateFormat.format(Date(notification.promisedReturnDateMillis))}",
+                            text = stringResource(R.string.notifsheet_amount_return, notification.currency, notification.amount, dateFormat.format(Date(notification.promisedReturnDateMillis))),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -240,7 +242,7 @@ private fun NotificationItem(
                                 modifier = Modifier.height(32.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
                             ) {
-                                Text("Accept", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(stringResource(R.string.accept_share), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                         OutlinedButton(
@@ -252,7 +254,7 @@ private fun NotificationItem(
                         ) {
                             Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp), tint = AlimGreen)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Copy to wallet", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
+                            Text(stringResource(R.string.copy_to_wallet), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
                         }
                     }
                 }
@@ -271,7 +273,7 @@ private fun NotificationItem(
                     ) {
                         Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(16.dp), tint = AlimGreen)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("View PDF", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
+                        Text(stringResource(R.string.notifsheet_view_pdf), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
                     }
                 }
 
@@ -290,7 +292,7 @@ private fun NotificationItem(
                                 ) {
                                     Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp), tint = AlimGreen)
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Import & Link", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
+                                    Text(stringResource(R.string.notifsheet_import_link), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
                                 }
                             }
                             "UPDATE_PROPOSAL" -> {
@@ -301,7 +303,7 @@ private fun NotificationItem(
                                     modifier = Modifier.height(32.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
                                 ) {
-                                    Text("Confirm", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    Text(stringResource(R.string.notifsheet_confirm), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                                 }
                                 OutlinedButton(
                                     onClick = onRejectUpdateClick,
@@ -310,7 +312,7 @@ private fun NotificationItem(
                                     modifier = Modifier.height(32.dp),
                                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
                                 ) {
-                                    Text("Reject", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                                    Text(stringResource(R.string.notifsheet_reject), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                                 }
                             }
                             "LINK_ACCEPTED", "UPDATE_ACCEPTED", "UPDATE_REJECTED" -> {
@@ -321,7 +323,7 @@ private fun NotificationItem(
                                     modifier = Modifier.height(32.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
                                 ) {
-                                    Text("Acknowledge", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    Text(stringResource(R.string.notifsheet_acknowledge), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                                 }
                             }
                         }

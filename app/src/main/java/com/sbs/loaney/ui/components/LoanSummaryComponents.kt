@@ -9,8 +9,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sbs.loaney.R
 import com.sbs.loaney.data.local.dao.LoanWithPayments
 
 @Composable
@@ -34,7 +36,7 @@ fun LoanSummaryDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close", fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.loansummary_close), fontWeight = FontWeight.Bold)
             }
         },
         title = {
@@ -48,7 +50,7 @@ fun LoanSummaryDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (sortedEntries.isEmpty()) {
-                    Text("No entries", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(id = R.string.loansummary_no_entries), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     sortedEntries.forEachIndexed { index, (name, amount) ->
                         Row(

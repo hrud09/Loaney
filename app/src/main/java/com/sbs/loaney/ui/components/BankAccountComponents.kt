@@ -156,7 +156,7 @@ fun BankAccountCard(
                                 if (!account.swiftCode.isNullOrBlank()) append("SWIFT: ${account.swiftCode}\n")
                             }
                             clipboardManager.setPrimaryClip(ClipData.newPlainText(if (account.isMfs) "MFS Account" else "Bank Account", text))
-                            Toast.makeText(context, "All Details Copied!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.bankcomp_all_details_copied), Toast.LENGTH_SHORT).show()
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -189,12 +189,12 @@ fun BankAccountCard(
                                 indication = null
                             ) {
                                 clipboardManager.setPrimaryClip(ClipData.newPlainText("Bank Name", account.bankName))
-                                Toast.makeText(context, "Name Copied!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.bankcomp_name_copied), Toast.LENGTH_SHORT).show()
                             }
                         )
                         if (account.isSharedIncoming && !account.ownerName.isNullOrBlank()) {
                             Text(
-                                text = "Shared by ${account.ownerName}",
+                                text = stringResource(id = R.string.shared_by, account.ownerName),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold
@@ -228,12 +228,12 @@ fun BankAccountCard(
                             indication = null
                         ) {
                             clipboardManager.setPrimaryClip(ClipData.newPlainText(if (account.isCard) "Card Number" else "Account Number", account.accountNumber))
-                            Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.bankcomp_copied), Toast.LENGTH_SHORT).show()
                         }
                 ) {
                     val numberLabel = when {
-                        account.isCard -> "CARD NUMBER"
-                        account.isMfs -> "MOBILE NUMBER"
+                        account.isCard -> stringResource(id = R.string.bankcomp_card_number)
+                        account.isMfs -> stringResource(id = R.string.bankcomp_mobile_number)
                         else -> stringResource(id = R.string.account_number)
                     }
                     Text(numberLabel, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 1.sp), color = labelColor)
@@ -241,7 +241,7 @@ fun BankAccountCard(
                     val displayNum = when {
                         account.isCard -> account.accountNumber.chunked(4).joinToString(" ")
                         account.isMfs -> account.accountNumber
-                        else -> "ACC ${account.accountNumber}"
+                        else -> stringResource(id = R.string.bankcomp_acc_number_format, account.accountNumber)
                     }
                     Text(
                         text = displayNum,
@@ -257,8 +257,8 @@ fun BankAccountCard(
                 HorizontalDivider(color = dividerColor, thickness = 0.5.dp)
 
                 val holderLabel = when {
-                    account.isCard -> "Cardholder Name"
-                    account.isMfs -> "Account Holder"
+                    account.isCard -> stringResource(id = R.string.bankcomp_cardholder_name)
+                    account.isMfs -> stringResource(id = R.string.account_holder)
                     else -> stringResource(id = R.string.account_holder)
                 }
                 BankField(holderLabel, account.accountName, clipboardManager, context, labelColor, contentColor)
@@ -307,7 +307,7 @@ fun BankField(
                     indication = null
                 ) {
                     clipboardManager.setPrimaryClip(ClipData.newPlainText(label, value))
-                    Toast.makeText(context, "$label Copied!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.bankcomp_label_copied, label), Toast.LENGTH_SHORT).show()
                 }
         ) {
             Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.5.sp), color = labelColor)

@@ -27,10 +27,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.AlimGreen
 import com.sbs.loaney.ui.theme.AlimWhite
 
@@ -210,7 +212,7 @@ private fun TutorialCard(
                     )
                 ) {
                     Text(
-                        text = if (isLast) "Done" else "Next",
+                        text = if (isLast) stringResource(id = R.string.tutorial_done) else stringResource(id = R.string.tutorial_next),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -223,7 +225,7 @@ private fun TutorialCard(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Text(
-                        "Skip tour",
+                        stringResource(id = R.string.tutorial_skip_tour),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
