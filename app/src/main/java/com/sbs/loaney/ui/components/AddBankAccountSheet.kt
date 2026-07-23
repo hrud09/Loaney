@@ -1,9 +1,15 @@
 package com.sbs.loaney.ui.components
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.ContactsContract
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,16 +36,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.BankAccountEntity
 import com.sbs.loaney.ui.theme.neubrutalistCard
+import com.sbs.loaney.util.BankAccountOcrExtractor
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.text.style.TextAlign
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
+import java.io.File
 
 data class AddBankAccountRequest(
     val accountName: String,
@@ -192,6 +204,77 @@ fun AddBankAccountBottomSheet(
     }
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var isOcrProcessing by remember { mutableStateOf(false) }
+    var ocrFieldsApplied by remember { mutableStateOf(false) }
+
+    // ── Camera capture URI (for TakePicture contract) ─────────────────
+    val cameraImageUri = remember {
+        val photoDir = File(context.cacheDir, "ocr_photos")
+        if (!photoDir.exists()) photoDir.mkdirs()
+        val photoFile = File(photoDir, "ocr_capture_${System.currentTimeMillis()}.jpg")
+        FileProvider.getUriForFile(context, "${context.packageName}.provider", photoFile)
+    }
+
+    // Shared OCR processing function
+    fun runOcrOnImage(uri: Uri) {
+        isOcrProcessing = true
+        coroutineScope.launch {
+            try {
+                val result = BankAccountOcrExtractor.extractFromImage(context, uri)
+                // Auto-fill fields that were extracted (only fill blank fields)
+                result.accountNumber?.let { if (accountNumber.isBlank()) accountNumber = it }
+                result.accountName?.let { if (accountName.isBlank()) accountName = it }
+                result.bankName?.let { if (bankName.isBlank()) bankName = it }
+                result.branchName?.let { if (branchName.isBlank()) branchName = it }
+                result.swiftCode?.let { if (swiftCode.isBlank()) swiftCode = it }
+
+                val filledCount = listOfNotNull(
+                    result.accountNumber, result.accountName, result.bankName,
+                    result.branchName, result.swiftCode
+                ).size
+
+                if (filledCount > 0) {
+                    ocrFieldsApplied = true
+                    Toast.makeText(context, "$filledCount field(s) auto-filled from image", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "No bank details found in the image", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to scan image", Toast.LENGTH_SHORT).show()
+            } finally {
+                isOcrProcessing = false
+            }
+        }
+    }
+
+    // Camera capture launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success) {
+            runOcrOnImage(cameraImageUri)
+        }
+    }
+
+    // Gallery OCR picker launcher
+    val galleryOcrLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { runOcrOnImage(it) }
+    }
+
+    // Camera permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraLauncher.launch(cameraImageUri)
+        } else {
+            Toast.makeText(context, "Camera permission is required to take photos", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val contactLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -368,7 +451,149 @@ fun AddBankAccountBottomSheet(
                     }
                 }
             }
-            
+
+            // ── OCR Scan Document Button ─────────────────────────────────
+            if (selectedTab != 2 && editingAccount == null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.DocumentScanner,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                "Scan Document to Auto-fill",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                        Text(
+                            "Take a photo or pick a screenshot of your bank statement, cheque, or passbook",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                            lineHeight = 16.sp
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    val hasCameraPermission = ContextCompat.checkSelfPermission(
+                                        context, Manifest.permission.CAMERA
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                    if (hasCameraPermission) {
+                                        cameraLauncher.launch(cameraImageUri)
+                                    } else {
+                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.secondary
+                                ),
+                                border = ButtonDefaults.outlinedButtonBorder(true),
+                                enabled = !isOcrProcessing
+                            ) {
+                                Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Camera", fontWeight = FontWeight.Medium)
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    galleryOcrLauncher.launch("image/*")
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.secondary
+                                ),
+                                border = ButtonDefaults.outlinedButtonBorder(true),
+                                enabled = !isOcrProcessing
+                            ) {
+                                Icon(Icons.Default.Photo, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Gallery", fontWeight = FontWeight.Medium)
+                            }
+                        }
+
+                        // Processing indicator
+                        AnimatedVisibility(
+                            visible = isOcrProcessing,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "Scanning document...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                        }
+
+                        // Success indicator
+                        AnimatedVisibility(
+                            visible = ocrFieldsApplied && !isOcrProcessing,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = Color(0xFF4CAF50),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    "Fields auto-filled! Review below.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF4CAF50),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             if (selectedTab != 2) {
                 if (selectedTab == 0) {
                     val countries = com.sbs.loaney.data.model.BanksData.countriesWithBanks.keys.toList()
