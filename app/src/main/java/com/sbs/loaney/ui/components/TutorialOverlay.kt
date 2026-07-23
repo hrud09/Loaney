@@ -121,25 +121,51 @@ fun TutorialOverlay(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp)
+                .padding(horizontal = 20.dp)
         ) {
-            // Keep the card clear of the thing it is describing.
-            val alignment = if (targetRect == null) {
-                Alignment.Center
+            if (targetRect == null) {
+                TutorialCard(
+                    step = currentStep,
+                    stepNumber = stepIndex + 1,
+                    totalSteps = steps.size,
+                    modifier = Modifier.align(Alignment.Center),
+                    onNext = ::goNext,
+                    onBack = ::goBack,
+                    onSkip = onComplete
+                )
             } else {
-                val targetIsLow = targetRect.top > with(density) { screenHeight.toPx() } / 2
-                if (targetIsLow) Alignment.TopCenter else Alignment.BottomCenter
-            }
+                val targetCenterY = (targetRect.top + targetRect.bottom) / 2f
+                val screenHeightPx = with(density) { screenHeight.toPx() }
+                val showBelow = targetCenterY < screenHeightPx * 0.55f
 
-            TutorialCard(
-                step = currentStep,
-                stepNumber = stepIndex + 1,
-                totalSteps = steps.size,
-                modifier = Modifier.align(alignment),
-                onNext = ::goNext,
-                onBack = ::goBack,
-                onSkip = onComplete
-            )
+                if (showBelow) {
+                    val topMarginDp = with(density) { (targetRect.bottom + 12f).toDp() }.coerceIn(20.dp, screenHeight - 200.dp)
+                    TutorialCard(
+                        step = currentStep,
+                        stepNumber = stepIndex + 1,
+                        totalSteps = steps.size,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = topMarginDp),
+                        onNext = ::goNext,
+                        onBack = ::goBack,
+                        onSkip = onComplete
+                    )
+                } else {
+                    val bottomMarginDp = with(density) { (screenHeightPx - targetRect.top + 12f).toDp() }.coerceIn(20.dp, screenHeight - 200.dp)
+                    TutorialCard(
+                        step = currentStep,
+                        stepNumber = stepIndex + 1,
+                        totalSteps = steps.size,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = bottomMarginDp),
+                        onNext = ::goNext,
+                        onBack = ::goBack,
+                        onSkip = onComplete
+                    )
+                }
+            }
         }
     }
 }

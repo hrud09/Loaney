@@ -211,8 +211,10 @@ fun HomeScreen(
 
         var showTutorial by remember { mutableStateOf(false) }
 
-        LaunchedEffect(uiState.isLoading, uiState.hasSeenTutorial, allTargetsMeasured) {
-            if (!uiState.isLoading && !uiState.hasSeenTutorial && allTargetsMeasured) {
+        // The first-run Home tour is now handled by the forced guided flow. Here we only run the
+        // spotlight tour when the user explicitly replays it from Settings.
+        LaunchedEffect(uiState.isLoading, uiState.replayHomeTour, allTargetsMeasured) {
+            if (!uiState.isLoading && uiState.replayHomeTour && allTargetsMeasured) {
                 showTutorial = true
             }
         }
@@ -531,7 +533,7 @@ fun HomeScreen(
             isVisible = showTutorial,
             onComplete = {
                 showTutorial = false
-                viewModel.setHasSeenTutorial(true)
+                viewModel.clearReplayHomeTour()
             }
         )
     }

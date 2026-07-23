@@ -27,6 +27,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val USER_DOB = stringPreferencesKey("user_dob")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val HAS_SEEN_TUTORIAL = booleanPreferencesKey("has_seen_tutorial")
+        val REPLAY_HOME_TOUR = booleanPreferencesKey("replay_home_tour")
         val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
         val DRAFT_BANK_ACCOUNT = stringPreferencesKey("draft_bank_account")
     }
@@ -118,6 +119,19 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         }
         .map { preferences ->
             preferences[PreferencesKeys.HAS_SEEN_TUTORIAL] ?: false
+        }
+
+    /**
+     * One-shot trigger for replaying the Home spotlight tour from Settings. Kept separate from
+     * [hasSeenTutorialFlow] because that flag now gates the forced first-loan guided flow, which
+     * runs once and must not be re-triggered by "Replay tutorial".
+     */
+    val replayHomeTourFlow: Flow<Boolean> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.REPLAY_HOME_TOUR] ?: false
         }
 
     val autoBackupEnabledFlow: Flow<Boolean> = dataStore.data
@@ -214,6 +228,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             preferences[PreferencesKeys.HAS_SEEN_TUTORIAL] = completed
         }
      }
+
+    suspend fun setReplayHomeTour(replay: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.REPLAY_HOME_TOUR] = replay
+        }
+    }
 
     suspend fun setAutoBackupEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->

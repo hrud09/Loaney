@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import android.provider.OpenableColumns
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -69,13 +70,25 @@ fun AddLoanScreen(
     initialNotes: String? = null,
     initialWitness: String? = null,
     initialRel: String? = null,
+    guided: Boolean = false,
     onNavigateBack: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     viewModel: ManageLoansViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    
+
+    // In the forced first-loan onboarding we seed the form with a realistic sample so the user
+    // edits a concrete loan rather than staring at empty fields. Everything stays editable.
+    val sampleName = stringResource(id = R.string.guided_sample_name)
+    val sampleEmail = stringResource(id = R.string.guided_sample_email)
+    val samplePurpose = stringResource(id = R.string.reason_emergency)
+
+    // Block escaping the guided step: the user must actually create a loan to reach the feature tour.
+    BackHandler(enabled = guided) {
+        Toast.makeText(context, context.getString(R.string.guided_must_save), Toast.LENGTH_SHORT).show()
+    }
+
     val pagerState = rememberPagerState(pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
 
@@ -89,18 +102,19 @@ fun AddLoanScreen(
     
     val selectedLoanType = if (pagerState.currentPage == 0) LoanType.LEND else LoanType.BORROW
 
-    var name by remember { mutableStateOf(initialName ?: "") }
+    var name by remember { mutableStateOf(initialName ?: if (guided) sampleName else "") }
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf(initialAmount ?: "") }
+    var amount by remember { mutableStateOf(initialAmount ?: if (guided) "1000" else "") }
     var loanDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var returnDate by remember { mutableLongStateOf(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000L) }
-    var purpose by remember { mutableStateOf(initialPurpose ?: "") }
+    var purpose by remember { mutableStateOf(initialPurpose ?: if (guided) samplePurpose else "") }
     var notes by remember { mutableStateOf(initialNotes ?: "") }
     var proofUri by remember { mutableStateOf<Uri?>(null) }
     var proofFileName by remember { mutableStateOf<String?>(null) }
-    var selectedRelationship by remember { mutableStateOf(initialRel ?: "Other") }
-    var email by remember { mutableStateOf("") }
+    var selectedRelationship by remember { mutableStateOf(initialRel ?: if (guided) "Friend" else "Other") }
+    // Seed an email so the auto-reminder MVP feature is visible during the tracker tour.
+    var email by remember { mutableStateOf(if (guided) sampleEmail else "") }
     var sendEmail by remember { mutableStateOf(false) }
     var interestRate by remember { mutableStateOf("") }
     var witness by remember { mutableStateOf(initialWitness ?: "") }
@@ -282,12 +296,15 @@ fun AddLoanScreen(
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack, 
-                                contentDescription = stringResource(id = R.string.back), 
-                                tint = AlimWhite
-                            )
+                        // Hidden during the forced first-loan onboarding — there is no backing out.
+                        if (!guided) {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(id = R.string.back),
+                                    tint = AlimWhite
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -442,9 +459,37 @@ fun AddLoanScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            if (guided) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(AlimGreen.copy(alpha = 0.12f))
+                        .border(1.dp, AlimGreen.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(Icons.Default.Lightbulb, contentDescription = null, tint = AlimGreen)
+                    Column {
+                        Text(
+                            text = stringResource(id = R.string.guided_addloan_title),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = stringResource(id = R.string.guided_addloan_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.weight(1f)
             ) { page ->
                 Column(
                     modifier = Modifier
@@ -483,24 +528,52 @@ fun AddLoanScreen(
                             )
                         }
 
-                        // Quick amount pills
+                        // Quick amount adjustment pills (Reduce & Add)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            quickAmounts.forEach { quickVal ->
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    modifier = Modifier.clickable { 
-                                        val curr = amount.toDoubleOrNull() ?: 0.0
-                                        amount = (curr + quickVal).toLong().toString() 
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Deduct Row (-500, -1000, -5000)
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                quickAmounts.forEach { quickVal ->
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        modifier = Modifier.clickable { 
+                                            val curr = amount.toDoubleOrNull() ?: 0.0
+                                            val newAmount = (curr - quickVal).coerceAtLeast(0.0)
+                                            amount = if (newAmount == 0.0) "0" else newAmount.toLong().toString()
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "-$quickVal",
+                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.error
+                                        )
                                     }
-                                ) {
-                                    Text(
-                                        text = stringResource(id = R.string.addloan_quick_amount_add, quickVal),
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
+                                }
+                            }
+
+                            // Add Row (+500, +1000, +5000)
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                quickAmounts.forEach { quickVal ->
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        modifier = Modifier.clickable { 
+                                            val curr = amount.toDoubleOrNull() ?: 0.0
+                                            amount = (curr + quickVal).toLong().toString() 
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "+$quickVal",
+                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = AlimGreen
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -98,10 +98,21 @@ fun MainScreen(
     val topLevelRoutes = listOf(Screen.Home.route, Screen.ManageLoans.route, Screen.Shop.route, Screen.Settings.route)
     val isTopLevel = currentDestination?.route in topLevelRoutes
 
+    val settingsState by settingsViewModel.uiState.collectAsState()
+
+    // Forced first-loan onboarding: a brand-new user (hasSeenTutorial == false) is pushed straight
+    // from Home into the guided "track your first loan" form instead of browsing the empty home page.
+    // We drive it off the persisted flag rather than the auth callback so it also resumes if the app
+    // was killed mid-onboarding. Home stays underneath so Back lands there once the loan is created.
+    LaunchedEffect(currentDestination?.route, settingsState.hasSeenTutorial) {
+        if (currentDestination?.route == Screen.Home.route && !settingsState.hasSeenTutorial) {
+            navController.navigate(Screen.AddLoan.createRoute(type = "LEND", guided = true))
+        }
+    }
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    val settingsState by settingsViewModel.uiState.collectAsState()
     val userProfile = UserProfile(name = settingsState.userName, profilePhotoUri = settingsState.userProfilePhoto)
 
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -153,7 +164,7 @@ fun MainScreen(
                     showLogoutDialog = false
                     scope.launch { drawerState.close() }
                     com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                    navController.navigate(Screen.Auth.route) {
+                    navController.navigate(Screen.Auth.createRoute()) {
                         popUpTo(navController.graph.id) { inclusive = true }
                     }
                 }) { androidx.compose.material3.Text(stringResource(R.string.main_sign_out), color = androidx.compose.material3.MaterialTheme.colorScheme.error) }
@@ -207,7 +218,7 @@ fun MainScreen(
                 },
                 onSignInClick = {
                     scope.launch { drawerState.close() }
-                    navController.navigate(Screen.Auth.route) {
+                    navController.navigate(Screen.Auth.createRoute()) {
                         popUpTo(navController.graph.id) { inclusive = true }
                     }
                 }
@@ -330,14 +341,24 @@ fun MainScreen(
                 composable(Screen.Onboarding.route) {
                     OnboardingScreen(
                         onFinish = {
-                            navController.navigate(Screen.Auth.route) {
+                            navController.navigate(Screen.Auth.createRoute()) {
                                 popUpTo(Screen.Onboarding.route) { inclusive = true }
                             }
                         }
                     )
                 }
-                composable(Screen.Auth.route) {
+                composable(
+                    route = Screen.Auth.route,
+                    arguments = listOf(
+                        navArgument("signup") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        }
+                    )
+                ) { backStackEntry ->
+                    val startInSignUp = backStackEntry.arguments?.getBoolean("signup") ?: false
                     AuthScreen(
+                        startInSignUp = startInSignUp,
                         onAuthSuccess = {
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(Screen.Auth.route) { inclusive = true }
@@ -412,6 +433,10 @@ fun MainScreen(
                         navArgument("rel") {
                             type = NavType.StringType
                             nullable = true
+                        },
+                        navArgument("guided") {
+                            type = NavType.BoolType
+                            defaultValue = false
                         }
                     ),
                     deepLinks = listOf(
@@ -425,6 +450,7 @@ fun MainScreen(
                     val notesStr = backStackEntry.arguments?.getString("notes")
                     val witnessStr = backStackEntry.arguments?.getString("witness")
                     val relStr = backStackEntry.arguments?.getString("rel")
+                    val guided = backStackEntry.arguments?.getBoolean("guided") ?: false
                     val initialType = try {
                         com.sbs.loaney.data.model.LoanType.valueOf(typeStr)
                     } catch (e: Exception) {
@@ -438,10 +464,11 @@ fun MainScreen(
                         initialNotes = notesStr,
                         initialWitness = witnessStr,
                         initialRel = relStr,
+                        guided = guided,
                         onNavigateBack = { navController.popBackStack() },
                         onNavigateToDetail = { loanId ->
                             navController.popBackStack()
-                            navController.navigate(Screen.LoanDetail.createRoute(loanId))
+                            navController.navigate(Screen.LoanDetail.createRoute(loanId, guided = guided))
                         }
                     )
                 }
@@ -452,7 +479,8 @@ fun MainScreen(
                         onProfileClick = { scope.launch { drawerState.open() } },
                         onNotificationsClick = { /* TODO: Implement global notifications */ },
                         onCloudBackupSignInClick = {
-                            navController.navigate(Screen.Auth.route)
+                            // Open the create-account form; on sign-up the guest's data is backed up.
+                            navController.navigate(Screen.Auth.createRoute(signUp = true))
                         }
                     )
                 }
@@ -466,15 +494,21 @@ fun MainScreen(
                         navArgument("remind") {
                             type = NavType.BoolType
                             defaultValue = false
+                        },
+                        navArgument("guided") {
+                            type = NavType.BoolType
+                            defaultValue = false
                         }
                     )
                 ) { backStackEntry ->
                     val loanId = backStackEntry.arguments?.getLong("loanId") ?: return@composable
                     val remind = backStackEntry.arguments?.getBoolean("remind") ?: false
+                    val guided = backStackEntry.arguments?.getBoolean("guided") ?: false
                     LoanTrackerScreen(
                         loanId = loanId,
                         onNavigateBack = { navController.popBackStack() },
-                        autoOpenReminder = remind
+                        autoOpenReminder = remind,
+                        guided = guided
                     )
                 }
                 composable(Screen.History.route) {

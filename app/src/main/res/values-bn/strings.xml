@@ -463,6 +463,22 @@
     <string name="home_tutorial_duedate_desc">কোনো ঋণের সময় ঘনিয়ে এলে এবং কেউ আপনাকে টাকা ফেরত দিলে এখানে আমরা আপনাকে মনে করিয়ে দেব।</string>
     <string name="home_tutorial_customize_title">নিজের মতো করে সাজিয়ে নিন</string>
     <string name="home_tutorial_customize_desc">মুদ্রা, ভাষা ও থিম পরিবর্তন করতে আপনার প্রোফাইল খুলুন। এই তো পরিচিতি শেষ—আপনি এখন প্রস্তুত।</string>
+
+    <!-- Forced first-loan guided onboarding -->
+    <string name="guided_sample_name">রহিম</string>
+    <string name="guided_sample_email">rahim@example.com</string>
+    <string name="guided_must_save">চালিয়ে যেতে আপনার প্রথম ঋণটি সংরক্ষণ করুন</string>
+    <string name="guided_addloan_title">আপনার প্রথম ঋণ ট্র্যাক করুন</string>
+    <string name="guided_addloan_desc">আমরা একটি নমুনা পূরণ করে দিয়েছি। নাম ও পরিমাণ বদলে আসল ঋণের তথ্য দিন, তারপর নিচের বোতামে চাপ দিয়ে ট্র্যাকিং শুরু করুন।</string>
+    <string name="tracker_tour_loan_title">আপনার প্রথম ট্র্যাক করা ঋণ</string>
+    <string name="tracker_tour_loan_desc">এটি আপনার ঋণের রেকর্ড—কে কত টাকা পাবে এবং কবে ফেরত দিতে হবে। পরিশোধ না হওয়া পর্যন্ত এটি এখানে থাকবে।</string>
+    <string name="tracker_tour_reminder_title">এক ট্যাপে মনে করিয়ে দিন</string>
+    <string name="tracker_tour_reminder_desc">WhatsApp, SMS, ইমেইল বা Messenger-এ বন্ধুত্বপূর্ণ একটি রিমাইন্ডার পাঠান—বার্তাটি আপনার জন্য লেখা থাকবে।</string>
+    <string name="tracker_tour_auto_title">স্বয়ংক্রিয় রিমাইন্ডার</string>
+    <string name="tracker_tour_auto_desc">এটি চালু করুন, নির্ধারিত তারিখ এলে Loaney নিজে থেকেই একটি রিমাইন্ডার ইমেইল পাঠাবে। আপনাকে কিছুই করতে হবে না।</string>
+    <string name="tracker_tour_done_title">সব প্রস্তুত!</string>
+    <string name="tracker_tour_done_desc">এটাই Loaney-এর মূল কথা—ঋণ ট্র্যাক করুন, তারপর অপর ব্যক্তিকে মনে করিয়ে দেওয়ার কাজটি এর হাতে ছেড়ে দিন। হোম স্ক্রিনে যেতে Done চাপুন।</string>
+
     <string name="home_link_account">অ্যাকাউন্ট যুক্ত করুন</string>
     <string name="home_remove_shared_account">শেয়ার করা অ্যাকাউন্ট সরান</string>
     <string name="home_delete_bank_account">ব্যাংক অ্যাকাউন্ট মুছুন</string>

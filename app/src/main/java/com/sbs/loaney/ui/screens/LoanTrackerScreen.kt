@@ -71,6 +71,10 @@ import com.sbs.loaney.util.sendMessengerReminder
 import com.sbs.loaney.util.sendGenericShareReminder
 import com.sbs.loaney.ui.components.ReminderChannelBottomSheet
 import com.sbs.loaney.ui.components.ReminderChannel
+import com.sbs.loaney.ui.components.TutorialOverlay
+import com.sbs.loaney.ui.components.TutorialStep
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.Image
@@ -116,11 +120,20 @@ fun LoanTrackerScreen(
     loanId: Long,
     onNavigateBack: () -> Unit,
     autoOpenReminder: Boolean = false,
+    guided: Boolean = false,
     viewModel: LoanTrackerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // ── Guided feature tour (forced first-loan onboarding) ───────────────────────────────────
+    // Spotlight the MVP: sending reminders and the automatic due-date email toggle.
+    var headerCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var reminderCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var autoRemindCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var showFeatureTour by remember { mutableStateOf(false) }
+    var featureTourDone by rememberSaveable { mutableStateOf(false) }
     var showEnlargedQr by remember { mutableStateOf(false) }
     var showAddPaymentSheet by remember { mutableStateOf(false) }
     var showAddLoanSheet by remember { mutableStateOf(false) }
@@ -419,7 +432,8 @@ fun LoanTrackerScreen(
                             // Send Reminder
                             TextButton(
                                 onClick = { showReminderSheet = true },
-                                 colors = ButtonDefaults.textButtonColors(contentColor = AlimGreen)
+                                modifier = Modifier.onGloballyPositioned { reminderCoords = it },
+                                colors = ButtonDefaults.textButtonColors(contentColor = AlimGreen)
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -439,7 +453,9 @@ fun LoanTrackerScreen(
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onGloballyPositioned { autoRemindCoords = it },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
@@ -529,7 +545,9 @@ fun LoanTrackerScreen(
 
                 // Header Card - Clean White Card
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned { headerCoords = it },
                     shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 2.dp
@@ -941,6 +959,64 @@ fun LoanTrackerScreen(
                         }
                     }
                 }
+            }
+        )
+    }
+
+    // ── Forced first-loan feature tour ───────────────────────────────────────────────────────
+    if (guided) {
+        val featureTourSteps = remember(headerCoords, reminderCoords, autoRemindCoords) {
+            buildList {
+                add(
+                    TutorialStep(
+                        title = context.getString(R.string.tracker_tour_loan_title),
+                        description = context.getString(R.string.tracker_tour_loan_desc),
+                        targetCoordinates = headerCoords
+                    )
+                )
+                add(
+                    TutorialStep(
+                        title = context.getString(R.string.tracker_tour_reminder_title),
+                        description = context.getString(R.string.tracker_tour_reminder_desc),
+                        targetCoordinates = reminderCoords
+                    )
+                )
+                // Auto-reminder toggle only exists for money we lent to someone with an email.
+                if (autoRemindCoords != null) {
+                    add(
+                        TutorialStep(
+                            title = context.getString(R.string.tracker_tour_auto_title),
+                            description = context.getString(R.string.tracker_tour_auto_desc),
+                            targetCoordinates = autoRemindCoords
+                        )
+                    )
+                }
+                add(
+                    TutorialStep(
+                        title = context.getString(R.string.tracker_tour_done_title),
+                        description = context.getString(R.string.tracker_tour_done_desc),
+                        targetCoordinates = null
+                    )
+                )
+            }
+        }
+
+        // Wait until the loan has loaded and the two mandatory spotlight targets are measured.
+        LaunchedEffect(featureTourDone, uiState.selectedLoan, headerCoords, reminderCoords) {
+            if (!featureTourDone && uiState.selectedLoan != null &&
+                headerCoords != null && reminderCoords != null
+            ) {
+                showFeatureTour = true
+            }
+        }
+
+        TutorialOverlay(
+            steps = featureTourSteps,
+            isVisible = showFeatureTour,
+            onComplete = {
+                showFeatureTour = false
+                featureTourDone = true
+                viewModel.markTutorialSeen()
             }
         )
     }

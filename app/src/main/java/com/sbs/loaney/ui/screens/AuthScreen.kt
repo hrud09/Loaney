@@ -61,10 +61,13 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun AuthScreen(
     onAuthSuccess: () -> Unit,
+    startInSignUp: Boolean = false,
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    var isGuestMode by remember { mutableStateOf(true) }
-    var isSignUp by remember { mutableStateOf(false) }
+    // Entered from "Sign in to back up to cloud": open the create-account form directly so the
+    // guest can sign up and have their tracked data mirrored to the new account.
+    var isGuestMode by remember { mutableStateOf(!startInSignUp) }
+    var isSignUp by remember { mutableStateOf(startInSignUp) }
     var isPhoneMode by remember { mutableStateOf(false) }
     var isOtpMode by remember { mutableStateOf(false) }
     

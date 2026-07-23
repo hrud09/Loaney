@@ -64,6 +64,13 @@ class LoanTrackerViewModel @Inject constructor(
         _selectedLoanId.value = loanId
     }
 
+    /** Marks the forced first-loan onboarding complete once the feature tour finishes. */
+    fun markTutorialSeen() {
+        viewModelScope.launch {
+            settingsRepository.setHasSeenTutorial(true)
+        }
+    }
+
     fun addPayment(amount: Double, method: String, note: String?, proofUri: String? = null) {
         val loanId = _selectedLoanId.value ?: return
         viewModelScope.launch {
