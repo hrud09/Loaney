@@ -121,6 +121,7 @@ fun LoanTrackerScreen(
     onNavigateBack: () -> Unit,
     autoOpenReminder: Boolean = false,
     guided: Boolean = false,
+    onLoanLoaded: () -> Unit = {},
     viewModel: LoanTrackerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -177,6 +178,12 @@ fun LoanTrackerScreen(
 
     LaunchedEffect(loanId) {
         viewModel.selectLoan(loanId)
+    }
+
+    LaunchedEffect(uiState.selectedLoan) {
+        if (uiState.selectedLoan != null) {
+            onLoanLoaded()
+        }
     }
 
     if (showDeleteConfirmation && uiState.selectedLoan != null) {

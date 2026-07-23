@@ -73,6 +73,7 @@ fun AddLoanScreen(
     guided: Boolean = false,
     onNavigateBack: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
+    onLoadingStateChanged: (Boolean) -> Unit = {},
     viewModel: ManageLoansViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -361,6 +362,7 @@ fun AddLoanScreen(
                         amountError = !isAmountValid
                         
                         if (isNameValid && isAmountValid) {
+                            onLoadingStateChanged(true)
                             viewModel.addLoan(
                                 type = selectedLoanType, name = name, phone = phone, 
                                 email = email.ifBlank { null }, address = address.ifBlank { null },

@@ -465,6 +465,7 @@
     <string name="home_tutorial_customize_desc">মুদ্রা, ভাষা ও থিম পরিবর্তন করতে আপনার প্রোফাইল খুলুন। এই তো পরিচিতি শেষ—আপনি এখন প্রস্তুত।</string>
 
     <!-- Forced first-loan guided onboarding -->
+    <string name="dummy_label">ডামি</string>
     <string name="guided_sample_name">রহিম</string>
     <string name="guided_sample_email">rahim@example.com</string>
     <string name="guided_must_save">চালিয়ে যেতে আপনার প্রথম ঋণটি সংরক্ষণ করুন</string>

@@ -39,3 +39,40 @@ data class LoanEntity(
     val linkedLoanId: String? = null,
     val pendingUpdateJson: String? = null
 )
+
+fun LoanEntity.isUnchangedDummy(context: android.content.Context): Boolean {
+    // English default values:
+    val isEnglishDummy = personName == "Rahim" && 
+            email == "rahim@example.com" && 
+            amount == 1000.0 && 
+            purpose == "🚑 Emergency" && 
+            relationshipType == "Friend"
+            
+    // Bangla default values:
+    val isBanglaDummy = personName == "রহিম" && 
+            email == "rahim@example.com" && 
+            amount == 1000.0 && 
+            purpose == "🚑 জরুরি" && 
+            relationshipType == "Friend"
+
+    // Context-based check just in case:
+    val sampleName = context.getString(com.sbs.loaney.R.string.guided_sample_name)
+    val sampleEmail = context.getString(com.sbs.loaney.R.string.guided_sample_email)
+    val samplePurpose = context.getString(com.sbs.loaney.R.string.reason_emergency)
+    val isContextDummy = personName == sampleName &&
+            email == sampleEmail &&
+            amount == 1000.0 &&
+            purpose == samplePurpose &&
+            relationshipType == "Friend"
+
+    return isEnglishDummy || isBanglaDummy || isContextDummy
+}
+
+fun LoanEntity.getDisplayName(context: android.content.Context): String {
+    return if (isUnchangedDummy(context)) {
+        val dummyText = context.getString(com.sbs.loaney.R.string.dummy_label)
+        "$personName ($dummyText)"
+    } else {
+        personName
+    }
+}

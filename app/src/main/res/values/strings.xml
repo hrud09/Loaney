@@ -475,6 +475,7 @@
     <string name="home_tutorial_customize_desc">Open your profile to change the currency, language, and theme. That\'s the tour — you\'re all set.</string>
 
     <!-- Forced first-loan guided onboarding -->
+    <string name="dummy_label">Dummy</string>
     <string name="guided_sample_name">Rahim</string>
     <string name="guided_sample_email">rahim@example.com</string>
     <string name="guided_must_save">Save your first loan to continue</string>
