@@ -71,7 +71,7 @@ fun AuthScreen(
     var profilePhotoUri by remember { mutableStateOf<String?>(null) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("Guest_" + (System.currentTimeMillis() / 1000).toString()) }
     var phoneNumber by remember { mutableStateOf("") }
     var otpCode by remember { mutableStateOf("") }
     var selectedCurrency by remember { mutableStateOf("৳") }
@@ -637,6 +637,9 @@ fun AuthScreen(
                         onClick = {
                             isGuestMode = false
                             localError = null
+                            if (name.startsWith("Guest_")) {
+                                name = ""
+                            }
                         },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(16.dp),
@@ -707,6 +710,9 @@ fun AuthScreen(
                             isPhoneMode = false
                             isSignUp = false
                             localError = null
+                            if (name.isBlank() || name.startsWith("Guest_")) {
+                                name = "Guest_" + (System.currentTimeMillis() / 1000).toString()
+                            }
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
