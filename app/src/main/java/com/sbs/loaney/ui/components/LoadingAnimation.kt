@@ -11,9 +11,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.CoralPink
 import com.sbs.loaney.ui.theme.SkyBlue
 
@@ -83,7 +85,7 @@ fun AnimatedLoadingScreen(modifier: Modifier = Modifier) {
             
             // "Loading..." text with animated alpha
             Text(
-                text = "Loading...",
+                text = stringResource(id = R.string.loadanim_loading),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),

@@ -400,7 +400,7 @@ fun AddLoanScreen(
                                         try {
                                             context.startActivity(intent)
                                         } catch (e: Exception) {
-                                            Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, context.getString(R.string.addloan_no_email_app), Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                     
@@ -409,12 +409,12 @@ fun AddLoanScreen(
                             )
                         } else {
                             val emptyFields = mutableListOf<String>()
-                            if (!isNameValid) emptyFields.add("Name")
-                            if (!isAmountValid) emptyFields.add("Amount")
-                            
+                            if (!isNameValid) emptyFields.add(context.getString(R.string.addloan_field_name))
+                            if (!isAmountValid) emptyFields.add(context.getString(R.string.amount))
+
                             Toast.makeText(
-                                context, 
-                                "Please fill mandatory fields: ${emptyFields.joinToString(", ")}", 
+                                context,
+                                context.getString(R.string.addloan_fill_mandatory_fields, emptyFields.joinToString(", ")),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -496,7 +496,7 @@ fun AddLoanScreen(
                                     }
                                 ) {
                                     Text(
-                                        text = "+$quickVal",
+                                        text = stringResource(id = R.string.addloan_quick_amount_add, quickVal),
                                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                                         color = MaterialTheme.colorScheme.onSurface
@@ -646,7 +646,7 @@ fun AddLoanScreen(
                                                 color = MaterialTheme.colorScheme.primary
                                             )
                                             Text(
-                                                text = "Looking up Loaney account…",
+                                                text = stringResource(id = R.string.addloan_looking_up_account),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -669,9 +669,9 @@ fun AddLoanScreen(
                                                     )
                                                     Text(
                                                         text = if (!uiState.linkedUserName.isNullOrBlank())
-                                                            "✨ ${uiState.linkedUserName} is on Loaney — they'll be notified!"
+                                                            stringResource(id = R.string.addloan_user_on_loaney, uiState.linkedUserName.orEmpty())
                                                         else
-                                                            "✨ Loaney user found — they'll be notified!",
+                                                            stringResource(id = R.string.addloan_loaney_user_found),
                                                         style = MaterialTheme.typography.labelSmall,
                                                         color = AlimGreen,
                                                         fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
@@ -696,7 +696,7 @@ fun AddLoanScreen(
                                                         modifier = Modifier.size(14.dp)
                                                     )
                                                     Text(
-                                                        text = "Not registered on Loaney",
+                                                        text = stringResource(id = R.string.addloan_not_registered),
                                                         style = MaterialTheme.typography.labelSmall,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                                     )
@@ -724,7 +724,7 @@ fun AddLoanScreen(
                                         colors = CheckboxDefaults.colors(checkedColor = AlimGreen)
                                     )
                                     Text(
-                                        text = "Send automated email notification",
+                                        text = stringResource(id = R.string.addloan_send_email_notification),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
@@ -836,7 +836,7 @@ fun AddLoanScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (showExtraDetails) stringResource(id = R.string.hide_extra_details) else "Add More Details",
+                            text = if (showExtraDetails) stringResource(id = R.string.hide_extra_details) else stringResource(id = R.string.addloan_add_more_details),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 color = MaterialTheme.colorScheme.secondary,
                                 fontWeight = FontWeight.Bold

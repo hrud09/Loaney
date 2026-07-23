@@ -20,10 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sbs.loaney.R
 import com.sbs.loaney.data.model.CalendarEvent
 import com.sbs.loaney.data.model.CalendarEventType
 import com.sbs.loaney.data.model.LoanType
@@ -84,14 +86,14 @@ fun CalendarContent(
         ) {
             Column {
                 Text(
-                    text = "Loan Tracker Calendar",
+                    text = stringResource(id = R.string.calpopup_loan_tracker_calendar),
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 )
                 Text(
-                    text = "Deadlines, Initiations & Payments",
+                    text = stringResource(id = R.string.calpopup_deadlines_initiations_payments),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -153,7 +155,10 @@ fun CalendarContent(
         val dayEvents = allEvents[selectedDateStr] ?: emptyList()
 
         Text(
-            text = "Activity for ${SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(selectedDate.time)}",
+            text = stringResource(
+                id = R.string.calpopup_activity_for,
+                SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(selectedDate.time)
+            ),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -179,7 +184,7 @@ fun CalendarContent(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "No tracks scheduled for today",
+                        text = stringResource(id = R.string.calpopup_no_tracks_scheduled),
                         style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                     )
                 }
@@ -209,7 +214,15 @@ fun MonthGrid(
     val firstDayOfWeek = (currentMonth.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }.get(Calendar.DAY_OF_WEEK)
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
-    val weekdays = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    val weekdays = listOf(
+        stringResource(id = R.string.calpopup_weekday_sun),
+        stringResource(id = R.string.calpopup_weekday_mon),
+        stringResource(id = R.string.calpopup_weekday_tue),
+        stringResource(id = R.string.calpopup_weekday_wed),
+        stringResource(id = R.string.calpopup_weekday_thu),
+        stringResource(id = R.string.calpopup_weekday_fri),
+        stringResource(id = R.string.calpopup_weekday_sat)
+    )
 
     Column {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -312,9 +325,9 @@ fun CalendarEventCard(
     onClick: () -> Unit
 ) {
     val (color, icon, label) = when (event.type) {
-        CalendarEventType.LOAN_INITIATION -> Triple(VibrantTeal, "Initiated", if (event.loanType == LoanType.LEND) "Lent to" else "Borrowed from")
-        CalendarEventType.DEADLINE -> Triple(CoralRose, "Deadline", "Payback due from")
-        CalendarEventType.PARTIAL_PAYMENT -> Triple(Color(0xFF3B82F6), "Payment", "Partial Payment for")
+        CalendarEventType.LOAN_INITIATION -> Triple(VibrantTeal, "Initiated", if (event.loanType == LoanType.LEND) stringResource(id = R.string.calpopup_lent_to) else stringResource(id = R.string.calpopup_borrowed_from))
+        CalendarEventType.DEADLINE -> Triple(CoralRose, "Deadline", stringResource(id = R.string.calpopup_payback_due_from))
+        CalendarEventType.PARTIAL_PAYMENT -> Triple(Color(0xFF3B82F6), "Payment", stringResource(id = R.string.calpopup_partial_payment_for))
     }
 
     Surface(

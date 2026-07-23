@@ -19,16 +19,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.DepositEntity
 import com.sbs.loaney.data.model.BanksData
 import com.sbs.loaney.ui.components.AnimatedCurrencyText
 import com.sbs.loaney.ui.components.CustomLightTextField
 import com.sbs.loaney.ui.components.SearchableDropdown
+import com.sbs.loaney.ui.components.ToolInfoDialog
+import com.sbs.loaney.ui.components.ToolInfoType
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.DepositUiState
 import com.sbs.loaney.ui.viewmodel.DepositViewModel
@@ -59,13 +63,14 @@ fun DepositScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Savings",
+                        stringResource(R.string.deposit_savings),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = AlimWhite
@@ -76,6 +81,15 @@ fun DepositScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
+                            tint = AlimWhite
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showInfoDialog = true }) {
+                        Icon(
+                            Icons.Default.Info,
+                            contentDescription = "Deposit Info",
                             tint = AlimWhite
                         )
                     }
@@ -107,12 +121,12 @@ fun DepositScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Calculator", fontWeight = FontWeight.SemiBold) }
+                    text = { Text(stringResource(R.string.deposit_calculator), fontWeight = FontWeight.SemiBold) }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("My Deposits", fontWeight = FontWeight.SemiBold) }
+                    text = { Text(stringResource(R.string.deposit_my_deposits), fontWeight = FontWeight.SemiBold) }
                 )
             }
 
@@ -140,6 +154,13 @@ fun DepositScreen(
                 }
             }
         }
+    }
+
+    if (showInfoDialog) {
+        ToolInfoDialog(
+            toolType = ToolInfoType.DPS_FDR,
+            onDismiss = { showInfoDialog = false }
+        )
     }
 }
 
@@ -170,9 +191,9 @@ private fun CalculatorTab(
 
         Text(
             text = if (isDps) {
-                "A Deposit Pension Scheme: you pay a fixed amount every month for the full term."
+                stringResource(R.string.deposit_dps_description)
             } else {
-                "A Fixed Deposit Receipt: you lock a lump sum away for the full term."
+                stringResource(R.string.deposit_fdr_description)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -181,7 +202,7 @@ private fun CalculatorTab(
         SearchableDropdown(
             value = uiState.bankName,
             onValueChange = onBankChange,
-            label = "Bank",
+            label = stringResource(R.string.deposit_bank),
             leadingIcon = Icons.Default.AccountBalance,
             options = BanksData.countriesWithBanks["Bangladesh"].orEmpty()
         )
@@ -189,7 +210,7 @@ private fun CalculatorTab(
         CustomLightTextField(
             value = uiState.amountInput,
             onValueChange = onAmountChange,
-            label = if (isDps) "Monthly Deposit" else "Deposit Amount",
+            label = if (isDps) stringResource(R.string.deposit_monthly_deposit) else stringResource(R.string.deposit_deposit_amount),
             leadingIcon = Icons.Default.Payments,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             placeholder = if (isDps) "5000" else "100000"
@@ -200,7 +221,7 @@ private fun CalculatorTab(
                 CustomLightTextField(
                     value = uiState.rateInput,
                     onValueChange = onRateChange,
-                    label = "Interest Rate (%)",
+                    label = stringResource(R.string.deposit_interest_rate),
                     leadingIcon = Icons.Default.Percent,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     placeholder = "8.5"
@@ -210,7 +231,7 @@ private fun CalculatorTab(
                 CustomLightTextField(
                     value = uiState.tenureInput,
                     onValueChange = onTenureChange,
-                    label = "Tenure (months)",
+                    label = stringResource(R.string.deposit_tenure_months),
                     leadingIcon = Icons.Default.CalendarMonth,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     placeholder = "60"
@@ -230,13 +251,13 @@ private fun CalculatorTab(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "I have a TIN",
+                    stringResource(R.string.deposit_i_have_tin),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    "Source tax on interest: ${uiState.taxRatePercent.toInt()}%",
+                    stringResource(R.string.deposit_source_tax_on_interest, uiState.taxRatePercent.toInt()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -268,12 +289,12 @@ private fun CalculatorTab(
             ) {
                 Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Save as Deposit", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.deposit_save_as_deposit), fontWeight = FontWeight.Bold)
             }
 
             if (!uiState.canSave) {
                 Text(
-                    "Pick a bank to save this deposit.",
+                    stringResource(R.string.deposit_pick_bank_to_save),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),
@@ -283,7 +304,7 @@ private fun CalculatorTab(
         }
 
         Text(
-            "Indicative only. Actual returns depend on your bank's exact compounding and tax rules.",
+            stringResource(R.string.deposit_indicative_only),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -334,15 +355,15 @@ private fun CompoundingSelector(
     onSelect: (Int) -> Unit
 ) {
     val options = listOf(
-        12 to "Monthly",
-        4 to "Quarterly",
-        2 to "Half-yearly",
-        1 to "Yearly"
+        12 to stringResource(R.string.deposit_compounding_monthly),
+        4 to stringResource(R.string.deposit_compounding_quarterly),
+        2 to stringResource(R.string.deposit_compounding_half_yearly),
+        1 to stringResource(R.string.deposit_compounding_yearly)
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            "Compounding",
+            stringResource(R.string.deposit_compounding),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface
@@ -381,7 +402,7 @@ private fun ProjectionCard(uiState: DepositUiState) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "You'll receive at maturity",
+                stringResource(R.string.deposit_receive_at_maturity),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AlimWhite.copy(alpha = 0.85f)
             )
@@ -394,7 +415,7 @@ private fun ProjectionCard(uiState: DepositUiState) {
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                "after ${tenureLabel(uiState.tenureMonths)}, net of tax",
+                stringResource(R.string.deposit_after_net_of_tax, tenureLabel(uiState.tenureMonths)),
                 style = MaterialTheme.typography.bodySmall,
                 color = AlimWhite.copy(alpha = 0.85f)
             )
@@ -403,10 +424,10 @@ private fun ProjectionCard(uiState: DepositUiState) {
             HorizontalDivider(color = AlimWhite.copy(alpha = 0.25f))
             Spacer(Modifier.height(16.dp))
 
-            ProjectionRow("Total deposited", money(symbol, p.totalDeposited))
-            ProjectionRow("Interest earned", "+ ${money(symbol, p.grossInterest)}")
+            ProjectionRow(stringResource(R.string.deposit_total_deposited), money(symbol, p.totalDeposited))
+            ProjectionRow(stringResource(R.string.deposit_interest_earned), "+ ${money(symbol, p.grossInterest)}")
             ProjectionRow(
-                "Source tax (${uiState.taxRatePercent.toInt()}%)",
+                stringResource(R.string.deposit_source_tax, uiState.taxRatePercent.toInt()),
                 "- ${money(symbol, p.taxOnInterest)}"
             )
 
@@ -415,13 +436,13 @@ private fun ProjectionCard(uiState: DepositUiState) {
             Spacer(Modifier.height(8.dp))
 
             ProjectionRow(
-                "Net maturity value",
+                stringResource(R.string.deposit_net_maturity_value),
                 money(symbol, p.netMaturityAmount),
                 emphasise = true
             )
             ProjectionRow(
-                "Effective yield",
-                String.format(Locale.getDefault(), "%.2f%% / yr", p.effectiveAnnualYield)
+                stringResource(R.string.deposit_effective_yield),
+                stringResource(R.string.deposit_effective_yield_value, p.effectiveAnnualYield)
             )
 
             if (uiState.tenureMonths >= 2) {
@@ -433,16 +454,19 @@ private fun ProjectionCard(uiState: DepositUiState) {
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(
-                            "If you break it early",
+                            stringResource(R.string.deposit_break_early_title),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = AlimWhite
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            "Cashing out at ${tenureLabel(uiState.tenureMonths / 2)} at the " +
-                                "${DepositCalculator.DEFAULT_PREMATURE_RATE.toInt()}% penalty rate returns about " +
-                                money(symbol, uiState.prematureProjection.netMaturityAmount) + ".",
+                            stringResource(
+                                R.string.deposit_break_early_desc,
+                                tenureLabel(uiState.tenureMonths / 2),
+                                DepositCalculator.DEFAULT_PREMATURE_RATE.toInt(),
+                                money(symbol, uiState.prematureProjection.netMaturityAmount)
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = AlimWhite.copy(alpha = 0.9f)
                         )
@@ -501,14 +525,14 @@ private fun TrackerTab(
             )
             Spacer(Modifier.height(16.dp))
             Text(
-                "No deposits yet",
+                stringResource(R.string.deposit_no_deposits_yet),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                "Work out a DPS or FDR in the calculator, then save it here to track it to maturity.",
+                stringResource(R.string.deposit_empty_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -521,7 +545,7 @@ private fun TrackerTab(
             ) {
                 Icon(Icons.Default.Calculate, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Open Calculator", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.deposit_open_calculator), fontWeight = FontWeight.Bold)
             }
         }
         return
@@ -545,16 +569,16 @@ private fun TrackerTab(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     SummaryStat(
-                        label = "Invested",
+                        label = stringResource(R.string.deposit_invested),
                         value = money(uiState.currencySymbol, uiState.totalInvested)
                     )
                     SummaryStat(
-                        label = "Matures to",
+                        label = stringResource(R.string.deposit_matures_to),
                         value = money(uiState.currencySymbol, uiState.totalProjectedValue),
                         valueColor = AlimGreen
                     )
                     SummaryStat(
-                        label = "Active",
+                        label = stringResource(R.string.status_active),
                         value = uiState.activeDeposits.size.toString()
                     )
                 }
@@ -562,14 +586,14 @@ private fun TrackerTab(
         }
 
         if (uiState.activeDeposits.isNotEmpty()) {
-            item { SectionLabel("Active") }
+            item { SectionLabel(stringResource(R.string.status_active)) }
             items(uiState.activeDeposits, key = { it.id }) { deposit ->
                 DepositCard(deposit, uiState.currencySymbol, onDelete)
             }
         }
 
         if (uiState.maturedDeposits.isNotEmpty()) {
-            item { SectionLabel("Matured") }
+            item { SectionLabel(stringResource(R.string.deposit_matured)) }
             items(uiState.maturedDeposits, key = { it.id }) { deposit ->
                 DepositCard(deposit, uiState.currencySymbol, onDelete)
             }
@@ -652,9 +676,19 @@ private fun DepositCard(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         if (deposit.type == DepositType.DPS.name) {
-                            "${money(currencySymbol, deposit.monthlyDeposit)}/mo at ${deposit.annualRate}% for ${tenureLabel(deposit.tenureMonths)}"
+                            stringResource(
+                                R.string.deposit_dps_card_summary,
+                                money(currencySymbol, deposit.monthlyDeposit),
+                                deposit.annualRate.toString(),
+                                tenureLabel(deposit.tenureMonths)
+                            )
                         } else {
-                            "${money(currencySymbol, deposit.principalAmount)} at ${deposit.annualRate}% for ${tenureLabel(deposit.tenureMonths)}"
+                            stringResource(
+                                R.string.deposit_fdr_card_summary,
+                                money(currencySymbol, deposit.principalAmount),
+                                deposit.annualRate.toString(),
+                                tenureLabel(deposit.tenureMonths)
+                            )
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -689,7 +723,7 @@ private fun DepositCard(
             ) {
                 Column {
                     Text(
-                        if (isMatured) "Matured on" else "Matures on",
+                        if (isMatured) stringResource(R.string.deposit_matured_on) else stringResource(R.string.deposit_matures_on),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -702,7 +736,7 @@ private fun DepositCard(
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        "Maturity value",
+                        stringResource(R.string.deposit_maturity_value),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -720,18 +754,18 @@ private fun DepositCard(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete deposit?") },
-            text = { Text("This removes the ${deposit.type} at ${deposit.bankName} from your tracker. It does not touch the actual deposit at your bank.") },
+            title = { Text(stringResource(R.string.deposit_delete_title)) },
+            text = { Text(stringResource(R.string.deposit_delete_msg, deposit.type, deposit.bankName)) },
             confirmButton = {
                 TextButton(onClick = {
                     onDelete(deposit)
                     showDeleteDialog = false
                 }) {
-                    Text("Delete", color = CoralRose, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.delete), color = CoralRose, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }

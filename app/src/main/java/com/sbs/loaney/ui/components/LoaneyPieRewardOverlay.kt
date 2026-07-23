@@ -16,12 +16,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.sbs.loaney.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -158,7 +160,7 @@ fun LoaneyPieRewardOverlay(
                     )
 
                     Text(
-                        text       = "Loaney Pies!",
+                        text       = stringResource(id = R.string.piereward_loaney_pies),
                         fontSize   = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color      = Color.White
@@ -166,7 +168,7 @@ fun LoaneyPieRewardOverlay(
 
                     // Sub-label
                     Text(
-                        text      = "Great job paying on time 🎉",
+                        text      = stringResource(id = R.string.piereward_paid_on_time),
                         fontSize  = 13.sp,
                         color     = Color.White.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center

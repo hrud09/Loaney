@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.annotation.DrawableRes
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.firebase.FirebaseException
@@ -71,7 +72,7 @@ fun AuthScreen(
     var profilePhotoUri by remember { mutableStateOf<String?>(null) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("Guest_" + (System.currentTimeMillis() / 1000).toString()) }
     var phoneNumber by remember { mutableStateOf("") }
     var otpCode by remember { mutableStateOf("") }
     var selectedCurrency by remember { mutableStateOf("৳") }
@@ -98,7 +99,7 @@ fun AuthScreen(
         if (authState is AuthState.Success) {
             authViewModel.resetState()
             if (isSignUp) {
-                android.widget.Toast.makeText(context, "Sign up completed!", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.auth_sign_up_completed), android.widget.Toast.LENGTH_SHORT).show()
             }
             onAuthSuccess()
         }
@@ -127,7 +128,7 @@ fun AuthScreen(
             }
             override fun onVerificationFailed(e: FirebaseException) {
                 isVerifyingPhone = false
-                localError = e.message ?: "Phone verification failed"
+                localError = e.message ?: context.getString(R.string.auth_phone_verification_failed)
             }
             override fun onCodeSent(verId: String, token: PhoneAuthProvider.ForceResendingToken) {
                 isVerifyingPhone = false
@@ -153,9 +154,9 @@ fun AuthScreen(
             
             Text(
                 text = when {
-                    isGuestMode -> "Hop into Loaney"
-                    isSignUp -> "Create Account"
-                    else -> "Welcome Back"
+                    isGuestMode -> stringResource(R.string.auth_hop_into_loaney)
+                    isSignUp -> stringResource(R.string.auth_create_account)
+                    else -> stringResource(R.string.auth_welcome_back)
                 },
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground
@@ -165,9 +166,9 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = when {
-                    isGuestMode -> "Use the app with just your name. Your data stays secure on this device."
-                    isSignUp -> "Create an account when you want cloud backup."
-                    else -> "Sign in to back up or restore your cloud data."
+                    isGuestMode -> stringResource(R.string.auth_guest_subtitle)
+                    isSignUp -> stringResource(R.string.auth_signup_subtitle)
+                    else -> stringResource(R.string.auth_signin_subtitle)
                 },
                 style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)),
                 textAlign = TextAlign.Center
@@ -179,7 +180,7 @@ fun AuthScreen(
             AnimatedVisibility(visible = !isGuestMode && isSignUp && !isOtpMode) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Profile Picture",
+                        text = stringResource(R.string.auth_profile_picture),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -216,7 +217,7 @@ fun AuthScreen(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it; localError = null },
-                        label = { Text("Your Name") },
+                        label = { Text(stringResource(R.string.auth_your_name)) },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AlimGreen) },
                         singleLine = true,
                         shape = RoundedCornerShape(16.dp),
@@ -230,7 +231,7 @@ fun AuthScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        text = "Local Currency",
+                        text = stringResource(R.string.auth_local_currency),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -286,7 +287,7 @@ fun AuthScreen(
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Log In", color = if (!isSignUp) Color.White else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.auth_log_in), color = if (!isSignUp) Color.White else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                     }
                     Box(
                         modifier = Modifier
@@ -297,7 +298,7 @@ fun AuthScreen(
                             .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Sign Up", color = if (isSignUp) Color.White else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.auth_sign_up), color = if (isSignUp) Color.White else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
                     }
                 }
                 }
@@ -317,12 +318,12 @@ fun AuthScreen(
 
             // Dynamic User Form
             if (!isGuestMode && isOtpMode) {
-                Text("Enter the 6-digit code sent to $phoneNumber", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.auth_otp_sent, phoneNumber), style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = otpCode,
                     onValueChange = { otpCode = it; localError = null },
-                    label = { Text("SMS Code") },
+                    label = { Text(stringResource(R.string.auth_sms_code)) },
                     singleLine = true,
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
@@ -334,7 +335,7 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = phoneNumber,
                     onValueChange = { phoneNumber = it; localError = null },
-                    label = { Text("Phone Number (with country code)") },
+                    label = { Text(stringResource(R.string.auth_phone_with_country_code)) },
                     leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AlimGreen) },
                     singleLine = true,
                     shape = RoundedCornerShape(16.dp),
@@ -347,7 +348,7 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it; localError = null },
-                    label = { Text("Email") },
+                    label = { Text(stringResource(R.string.auth_email)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AlimGreen) },
                     singleLine = true,
                     shape = RoundedCornerShape(16.dp),
@@ -360,7 +361,7 @@ fun AuthScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it; localError = null },
-                    label = { Text("Password") },
+                    label = { Text(stringResource(R.string.auth_password)) },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AlimGreen) },
                     trailingIcon = {
                         val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
@@ -386,7 +387,7 @@ fun AuthScreen(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it; localError = null },
-                        label = { Text("Full Name") },
+                        label = { Text(stringResource(R.string.auth_full_name)) },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AlimGreen) },
                         singleLine = true,
                         shape = RoundedCornerShape(16.dp),
@@ -401,7 +402,7 @@ fun AuthScreen(
                         OutlinedTextField(
                             value = phoneNumber,
                             onValueChange = { phoneNumber = it; localError = null },
-                            label = { Text("Phone Number (Optional)") },
+                            label = { Text(stringResource(R.string.auth_phone_number_optional)) },
                             leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AlimGreen) },
                             singleLine = true,
                             shape = RoundedCornerShape(16.dp),
@@ -414,7 +415,7 @@ fun AuthScreen(
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it; localError = null },
-                            label = { Text("Email (Optional)") },
+                            label = { Text(stringResource(R.string.email_optional)) },
                             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AlimGreen) },
                             singleLine = true,
                             shape = RoundedCornerShape(16.dp),
@@ -429,7 +430,7 @@ fun AuthScreen(
                     OutlinedTextField(
                         value = address,
                         onValueChange = { address = it; localError = null },
-                        label = { Text("Address (Optional)") },
+                        label = { Text(stringResource(R.string.auth_address_optional)) },
                         leadingIcon = { Icon(Icons.Default.Home, contentDescription = null, tint = AlimGreen) },
                         singleLine = true,
                         shape = RoundedCornerShape(16.dp),
@@ -448,7 +449,7 @@ fun AuthScreen(
                         OutlinedTextField(
                             value = dateOfBirth,
                             onValueChange = {},
-                            label = { Text("Birth Year (Optional)") },
+                            label = { Text(stringResource(R.string.auth_birth_year_optional)) },
                             leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null, tint = AlimGreen) },
                             singleLine = true,
                             readOnly = true,
@@ -480,12 +481,12 @@ fun AuthScreen(
                                     }
                                     showDatePicker = false
                                 }) {
-                                    Text("OK", color = AlimGreen, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.ok), color = AlimGreen, fontWeight = FontWeight.Bold)
                                 }
                             },
                             dismissButton = {
                                 TextButton(onClick = { showDatePicker = false }) {
-                                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(stringResource(R.string.cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         ) {
@@ -514,7 +515,7 @@ fun AuthScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
                     Text(
-                        text = "Local Currency",
+                        text = stringResource(R.string.auth_local_currency),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -561,7 +562,7 @@ fun AuthScreen(
                     localError = null
                     if (isGuestMode) {
                         if (name.isBlank()) {
-                            localError = "Enter your name to continue"
+                            localError = context.getString(R.string.auth_enter_name_to_continue)
                         } else {
                             authViewModel.continueAsGuest(name, selectedCurrency)
                         }
@@ -579,7 +580,7 @@ fun AuthScreen(
                                 dateOfBirth = dateOfBirth.takeIf { isSignUp }
                             )
                         } catch (e: Exception) {
-                            localError = "Invalid SMS code"
+                            localError = context.getString(R.string.auth_invalid_sms_code)
                         }
                     } else if (isPhoneMode) {
                         if (activity != null) {
@@ -591,7 +592,7 @@ fun AuthScreen(
                                 .setCallbacks(callbacks)
                             PhoneAuthProvider.verifyPhoneNumber(builder.build())
                         } else {
-                            localError = "Activity context required for Phone Auth"
+                            localError = context.getString(R.string.auth_activity_required_phone)
                         }
                     } else {
                         if (isSignUp) {
@@ -612,11 +613,11 @@ fun AuthScreen(
                     CircularProgressIndicator(color = AlimWhite, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 } else {
                     val btnText = when {
-                        isGuestMode -> "Continue as Guest"
-                        isOtpMode -> "Verify & Continue"
-                        isPhoneMode -> "Send SMS Code"
-                        isSignUp -> "Create Account"
-                        else -> "Log In"
+                        isGuestMode -> stringResource(R.string.auth_continue_as_guest)
+                        isOtpMode -> stringResource(R.string.auth_verify_continue)
+                        isPhoneMode -> stringResource(R.string.auth_send_sms_code)
+                        isSignUp -> stringResource(R.string.auth_create_account)
+                        else -> stringResource(R.string.auth_log_in)
                     }
                     Text(btnText, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
@@ -627,7 +628,7 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                     HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
-                    Text(" or ", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f), modifier = Modifier.padding(horizontal = 8.dp))
+                    Text(stringResource(R.string.auth_or), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f), modifier = Modifier.padding(horizontal = 8.dp))
                     HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                 }
                 Spacer(modifier = Modifier.height(24.dp))
@@ -637,27 +638,30 @@ fun AuthScreen(
                         onClick = {
                             isGuestMode = false
                             localError = null
+                            if (name.startsWith("Guest_")) {
+                                name = ""
+                            }
                         },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                     ) {
-                        Text("Sign in for cloud backup", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.auth_sign_in_cloud_backup), fontWeight = FontWeight.Bold)
                     }
                 } else {
                     // Google and Facebook each cover sign-up and sign-in in one tap, so they stay
                     // put whichever side of the Log In / Sign Up toggle we are on. The typed name
                     // and currency only seed a profile that does not exist yet.
                     SocialSignInButton(
-                        text = "Continue with Google",
+                        text = stringResource(R.string.auth_continue_with_google),
                         iconRes = R.drawable.ic_google_logo,
                         enabled = !isMainLoading,
                         onClick = {
                             keyboardController?.hide()
                             localError = null
                             if (activity == null) {
-                                localError = "Could not start Google sign-in"
+                                localError = context.getString(R.string.auth_google_signin_failed)
                             } else {
                                 authViewModel.signInWithGoogle(
                                     activity = activity,
@@ -669,14 +673,14 @@ fun AuthScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     SocialSignInButton(
-                        text = "Continue with Facebook",
+                        text = stringResource(R.string.auth_continue_with_facebook),
                         iconRes = R.drawable.ic_facebook_logo,
                         enabled = !isMainLoading,
                         onClick = {
                             keyboardController?.hide()
                             localError = null
                             if (activity == null) {
-                                localError = "Could not start Facebook sign-in"
+                                localError = context.getString(R.string.auth_facebook_signin_failed)
                             } else {
                                 authViewModel.signInWithFacebook(
                                     activity = activity,
@@ -698,7 +702,7 @@ fun AuthScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                     ) {
-                        Text(if (isPhoneMode) "Continue with Email" else "Continue with Phone", fontWeight = FontWeight.Bold)
+                        Text(if (isPhoneMode) stringResource(R.string.auth_continue_with_email) else stringResource(R.string.auth_continue_with_phone), fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     TextButton(
@@ -707,17 +711,20 @@ fun AuthScreen(
                             isPhoneMode = false
                             isSignUp = false
                             localError = null
+                            if (name.isBlank() || name.startsWith("Guest_")) {
+                                name = "Guest_" + (System.currentTimeMillis() / 1000).toString()
+                            }
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Use without signing in", color = AlimGreen, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.auth_use_without_signing_in), color = AlimGreen, fontWeight = FontWeight.Bold)
                     }
                 }
                 
             } else {
                 Spacer(modifier = Modifier.height(24.dp))
                 TextButton(onClick = { isOtpMode = false }) {
-                    Text("Back to Sign In", color = AlimGreen)
+                    Text(stringResource(R.string.auth_back_to_sign_in), color = AlimGreen)
                 }
             }
 

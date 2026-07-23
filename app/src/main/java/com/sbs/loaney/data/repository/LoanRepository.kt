@@ -22,6 +22,8 @@ class LoanRepository(
 ) : ILoanRepository {
     override fun getAllLoans(): Flow<List<LoanWithPayments>> = loanDao.getAllLoans()
 
+    override suspend fun getAllLoansOnce(): List<LoanWithPayments> = loanDao.getAllLoansOnce()
+
     override fun getLoansByType(type: LoanType): Flow<List<LoanWithPayments>> = loanDao.getLoansByType(type)
 
     override fun getLoanById(loanId: Long): Flow<LoanWithPayments?> = loanDao.getLoanById(loanId)

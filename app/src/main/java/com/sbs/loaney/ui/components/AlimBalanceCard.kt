@@ -69,10 +69,10 @@ fun AlimBalanceCard(
                     ) {
                         Row(
                             modifier = Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             // Given Section
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
                                         text = stringResource(id = R.string.total_given),
@@ -106,7 +106,7 @@ fun AlimBalanceCard(
                                         style = MaterialTheme.typography.headlineSmall.copy(
                                             color = AlimWhite,
                                             fontWeight = FontWeight.SemiBold,
-                                            fontSize = 20.sp
+                                            fontSize = 40.sp
                                         ),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -115,7 +115,7 @@ fun AlimBalanceCard(
                             }
 
                             // Taken Section
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
                                         text = stringResource(id = R.string.total_taken),
@@ -138,9 +138,9 @@ fun AlimBalanceCard(
                                     Text(
                                         text = if (visible) "$currencySymbol${String.format("%,.0f", totalBorrowed)}" else "****",
                                         style = MaterialTheme.typography.headlineSmall.copy(
-                                            color = CoralRose,
+                                            color = Color(0xFFD32F2F), // Dark Red
                                             fontWeight = FontWeight.SemiBold,
-                                            fontSize = 20.sp
+                                            fontSize = 40.sp
                                         ),
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -173,7 +173,7 @@ fun AlimBalanceCard(
                         AlimCardAction(Icons.Default.History, stringResource(id = R.string.history), onClick = onNavigateToHistoryScreen)
                         AlimCardAction(Icons.Default.BarChart, stringResource(id = R.string.report), onClick = onReportClick)
                         Box(modifier = Modifier.onGloballyPositioned { onPositionedTools(it) }) {
-                            AlimCardAction(Icons.Default.Build, "Tools", onClick = onToolsClick)
+                            AlimCardAction(Icons.Default.Build, stringResource(id = R.string.balcard_tools), onClick = onToolsClick)
                         }
                     }
                 }

@@ -146,6 +146,9 @@ class FirebaseLoanRepository @Inject constructor(
         }
     }
 
+    /** One-shot read; mirrors the Room DAO's snapshot query used for duplicate checks. */
+    override suspend fun getAllLoansOnce(): List<LoanWithPayments> = getAllLoans().first()
+
     override fun getLoansByType(type: LoanType): Flow<List<LoanWithPayments>> {
         return getAllLoans().map { loans ->
             loans.filter { it.loan.type == type }

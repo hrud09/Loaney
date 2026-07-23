@@ -234,20 +234,20 @@ fun SettingsScreen(
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
                         SettingsItem(
                             icon = Icons.AutoMirrored.Filled.HelpOutline,
-                            title = "Replay app tour",
-                            subtitle = "Walk through the home screen again",
+                            title = stringResource(id = R.string.setscr_replay_app_tour),
+                            subtitle = stringResource(id = R.string.setscr_replay_app_tour_subtitle),
                             onClick = {
                                 viewModel.replayTutorial()
-                                Toast.makeText(context, "The tour will start on the home screen", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.setscr_tour_start_toast), Toast.LENGTH_SHORT).show()
                             }
                         )
                     }
 
-                    SettingsGroup(title = "Cloud Backup") {
+                    SettingsGroup(title = stringResource(id = R.string.setscr_cloud_backup)) {
                         SettingsItem(
                             icon = Icons.Default.CloudUpload,
-                            title = if (isSignedIn) "Back up to cloud" else "Sign in to back up to cloud",
-                            subtitle = if (isSignedIn) "Save a secure copy with your cloud account" else "Guest data stays on this device until you sign in",
+                            title = if (isSignedIn) stringResource(id = R.string.setscr_back_up_to_cloud) else stringResource(id = R.string.setscr_sign_in_to_back_up),
+                            subtitle = if (isSignedIn) stringResource(id = R.string.setscr_back_up_subtitle) else stringResource(id = R.string.setscr_guest_data_subtitle),
                             onClick = {
                                 if (isSignedIn) {
                                     viewModel.backupDatabase()
@@ -260,8 +260,8 @@ fun SettingsScreen(
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 0.5.dp)
                             SettingsItem(
                                 icon = Icons.Default.CloudDownload,
-                                title = "Restore from cloud",
-                                subtitle = "Bring back your latest cloud backup",
+                                title = stringResource(id = R.string.setscr_restore_from_cloud),
+                                subtitle = stringResource(id = R.string.setscr_restore_subtitle),
                                 onClick = { viewModel.restoreDatabase() }
                             )
                         }
@@ -275,11 +275,11 @@ fun SettingsScreen(
     LaunchedEffect(backupState, backupErrorMessage) {
         when (backupState) {
             BackupState.SUCCESS -> {
-                android.widget.Toast.makeText(context, "Cloud backup updated", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.setscr_backup_updated), android.widget.Toast.LENGTH_SHORT).show()
                 viewModel.resetBackupState()
             }
             BackupState.ERROR -> {
-                android.widget.Toast.makeText(context, backupErrorMessage ?: "Cloud backup failed", android.widget.Toast.LENGTH_LONG).show()
+                android.widget.Toast.makeText(context, backupErrorMessage ?: context.getString(R.string.setscr_backup_failed), android.widget.Toast.LENGTH_LONG).show()
                 viewModel.resetBackupState()
             }
             else -> Unit

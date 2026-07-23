@@ -32,11 +32,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sbs.loaney.R
 import com.sbs.loaney.data.model.Coupon
 import com.sbs.loaney.data.model.CouponCategory
 import com.sbs.loaney.ui.theme.CurrencyTypography
@@ -61,7 +63,7 @@ fun ShopScreen(
                 CenterAlignedTopAppBar(
                     title = { 
                         Text(
-                            "Shop", 
+                            stringResource(R.string.shop_title),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = AlimWhite
@@ -123,7 +125,7 @@ fun ShopScreen(
                         }
                         Column {
                             Text(
-                                text = "TOTAL REWARDS",
+                                text = stringResource(R.string.shop_total_rewards),
                                 color = AlimWhite.copy(alpha = 0.7f),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
@@ -139,7 +141,7 @@ fun ShopScreen(
                                     )
                                )
                                 Text(
-                                    text = " PIES",
+                                    text = " ${stringResource(R.string.shop_pies)}",
                                     color = AlimWhite.copy(alpha = 0.6f),
                                     style = MaterialTheme.typography.labelLarge,
                                     modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
@@ -191,7 +193,7 @@ fun ShopScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         
                         Text(
-                            text = "Rewards Shop Coming Soon",
+                            text = stringResource(R.string.shop_coming_soon_title),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -201,7 +203,7 @@ fun ShopScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                         
                         Text(
-                            text = "We are baking some amazing rewards for you! Track your loans, keep up the good credit, and collect more Loaney Pies to redeem them here soon.",
+                            text = stringResource(R.string.shop_coming_soon_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -339,7 +341,7 @@ fun CouponCard(coupon: Coupon, canAfford: Boolean, onClick: () -> Unit) {
                 }
                 if (!canAfford) {
                     Text(
-                        "INSUFFICIENT",
+                        stringResource(R.string.shop_insufficient),
                         color = CoralRose,
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Black,

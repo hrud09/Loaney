@@ -73,7 +73,7 @@ fun DeletionReasonBottomSheet(
 
             // Title & Subtitle
             Text(
-                text = "Delete Loan for $personName?",
+                text = stringResource(id = R.string.delreason_delete_loan_for, personName),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -96,25 +96,25 @@ fun DeletionReasonBottomSheet(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 ReasonItem(
                     title = stringResource(id = R.string.delete_reason_paid),
-                    subtitle = "The loan has been settled in full",
+                    subtitle = stringResource(id = R.string.delreason_paid_desc),
                     isSelected = selectedReason == DeletionReason.PAID_FULLY,
                     onClick = { selectedReason = DeletionReason.PAID_FULLY }
                 )
                 ReasonItem(
                     title = stringResource(id = R.string.delete_reason_forgiven),
-                    subtitle = "This debt is written off / forgiven",
+                    subtitle = stringResource(id = R.string.delreason_forgiven_desc),
                     isSelected = selectedReason == DeletionReason.FORGIVEN,
                     onClick = { selectedReason = DeletionReason.FORGIVEN }
                 )
                 ReasonItem(
                     title = stringResource(id = R.string.delete_reason_mistake),
-                    subtitle = "Logged by error, remove completely",
+                    subtitle = stringResource(id = R.string.delreason_mistake_desc),
                     isSelected = selectedReason == DeletionReason.MISTAKE,
                     onClick = { selectedReason = DeletionReason.MISTAKE }
                 )
                 ReasonItem(
                     title = stringResource(id = R.string.delete_reason_other),
-                    subtitle = "None of the above, provide your own",
+                    subtitle = stringResource(id = R.string.delreason_other_desc),
                     isSelected = selectedReason == DeletionReason.OTHER,
                     onClick = { selectedReason = DeletionReason.OTHER }
                 )

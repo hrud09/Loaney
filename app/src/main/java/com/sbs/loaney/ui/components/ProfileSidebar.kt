@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -21,10 +22,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sbs.loaney.R
 import com.sbs.loaney.data.model.UserProfile
 
 import androidx.compose.foundation.border
@@ -37,8 +40,11 @@ fun ProfileSidebarContent(
     onNavigateToShop: () -> Unit,
     onNavigateToTools: () -> Unit,
     onSignOutClick: () -> Unit,
+    onSignInClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // Guest sessions never create a Firebase auth user, so a null currentUser means "guest".
+    val isGuest = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser == null
     Column(
         modifier = modifier
             .fillMaxHeight()
@@ -89,7 +95,7 @@ fun ProfileSidebarContent(
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "Lvl ${profile.xpLevel}",
+                                text = stringResource(R.string.sidebar_level_badge, profile.xpLevel),
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 fontWeight = FontWeight.ExtraBold,
                                 fontSize = 11.sp
@@ -127,13 +133,13 @@ fun ProfileSidebarContent(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "XP Progress",
+                    text = stringResource(R.string.sidebar_xp_progress),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "${profile.currentXp} / ${profile.xpToNextLevel} XP",
+                    text = stringResource(R.string.sidebar_xp_amount, profile.currentXp, profile.xpToNextLevel),
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp
@@ -179,13 +185,13 @@ fun ProfileSidebarContent(
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Loaney Pie Vault",
+                        text = stringResource(R.string.sidebar_pie_vault),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
                     Text(
-                        text = "${profile.totalLoaneyPies} pies",
+                        text = stringResource(R.string.sidebar_pies_count, profile.totalLoaneyPies),
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 18.sp
@@ -198,7 +204,7 @@ fun ProfileSidebarContent(
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                     modifier = Modifier.height(36.dp)
                 ) {
-                    Text("Redeem", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text(stringResource(R.string.sidebar_redeem), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }
@@ -213,28 +219,36 @@ fun ProfileSidebarContent(
         // ── Menu items ─────────────────────────────────────────────
         SidebarMenuItem(
             icon = Icons.AutoMirrored.Filled.List,
-            label = "Transaction History",
+            label = stringResource(R.string.sidebar_transaction_history),
             onClick = onNavigateToHistory
         )
         SidebarMenuItem(
             icon = Icons.Default.Build,
-            label = "Tools",
+            label = stringResource(R.string.sidebar_tools),
             onClick = onNavigateToTools
         )
         SidebarMenuItem(
             icon = Icons.Default.Settings,
-            label = "Settings",
+            label = stringResource(R.string.settings),
             onClick = onNavigateToSettings
         )
         } // Close scrollable Column
 
         // Pinned Bottom Section
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        SidebarMenuItem(
-            icon = Icons.AutoMirrored.Filled.Logout,
-            label = "Sign Out",
-            onClick = onSignOutClick
-        )
+        if (isGuest) {
+            SidebarMenuItem(
+                icon = Icons.AutoMirrored.Filled.Login,
+                label = stringResource(R.string.sidebar_sign_in),
+                onClick = onSignInClick
+            )
+        } else {
+            SidebarMenuItem(
+                icon = Icons.AutoMirrored.Filled.Logout,
+                label = stringResource(R.string.sidebar_sign_out),
+                onClick = onSignOutClick
+            )
+        }
         Spacer(Modifier.height(32.dp))
     }
 }

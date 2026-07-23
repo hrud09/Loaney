@@ -135,10 +135,10 @@ fun MainScreen(
                         rel = relStr
                     )
                 } else {
-                    Toast.makeText(context, "Invalid QR Code format", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.main_invalid_qr_format), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Failed to scan QR Code", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.main_failed_scan_qr), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -146,8 +146,8 @@ fun MainScreen(
     if (showLogoutDialog) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { androidx.compose.material3.Text("Sign Out") },
-            text = { androidx.compose.material3.Text("Are you sure you want to sign out?") },
+            title = { androidx.compose.material3.Text(stringResource(R.string.main_sign_out)) },
+            text = { androidx.compose.material3.Text(stringResource(R.string.main_sign_out_confirm)) },
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = {
                     showLogoutDialog = false
@@ -156,10 +156,10 @@ fun MainScreen(
                     navController.navigate(Screen.Auth.route) {
                         popUpTo(navController.graph.id) { inclusive = true }
                     }
-                }) { androidx.compose.material3.Text("Sign Out", color = androidx.compose.material3.MaterialTheme.colorScheme.error) }
+                }) { androidx.compose.material3.Text(stringResource(R.string.main_sign_out), color = androidx.compose.material3.MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showLogoutDialog = false }) { androidx.compose.material3.Text("Cancel") }
+                androidx.compose.material3.TextButton(onClick = { showLogoutDialog = false }) { androidx.compose.material3.Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -204,6 +204,12 @@ fun MainScreen(
                 },
                 onSignOutClick = {
                     showLogoutDialog = true
+                },
+                onSignInClick = {
+                    scope.launch { drawerState.close() }
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
                 }
             )
         }
@@ -229,7 +235,7 @@ fun MainScreen(
                         onScanQrClick = {
                             val options = ScanOptions()
                             options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-                            options.setPrompt("Scan a Loaney QR Code")
+                            options.setPrompt(context.getString(R.string.main_scan_qr_prompt))
                             options.setCameraId(0)
                             options.setBeepEnabled(false)
                             options.setOrientationLocked(true) // Force portrait
@@ -503,17 +509,17 @@ fun MainScreen(
     if (scannedLoanData != null) {
         AlertDialog(
             onDismissRequest = { scannedLoanData = null },
-            title = { Text("Tracked Loan Details") },
+            title = { Text(stringResource(R.string.main_tracked_loan_details)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DetailItem("Type", scannedLoanData?.type ?: "")
-                    DetailItem("Amount", "৳${scannedLoanData?.amount ?: "0"}")
-                    DetailItem("From", scannedLoanData?.name ?: "Unknown")
+                    DetailItem(stringResource(R.string.main_type), scannedLoanData?.type ?: "")
+                    DetailItem(stringResource(R.string.amount), "৳${scannedLoanData?.amount ?: "0"}")
+                    DetailItem(stringResource(R.string.main_from), scannedLoanData?.name ?: stringResource(R.string.main_unknown))
                     if (!scannedLoanData?.purpose.isNullOrBlank()) {
-                        DetailItem("Purpose", scannedLoanData?.purpose ?: "")
+                        DetailItem(stringResource(R.string.purpose), scannedLoanData?.purpose ?: "")
                     }
                     Text(
-                        "Please verify if this information is correct before tracking.",
+                        stringResource(R.string.main_verify_info),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray,
                         modifier = Modifier.padding(top = 8.dp)
@@ -538,11 +544,11 @@ fun MainScreen(
                         scannedLoanData = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
-                ) { Text("Accept") }
+                ) { Text(stringResource(R.string.accept_share)) }
             },
             dismissButton = {
                 TextButton(onClick = { showIssueReport = true }) {
-                    Text("Ask Change", color = Color.Gray)
+                    Text(stringResource(R.string.main_ask_change), color = Color.Gray)
                 }
             }
         )
@@ -551,7 +557,7 @@ fun MainScreen(
     if (showIssueReport && scannedLoanData != null) {
         AlertDialog(
             onDismissRequest = { showIssueReport = false },
-            title = { Text("What's incorrect?") },
+            title = { Text(stringResource(R.string.main_whats_incorrect)) },
             text = {
                 Column {
                     val issues = listOf("Incorrect Amount", "Incorrect Person Name", "Incorrect Loan Type", "Other")
@@ -604,7 +610,7 @@ fun sendIssueReport(context: android.content.Context, issue: String, loanData: S
     try {
         context.startActivity(intent)
     } catch (e: Exception) {
-        Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.main_no_email_app), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -655,7 +661,7 @@ fun BkashBottomNavBar(
                 val historySelected = currentDestination?.hierarchy?.any { it.route == Screen.ManageLoans.route } == true
                 BkashNavBarItem(
                     icon = if (historySelected) Icons.Default.ReceiptLong else Icons.Outlined.ReceiptLong,
-                    label = "Transaction",
+                    label = stringResource(R.string.main_transaction),
                     selected = historySelected,
                     onClick = { onNavItemClick(Screen.ManageLoans.createRoute()) }
                 )
@@ -667,7 +673,7 @@ fun BkashBottomNavBar(
                 val shopSelected = currentDestination?.hierarchy?.any { it.route == Screen.Shop.route } == true
                 BkashNavBarItem(
                     icon = if (shopSelected) Icons.Default.ShoppingBag else Icons.Outlined.ShoppingBag,
-                    label = "Shop",
+                    label = stringResource(R.string.main_shop),
                     selected = shopSelected,
                     onClick = onShopClick
                 )
@@ -676,7 +682,7 @@ fun BkashBottomNavBar(
                 val settingsSelected = currentDestination?.hierarchy?.any { it.route == Screen.Settings.route } == true
                 BkashNavBarItem(
                     icon = if (settingsSelected) Icons.Default.Settings else Icons.Outlined.Settings,
-                    label = "Settings",
+                    label = stringResource(R.string.settings),
                     selected = settingsSelected,
                     onClick = onProfileClick
                 )
@@ -696,7 +702,7 @@ fun BkashBottomNavBar(
             ) {
                 // Manual Input FAB
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Manual Input", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                    Text(stringResource(R.string.main_manual_input), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
                     Box(modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape).clip(CircleShape).background(MaterialTheme.colorScheme.surface).clickable { expanded = false; onCenterFabClick() }, contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.Edit, contentDescription = "Manual Input", tint = AlimGreen)
                     }
@@ -704,7 +710,7 @@ fun BkashBottomNavBar(
                 
                 // Scan QR FAB
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Scan QR Code", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
+                    Text(stringResource(R.string.main_scan_qr_code), color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp))
                     Box(modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape).clip(CircleShape).background(MaterialTheme.colorScheme.surface).clickable { expanded = false; onScanQrClick() }, contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan QR", tint = AlimGreen)
                     }

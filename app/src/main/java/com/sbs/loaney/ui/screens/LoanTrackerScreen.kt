@@ -220,8 +220,8 @@ fun LoanTrackerScreen(
         AlertDialog(
             onDismissRequest = { showForgiveConfirmation = false },
             icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = AmberWarn) },
-            title = { Text("Forgive Debt?") },
-            text = { Text("Are you sure you want to write off the remaining ${uiState.currencySymbol}${String.format("%,.0f", remainingAmount)}? This will not log it as received cash.") },
+            title = { Text(stringResource(id = R.string.tracker_forgive_debt_title)) },
+            text = { Text(stringResource(id = R.string.tracker_forgive_debt_msg, "${uiState.currencySymbol}${String.format("%,.0f", remainingAmount)}")) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -230,7 +230,7 @@ fun LoanTrackerScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = AmberWarn)
                 ) {
-                    Text("Forgive", fontWeight = FontWeight.Bold)
+                    Text(stringResource(id = R.string.tracker_forgive), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -272,7 +272,7 @@ fun LoanTrackerScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Scan to Track Loan",
+                        text = stringResource(id = R.string.tracker_scan_to_track_loan),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = AlimDark
@@ -291,7 +291,7 @@ fun LoanTrackerScreen(
                         onClick = { showEnlargedQr = false },
                         colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
                     ) {
-                        Text("Close")
+                        Text(stringResource(id = R.string.tracker_close))
                     }
                 }
             }
@@ -414,7 +414,7 @@ fun LoanTrackerScreen(
                                 onClick = { showForgiveConfirmation = true },
                                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                             ) {
-                                Text("Forgive Debt", style = MaterialTheme.typography.labelMedium)
+                                Text(stringResource(id = R.string.tracker_forgive_debt), style = MaterialTheme.typography.labelMedium)
                             }
                             // Send Reminder
                             TextButton(
@@ -423,7 +423,7 @@ fun LoanTrackerScreen(
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Send Reminder", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(id = R.string.tracker_send_reminder), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -444,16 +444,16 @@ fun LoanTrackerScreen(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        "Auto-remind by email",
+                                        stringResource(id = R.string.tracker_auto_remind_title),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         if (trackedLoan.autoRemindEnabled) {
-                                            "We'll email ${trackedLoan.personName} when this is due, and every 3 days while it's overdue."
+                                            stringResource(id = R.string.tracker_auto_remind_on_desc, trackedLoan.personName)
                                         } else {
-                                            "Email ${trackedLoan.personName} automatically when this falls due."
+                                            stringResource(id = R.string.tracker_auto_remind_off_desc, trackedLoan.personName)
                                         },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -519,7 +519,7 @@ fun LoanTrackerScreen(
                             Icon(Icons.Default.Info, contentDescription = null, tint = AmberWarn)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "An update to this loan's details is pending confirmation from the linked user.",
+                                text = stringResource(id = R.string.tracker_pending_update),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -792,7 +792,7 @@ fun LoanTrackerScreen(
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Scan to Track",
+                                    text = stringResource(id = R.string.tracker_scan_to_track),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontWeight = FontWeight.Bold
@@ -916,7 +916,7 @@ fun LoanTrackerScreen(
                             if (!loan.phoneNumber.isNullOrBlank()) {
                                 sendWhatsAppReminder(context, loan.phoneNumber, message)
                             } else {
-                                android.widget.Toast.makeText(context, "No phone number available", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, context.getString(R.string.tracker_no_phone_number), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
                         ReminderChannel.Messenger -> {
@@ -926,14 +926,14 @@ fun LoanTrackerScreen(
                             if (!loan.phoneNumber.isNullOrBlank()) {
                                 sendSmsReminder(context, loan.phoneNumber, message)
                             } else {
-                                android.widget.Toast.makeText(context, "No phone number available", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, context.getString(R.string.tracker_no_phone_number), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
                         ReminderChannel.Email -> {
                             if (!loan.email.isNullOrBlank()) {
                                 sendEmailReminder(context, loan.email, loan.personName, message)
                             } else {
-                                android.widget.Toast.makeText(context, "No email address available", android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(context, context.getString(R.string.tracker_no_email_address), android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
                         ReminderChannel.Other -> {
@@ -1080,7 +1080,7 @@ fun EditLoanBottomSheet(
             CustomLightTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = "Name",
+                label = stringResource(id = R.string.tracker_name),
                 leadingIcon = Icons.Default.Person,
                 trailingIcon = Icons.Default.ContactPhone,
                 onTrailingIconClick = { 
@@ -1094,7 +1094,7 @@ fun EditLoanBottomSheet(
             CustomLightTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                label = "Phone",
+                label = stringResource(id = R.string.tracker_phone),
                 leadingIcon = Icons.Default.Phone,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
@@ -1102,7 +1102,7 @@ fun EditLoanBottomSheet(
             CustomLightTextField(
                 value = amount,
                 onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) amount = it },
-                label = "Amount",
+                label = stringResource(id = R.string.amount),
                 leadingIcon = Icons.Default.AttachMoney,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
@@ -1136,7 +1136,7 @@ fun EditLoanBottomSheet(
                     CustomLightTextField(
                         value = dateFormat.format(Date(loanDate)),
                         onValueChange = {},
-                        label = "Loan Date",
+                        label = stringResource(id = R.string.loan_date),
                         readOnly = true,
                         enabled = false,
                         leadingIcon = Icons.Default.CalendarToday
@@ -1146,7 +1146,7 @@ fun EditLoanBottomSheet(
                     CustomLightTextField(
                         value = dateFormat.format(Date(returnDate)),
                         onValueChange = {},
-                        label = "Due Date",
+                        label = stringResource(id = R.string.due_date),
                         readOnly = true,
                         enabled = false,
                         leadingIcon = Icons.Default.Event
@@ -1156,7 +1156,7 @@ fun EditLoanBottomSheet(
 
             // Relationship
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Relationship", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(id = R.string.relationship), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(relationships) { pair ->
                         val label = pair.first
@@ -1182,7 +1182,7 @@ fun EditLoanBottomSheet(
             CustomLightTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = "Email (Optional)",
+                label = stringResource(id = R.string.email_optional),
                 leadingIcon = Icons.Default.Email,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
@@ -1190,27 +1190,27 @@ fun EditLoanBottomSheet(
             CustomLightTextField(
                 value = address,
                 onValueChange = { address = it },
-                label = "Address (Optional)",
+                label = stringResource(id = R.string.tracker_address_optional),
                 leadingIcon = Icons.Default.LocationOn
             )
 
             CustomLightTextField(
                 value = witness,
                 onValueChange = { witness = it },
-                label = "Witness (Optional)",
+                label = stringResource(id = R.string.witness_optional),
                 leadingIcon = Icons.Default.Group
             )
 
             CustomLightTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = "Notes (Optional)",
+                label = stringResource(id = R.string.tracker_notes_optional),
                 leadingIcon = Icons.AutoMirrored.Filled.Notes
             )
             
             // Attachments
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Profile Photo & Attachments", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(id = R.string.tracker_profile_photo_attachments), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     // Profile Photo
                     Box(
@@ -1271,7 +1271,7 @@ fun EditLoanBottomSheet(
                 shape = RoundedCornerShape(12.dp),
                 enabled = name.isNotBlank() && amount.isNotBlank()
             ) {
-                Text("Save Changes", fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.tracker_save_changes), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -1591,10 +1591,10 @@ fun shareQrCode(context: android.content.Context, bitmap: android.graphics.Bitma
     try {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "Loaney Track Link")
-            putExtra(Intent.EXTRA_TEXT, "Scan this in Loaney app to track our loan: $text")
+            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.tracker_share_subject))
+            putExtra(Intent.EXTRA_TEXT, context.getString(R.string.tracker_share_text, text))
         }
-        context.startActivity(Intent.createChooser(shareIntent, "Share Loan Link"))
+        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.tracker_share_chooser)))
     } catch (e: Exception) {
         e.printStackTrace()
     }

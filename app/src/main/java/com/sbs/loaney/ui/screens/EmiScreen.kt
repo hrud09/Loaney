@@ -42,6 +42,8 @@ import com.sbs.loaney.R
 import com.sbs.loaney.data.local.entity.EmiEntity
 import com.sbs.loaney.ui.components.CustomLightTextField
 import com.sbs.loaney.ui.components.SearchableDropdown
+import com.sbs.loaney.ui.components.ToolInfoDialog
+import com.sbs.loaney.ui.components.ToolInfoType
 import com.sbs.loaney.ui.components.bounceClick
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.BrandOffer
@@ -56,6 +58,7 @@ fun EmiScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     var showAddEmiSheet by remember { mutableStateOf(false) }
+    var showInfoDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Parameters for Add EMI Sheet (used during autofill from calculator too)
@@ -92,7 +95,7 @@ fun EmiScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            "EMI Hub",
+                            stringResource(R.string.emi_hub_title),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = AlimWhite
@@ -103,6 +106,15 @@ fun EmiScreen(
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
+                                tint = AlimWhite
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { showInfoDialog = true }) {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription = "EMI Info",
                                 tint = AlimWhite
                             )
                         }
@@ -148,17 +160,17 @@ fun EmiScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Tracker", fontWeight = FontWeight.SemiBold) }
+                    text = { Text(stringResource(R.string.emi_tab_tracker), fontWeight = FontWeight.SemiBold) }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("Calculator", fontWeight = FontWeight.SemiBold) }
+                    text = { Text(stringResource(R.string.emi_tab_calculator), fontWeight = FontWeight.SemiBold) }
                 )
                 Tab(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
-                    text = { Text("Offers", fontWeight = FontWeight.SemiBold) }
+                    text = { Text(stringResource(R.string.emi_tab_offers), fontWeight = FontWeight.SemiBold) }
                 )
             }
 
@@ -219,7 +231,7 @@ fun EmiScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Add EMI Tracker",
+                            stringResource(R.string.emi_add_tracker_title),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -232,14 +244,14 @@ fun EmiScreen(
                     CustomLightTextField(
                         value = sheetItemName,
                         onValueChange = { sheetItemName = it },
-                        label = "Item Name",
+                        label = stringResource(R.string.emi_item_name),
                         leadingIcon = Icons.Default.ShoppingBag
                     )
 
                     CustomLightTextField(
                         value = sheetTotalAmount,
                         onValueChange = { sheetTotalAmount = it },
-                        label = "Total Purchase Price",
+                        label = stringResource(R.string.emi_total_purchase_price),
                         leadingIcon = Icons.Default.AttachMoney,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
@@ -247,7 +259,7 @@ fun EmiScreen(
                     CustomLightTextField(
                         value = sheetDownPayment,
                         onValueChange = { sheetDownPayment = it },
-                        label = "Down Payment (Optional)",
+                        label = stringResource(R.string.emi_down_payment_optional),
                         leadingIcon = Icons.Default.MoneyOff,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
@@ -255,7 +267,7 @@ fun EmiScreen(
                     CustomLightTextField(
                         value = sheetTenure,
                         onValueChange = { sheetTenure = it },
-                        label = "Tenure (Months)",
+                        label = stringResource(R.string.emi_tenure_months_label),
                         leadingIcon = Icons.Default.CalendarToday,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
@@ -263,7 +275,7 @@ fun EmiScreen(
                     CustomLightTextField(
                         value = sheetRate,
                         onValueChange = { sheetRate = it },
-                        label = "Annual Interest Rate (%)",
+                        label = stringResource(R.string.emi_annual_interest_rate),
                         leadingIcon = Icons.Default.Percent,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
@@ -271,16 +283,16 @@ fun EmiScreen(
                     CustomLightTextField(
                         value = sheetDueDay,
                         onValueChange = { sheetDueDay = it },
-                        label = "Monthly Due Day (1-31)",
+                        label = stringResource(R.string.emi_monthly_due_day),
                         leadingIcon = Icons.Default.Today,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
 
                     // Link bank account dropdown
-                    val bankOptions = uiState.bankAccounts.map { 
-                        if (it.isCard) "${it.bankName} - Card (*${it.accountNumber.takeLast(4)})"
-                        else if (it.isMfs) "${it.mfsProvider} - MFS (${it.accountNumber})"
-                        else "${it.bankName} - Account (${it.accountNumber})"
+                    val bankOptions = uiState.bankAccounts.map {
+                        if (it.isCard) stringResource(R.string.emi_bank_option_card, it.bankName, it.accountNumber.takeLast(4))
+                        else if (it.isMfs) stringResource(R.string.emi_bank_option_mfs, it.mfsProvider.orEmpty(), it.accountNumber)
+                        else stringResource(R.string.emi_bank_option_account, it.bankName, it.accountNumber)
                     }
                     
                     SearchableDropdown(
@@ -292,7 +304,7 @@ fun EmiScreen(
                                 sheetSelectedBankId = uiState.bankAccounts[index].id
                             }
                         },
-                        label = "Linked Account/Card (Optional)",
+                        label = stringResource(R.string.emi_linked_account_optional),
                         leadingIcon = Icons.Default.AccountBalance,
                         options = bankOptions
                     )
@@ -308,7 +320,7 @@ fun EmiScreen(
                             val day = sheetDueDay.toIntOrNull() ?: 5
 
                             if (sheetItemName.isBlank() || price <= 0 || months <= 0) {
-                                Toast.makeText(context, "Please fill in all required fields", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.emi_fill_required_fields), Toast.LENGTH_SHORT).show()
                                 return@Button
                             }
 
@@ -333,7 +345,7 @@ fun EmiScreen(
                                 bankAccountId = sheetSelectedBankId
                             )
                             showAddEmiSheet = false
-                            Toast.makeText(context, "EMI Tracker added successfully", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.emi_tracker_added_success), Toast.LENGTH_SHORT).show()
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -341,10 +353,17 @@ fun EmiScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = AlimGreen),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text("Add EMI Tracker", color = AlimWhite, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.emi_add_tracker_title), color = AlimWhite, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }
+        }
+
+        if (showInfoDialog) {
+            ToolInfoDialog(
+                toolType = ToolInfoType.EMI_HUB,
+                onDismiss = { showInfoDialog = false }
+            )
         }
     }
 }
@@ -384,10 +403,10 @@ fun TrackerTab(
                         Icon(Icons.Default.Calculate, contentDescription = null, tint = AlimGreen, modifier = Modifier.size(36.dp))
                     }
                     Spacer(modifier = Modifier.height(24.dp))
-                    Text("No Active EMIs", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.emi_no_active_emis), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        "You don't have any Equated Monthly Installments tracked yet. Swipe to the Calculator tab to estimate interest and save your EMI deals directly!",
+                        stringResource(R.string.emi_no_active_desc),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -398,7 +417,7 @@ fun TrackerTab(
                         onClick = onAddManualClick,
                         colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
                     ) {
-                        Text("Add Manually", color = AlimWhite)
+                        Text(stringResource(R.string.emi_add_manually), color = AlimWhite)
                     }
                 }
             }
@@ -422,7 +441,7 @@ fun TrackerTab(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("EMI LIABILITIES", color = AlimWhite.copy(alpha = 0.7f), fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
+                            Text(stringResource(R.string.emi_liabilities_label), color = AlimWhite.copy(alpha = 0.7f), fontWeight = FontWeight.Bold, letterSpacing = 1.sp, fontSize = 12.sp)
                             Icon(Icons.Default.TrendingDown, contentDescription = null, tint = CoralRose)
                         }
                         Spacer(modifier = Modifier.height(16.dp))
@@ -433,7 +452,7 @@ fun TrackerTab(
                                 color = AlimWhite,
                                 fontWeight = FontWeight.Black
                             )
-                            Text("/mo", color = AlimWhite.copy(alpha = 0.6f), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+                            Text(stringResource(R.string.emi_per_month), color = AlimWhite.copy(alpha = 0.6f), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         HorizontalDivider(color = AlimWhite.copy(alpha = 0.15f))
@@ -443,12 +462,12 @@ fun TrackerTab(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text("Total Outstanding", color = AlimWhite.copy(alpha = 0.6f), fontSize = 11.sp)
+                                Text(stringResource(R.string.emi_total_outstanding), color = AlimWhite.copy(alpha = 0.6f), fontSize = 11.sp)
                                 Text("৳${String.format("%,.0f", uiState.totalOutstanding)}", color = AlimWhite, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("Active EMIs", color = AlimWhite.copy(alpha = 0.6f), fontSize = 11.sp)
-                                Text("${uiState.activeEmis.size} Active", color = AlimGreen, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text(stringResource(R.string.emi_active_emis_label), color = AlimWhite.copy(alpha = 0.6f), fontSize = 11.sp)
+                                Text(stringResource(R.string.emi_active_count, uiState.activeEmis.size), color = AlimGreen, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             }
                         }
                     }
@@ -456,7 +475,7 @@ fun TrackerTab(
             }
 
             item {
-                Text("Your Installments", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                Text(stringResource(R.string.emi_your_installments), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
             }
 
             // EMI Items list
@@ -487,8 +506,8 @@ fun EmiItemCard(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete EMI Tracker?") },
-            text = { Text("Are you sure you want to stop tracking this installment of \"${emi.itemName}\"? This action cannot be undone.") },
+            title = { Text(stringResource(R.string.emi_delete_tracker_title)) },
+            text = { Text(stringResource(R.string.emi_delete_tracker_msg, emi.itemName)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -496,12 +515,12 @@ fun EmiItemCard(
                         showDeleteConfirm = false
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -535,7 +554,7 @@ fun EmiItemCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "৳${String.format("%,.0f", emi.monthlyInstallment)}/mo • ${emi.tenureMonths} Months",
+                        text = stringResource(R.string.emi_installment_summary, String.format("%,.0f", emi.monthlyInstallment), emi.tenureMonths),
                         color = if (emi.isCompleted) Color.Gray else AlimGreen,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodyMedium
@@ -559,13 +578,13 @@ fun EmiItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (emi.isCompleted) "Completed 🎉" else "Installment ${emi.paymentsPaid} of ${emi.tenureMonths}",
+                    text = if (emi.isCompleted) stringResource(R.string.emi_completed) else stringResource(R.string.emi_installment_progress, emi.paymentsPaid, emi.tenureMonths),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "${(progress * 100).toInt()}% Paid",
+                    text = stringResource(R.string.emi_percent_paid, (progress * 100).toInt()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold
@@ -611,9 +630,9 @@ fun EmiItemCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = linkedAccount?.let { 
-                            if (it.isCard) "${it.bankName} Card" else if (it.isMfs) it.mfsProvider else it.bankName
-                        } ?: "No Linked Account",
+                        text = linkedAccount?.let {
+                            if (it.isCard) stringResource(R.string.emi_bank_card, it.bankName) else if (it.isMfs) it.mfsProvider else it.bankName
+                        } ?: stringResource(R.string.emi_no_linked_account),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray,
                         maxLines = 1,
@@ -633,7 +652,7 @@ fun EmiItemCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Check, contentDescription = null, tint = AlimGreen, modifier = Modifier.size(12.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Paid Installment", color = AlimGreen, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text(stringResource(R.string.emi_paid_installment), color = AlimGreen, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                         }
                     }
                 }
@@ -671,7 +690,7 @@ fun CalculatorTab(
                 // Left: EMI Result
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "ESTIMATED MONTHLY EMI",
+                        text = stringResource(R.string.emi_estimated_monthly),
                         color = AlimWhite.copy(alpha = 0.8f),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
@@ -685,7 +704,7 @@ fun CalculatorTab(
                             color = AlimWhite,
                             fontWeight = FontWeight.Black
                         )
-                        Text("/mo", color = AlimWhite.copy(alpha = 0.7f), fontSize = 12.sp, modifier = Modifier.padding(bottom = 2.dp))
+                        Text(stringResource(R.string.emi_per_month), color = AlimWhite.copy(alpha = 0.7f), fontSize = 12.sp, modifier = Modifier.padding(bottom = 2.dp))
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     HorizontalDivider(color = AlimWhite.copy(alpha = 0.2f))
@@ -695,11 +714,11 @@ fun CalculatorTab(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text("Interest", color = AlimWhite.copy(alpha = 0.7f), fontSize = 9.sp)
+                            Text(stringResource(R.string.emi_interest), color = AlimWhite.copy(alpha = 0.7f), fontSize = 9.sp)
                             Text("৳${String.format("%,.0f", uiState.calcTotalInterest)}", color = AlimWhite, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("Total", color = AlimWhite.copy(alpha = 0.7f), fontSize = 9.sp)
+                            Text(stringResource(R.string.emi_total), color = AlimWhite.copy(alpha = 0.7f), fontSize = 9.sp)
                             Text("৳${String.format("%,.0f", uiState.calcTotalPayable)}", color = AlimWhite, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
@@ -747,7 +766,7 @@ fun CalculatorTab(
                 // Slider: Purchase Amount
                 Column {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Purchase Price", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                        Text(stringResource(R.string.emi_purchase_price), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                         Text("৳${String.format("%,.0f", uiState.calculatorAmount)}", color = AlimGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                     Slider(
@@ -762,7 +781,7 @@ fun CalculatorTab(
                 // Slider: Down Payment
                 Column {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Down Payment", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                        Text(stringResource(R.string.emi_down_payment), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                         Text("৳${String.format("%,.0f", uiState.calculatorDownPayment)}", color = AlimGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                     Slider(
@@ -776,7 +795,7 @@ fun CalculatorTab(
                 // Slider: Interest Rate
                 Column {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Interest Rate", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                        Text(stringResource(R.string.emi_interest_rate), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
                         Text("${String.format("%.1f", uiState.calculatorRate)}%", color = AlimGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                     Slider(
@@ -791,8 +810,8 @@ fun CalculatorTab(
                 // Slider: Tenure Months
                 Column {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Tenure", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
-                        Text("${uiState.calculatorTenure} Months", color = AlimGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(stringResource(R.string.emi_tenure), fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                        Text(stringResource(R.string.emi_tenure_months_value, uiState.calculatorTenure), color = AlimGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                     Slider(
                         value = uiState.calculatorTenure.toFloat(),
@@ -814,7 +833,7 @@ fun CalculatorTab(
             colors = ButtonDefaults.buttonColors(containerColor = AlimGreen),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("Save as Active EMI", color = AlimWhite, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(stringResource(R.string.emi_save_as_active), color = AlimWhite, fontWeight = FontWeight.Bold, fontSize = 14.sp)
         }
     }
 }
@@ -904,7 +923,7 @@ fun OffersTab(
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 Text(
-                    text = "EMI Offers Coming Soon",
+                    text = stringResource(R.string.emi_offers_coming_soon),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -914,7 +933,7 @@ fun OffersTab(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 Text(
-                    text = "We are partnering with your favorite brands (Samsung, Apple, Star Tech, Ryans, and more) to bring you the best 0% and discounted EMI deals. Stay tuned!",
+                    text = stringResource(R.string.emi_offers_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

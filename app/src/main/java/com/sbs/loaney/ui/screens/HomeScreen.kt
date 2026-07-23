@@ -170,33 +170,33 @@ fun HomeScreen(
         ) {
             listOf(
                 TutorialStep(
-                    title = "Everything you're owed, in one place",
-                    description = "This card totals what you've given out and what you've taken, so you always know where you stand.",
+                    title = context.getString(R.string.home_tutorial_balance_title),
+                    description = context.getString(R.string.home_tutorial_balance_desc),
                     targetCoordinates = balanceCardCoords
                 ),
                 TutorialStep(
-                    title = "Record a loan in seconds",
-                    description = "Tap Give when you lend money and Take when you borrow. History and Report show you everything you've recorded.",
+                    title = context.getString(R.string.home_tutorial_record_title),
+                    description = context.getString(R.string.home_tutorial_record_desc),
                     targetCoordinates = quickActionsCoords
                 ),
                 TutorialStep(
-                    title = "Do the math before you commit",
-                    description = "Tools holds the EMI calculator for instalments, and the DPS & FDR calculator for working out what a savings deposit will mature to.",
+                    title = context.getString(R.string.home_tutorial_tools_title),
+                    description = context.getString(R.string.home_tutorial_tools_desc),
                     targetCoordinates = toolsCoords
                 ),
                 TutorialStep(
-                    title = "Keep your accounts handy",
-                    description = "Link a bank account, card, or mobile wallet like bKash. You can share an account with someone you trust, and get paid faster.",
+                    title = context.getString(R.string.home_tutorial_accounts_title),
+                    description = context.getString(R.string.home_tutorial_accounts_desc),
                     targetCoordinates = bankSectionCoords
                 ),
                 TutorialStep(
-                    title = "Never miss a due date",
-                    description = "We'll remind you here when a loan is coming due, and when someone repays you.",
+                    title = context.getString(R.string.home_tutorial_duedate_title),
+                    description = context.getString(R.string.home_tutorial_duedate_desc),
                     targetCoordinates = notificationCoords
                 ),
                 TutorialStep(
-                    title = "Make it yours",
-                    description = "Open your profile to change the currency, language, and theme. That's the tour — you're all set.",
+                    title = context.getString(R.string.home_tutorial_customize_title),
+                    description = context.getString(R.string.home_tutorial_customize_desc),
                     targetCoordinates = profileCoords
                 )
             )
@@ -327,7 +327,7 @@ fun HomeScreen(
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Link Account", fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(id = R.string.home_link_account), fontWeight = FontWeight.SemiBold)
                             }
                         }
                     } else {
@@ -420,14 +420,14 @@ fun HomeScreen(
         AlertDialog(
             onDismissRequest = { accountToDelete = null },
             title = {
-                Text(if (isSharedIncoming) "Remove Shared Account" else "Delete Bank Account")
+                Text(if (isSharedIncoming) stringResource(id = R.string.home_remove_shared_account) else stringResource(id = R.string.home_delete_bank_account))
             },
             text = {
                 Text(
                     if (isSharedIncoming) {
-                        "Remove this shared account from your wallet? The owner will still have their account."
+                        stringResource(id = R.string.home_remove_shared_account_msg)
                     } else {
-                        "Are you sure you want to delete this bank account? This action cannot be undone."
+                        stringResource(id = R.string.home_delete_bank_account_msg)
                     }
                 )
             },
@@ -445,12 +445,12 @@ fun HomeScreen(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text(if (isSharedIncoming) "Remove" else "Delete")
+                    Text(if (isSharedIncoming) stringResource(id = R.string.home_remove) else stringResource(id = R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { accountToDelete = null }) {
-                    Text("Cancel")
+                    Text(stringResource(id = R.string.cancel))
                 }
             }
         )
@@ -472,7 +472,7 @@ fun HomeScreen(
                      viewModel.shareBankAccount(account, shareEmail, permission) {
                          accountToShare = null
                          shareEmail = ""
-                         Toast.makeText(context, "Account shared successfully!", Toast.LENGTH_SHORT).show()
+                         Toast.makeText(context, context.getString(R.string.home_account_shared_success), Toast.LENGTH_SHORT).show()
                      }
                  }
              },

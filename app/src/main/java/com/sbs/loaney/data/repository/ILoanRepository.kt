@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ILoanRepository {
     fun getAllLoans(): Flow<List<LoanWithPayments>>
+    suspend fun getAllLoansOnce(): List<LoanWithPayments>
     fun getLoansByType(type: LoanType): Flow<List<LoanWithPayments>>
     fun getLoanById(loanId: Long): Flow<LoanWithPayments?>
     suspend fun insertLoan(loan: LoanEntity): Long

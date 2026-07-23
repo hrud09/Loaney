@@ -21,6 +21,7 @@ class AuthRepository @Inject constructor(
             settingsRepository.setUserAddress(null)
             settingsRepository.setUserDob(null)
             settingsRepository.setOnboardingCompleted(true)
+            settingsRepository.setHasSeenTutorial(false) // Show tutorial for guests
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -39,10 +40,10 @@ class AuthRepository @Inject constructor(
         return try {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val userId = authResult.user?.uid ?: throw Exception("User creation failed")
-
+ 
             val sdf = java.text.SimpleDateFormat("yyMMddHHmmss", java.util.Locale.getDefault())
             val username = name.replace(" ", "").lowercase() + "_" + sdf.format(java.util.Date())
-
+ 
             val userProfile = mutableMapOf<String, Any>(
                 "name" to name,
                 "username" to username,
@@ -54,7 +55,7 @@ class AuthRepository @Inject constructor(
             if (!profilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = profilePhotoUri
             if (!address.isNullOrBlank()) userProfile["address"] = address
             if (!dateOfBirth.isNullOrBlank()) userProfile["dateOfBirth"] = dateOfBirth
-
+ 
             // Save to Firestore with a timeout to catch missing database issues
             try {
                 kotlinx.coroutines.withTimeout(8000L) {
@@ -63,7 +64,7 @@ class AuthRepository @Inject constructor(
             } catch (e: Exception) {
                 android.util.Log.e("Auth", "Firestore save failed/timed out: ${e.message}")
             }
-
+ 
             // Update local datastore
             settingsRepository.setUserName(name)
             settingsRepository.setCurrencySymbol(currency)
@@ -71,13 +72,14 @@ class AuthRepository @Inject constructor(
             settingsRepository.setUserAddress(address)
             settingsRepository.setUserDob(dateOfBirth)
             settingsRepository.setOnboardingCompleted(true)
-
+            settingsRepository.setHasSeenTutorial(false) // First time sign up gets tutorial
+ 
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-
+ 
     /**
      * Signs the user in, fetches their profile from Firestore,
      * and updates the local settings.
@@ -86,7 +88,7 @@ class AuthRepository @Inject constructor(
         return try {
             val authResult = auth.signInWithEmailAndPassword(email, password).await()
             val userId = authResult.user?.uid ?: throw Exception("Login failed")
-
+ 
             // Fetch user profile from Firestore with timeout
             val document = try {
                 kotlinx.coroutines.withTimeout(8000L) {
@@ -110,19 +112,24 @@ class AuthRepository @Inject constructor(
                 settingsRepository.setUserProfilePhoto(profilePhotoUri)
                 settingsRepository.setUserAddress(address)
                 settingsRepository.setUserDob(dob)
+                
+                // Existing user: already has account, so skip tutorial
+                settingsRepository.setHasSeenTutorial(true)
+            } else {
+                settingsRepository.setHasSeenTutorial(false)
             }
             settingsRepository.setOnboardingCompleted(true)
-
+ 
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-
+ 
     fun signOut() {
         auth.signOut()
     }
-
+ 
     /**
      * Authenticates with a Firebase AuthCredential (e.g., from Google or Phone).
      * If it's a new user, it creates a Firestore profile using provided defaults.
@@ -140,7 +147,7 @@ class AuthRepository @Inject constructor(
         return try {
             val authResult = auth.signInWithCredential(credential).await()
             val userId = authResult.user?.uid ?: throw Exception("Login failed")
-
+ 
             val document = try {
                 kotlinx.coroutines.withTimeout(8000L) {
                     firestore.collection("users").document(userId).get().await()
@@ -160,26 +167,29 @@ class AuthRepository @Inject constructor(
             } else {
                 currency ?: "৳"
             }
-
+ 
             var finalProfilePhotoUri = profilePhotoUri ?: authResult.user?.photoUrl?.toString()
             if (document != null && document.exists() && document.getString("profilePhotoUri") != null) {
                 finalProfilePhotoUri = document.getString("profilePhotoUri")
             }
-
+ 
             var finalAddress = address
             if (document != null && document.exists() && document.getString("address") != null) {
                 finalAddress = document.getString("address")
             }
-
+ 
             var finalDob = dateOfBirth
             if (document != null && document.exists() && document.getString("dateOfBirth") != null) {
                 finalDob = document.getString("dateOfBirth")
             }
-
+ 
             if (document == null || !document.exists()) {
+                // New user: gets tutorial
+                settingsRepository.setHasSeenTutorial(false)
+
                 val sdf = java.text.SimpleDateFormat("yyMMddHHmmss", java.util.Locale.getDefault())
                 val username = finalName.replace(" ", "").lowercase() + "_" + sdf.format(java.util.Date())
-
+ 
                 val userProfile = mutableMapOf<String, Any>(
                     "name" to finalName,
                     "username" to username,
@@ -193,7 +203,7 @@ class AuthRepository @Inject constructor(
                 if (!finalProfilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = finalProfilePhotoUri
                 if (!address.isNullOrBlank()) userProfile["address"] = address
                 if (!dateOfBirth.isNullOrBlank()) userProfile["dateOfBirth"] = dateOfBirth
-
+ 
                 try {
                     kotlinx.coroutines.withTimeout(8000L) {
                         firestore.collection("users").document(userId).set(userProfile).await()
@@ -201,15 +211,18 @@ class AuthRepository @Inject constructor(
                 } catch (e: Exception) {
                     android.util.Log.e("Auth", "Firestore credential save failed/timed out: ${e.message}")
                 }
+            } else {
+                // Existing user: skips tutorial
+                settingsRepository.setHasSeenTutorial(true)
             }
-
+ 
             settingsRepository.setUserName(finalName)
             settingsRepository.setCurrencySymbol(finalCurrency)
             settingsRepository.setUserProfilePhoto(finalProfilePhotoUri)
             settingsRepository.setUserAddress(finalAddress)
             settingsRepository.setUserDob(finalDob)
             settingsRepository.setOnboardingCompleted(true)
-
+ 
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(friendly(e))
@@ -267,9 +280,12 @@ class AuthRepository @Inject constructor(
             }
 
             if (document == null || !document.exists()) {
+                // New user: gets tutorial
+                settingsRepository.setHasSeenTutorial(false)
+
                 val sdf = java.text.SimpleDateFormat("yyMMddHHmmss", java.util.Locale.getDefault())
                 val username = finalName.replace(" ", "").lowercase() + "_" + sdf.format(java.util.Date())
-
+ 
                 val userProfile = mutableMapOf<String, Any>(
                     "name" to finalName,
                     "username" to username,
@@ -280,7 +296,7 @@ class AuthRepository @Inject constructor(
                 val finalPhone = user.phoneNumber ?: ""
                 if (finalPhone.isNotBlank()) userProfile["phone"] = finalPhone
                 if (!finalProfilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = finalProfilePhotoUri
-
+ 
                 try {
                     kotlinx.coroutines.withTimeout(8000L) {
                         firestore.collection("users").document(userId).set(userProfile).await()
@@ -288,6 +304,9 @@ class AuthRepository @Inject constructor(
                 } catch (e: Exception) {
                     android.util.Log.e("Auth", "Firestore credential save failed/timed out: ${e.message}")
                 }
+            } else {
+                // Existing user: skips tutorial
+                settingsRepository.setHasSeenTutorial(true)
             }
 
             settingsRepository.setUserName(finalName)

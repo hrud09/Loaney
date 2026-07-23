@@ -27,10 +27,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.sbs.loaney.R
 import com.sbs.loaney.ui.theme.AlimGreen
 import com.sbs.loaney.ui.theme.AlimWhite
 
@@ -67,27 +69,6 @@ fun TutorialOverlay(
         )
     }
 
-    // Animatables rather than animateFloatAsState: the first target must be snapped to,
-    // otherwise the spotlight visibly flies in from the top-left corner on the first step.
-    val left = remember { Animatable(targetRect?.left ?: 0f) }
-    val top = remember { Animatable(targetRect?.top ?: 0f) }
-    val right = remember { Animatable(targetRect?.right ?: 0f) }
-    val bottom = remember { Animatable(targetRect?.bottom ?: 0f) }
-    var hasPositioned by remember { mutableStateOf(targetRect != null) }
-
-    LaunchedEffect(targetRect) {
-        val r = targetRect ?: return@LaunchedEffect
-        if (!hasPositioned) {
-            left.snapTo(r.left); top.snapTo(r.top)
-            right.snapTo(r.right); bottom.snapTo(r.bottom)
-            hasPositioned = true
-        } else {
-            val spec = tween<Float>(durationMillis = 320)
-            left.animateTo(r.left, spec); top.animateTo(r.top, spec)
-            right.animateTo(r.right, spec); bottom.animateTo(r.bottom, spec)
-        }
-    }
-
     fun goNext() {
         if (stepIndex < steps.lastIndex) currentStepIndex = stepIndex + 1 else onComplete()
     }
@@ -112,10 +93,10 @@ fun TutorialOverlay(
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             val spotlight = Path().apply {
-                if (targetRect != null && hasPositioned) {
+                if (targetRect != null) {
                     addRoundRect(
                         RoundRect(
-                            rect = Rect(left.value, top.value, right.value, bottom.value),
+                            rect = targetRect,
                             cornerRadius = CornerRadius(20.dp.toPx())
                         )
                     )
@@ -126,11 +107,11 @@ fun TutorialOverlay(
                 drawRect(color = Color.Black.copy(alpha = 0.75f))
             }
 
-            if (targetRect != null && hasPositioned) {
+            if (targetRect != null) {
                 drawRoundRect(
                     color = AlimGreen,
-                    topLeft = Offset(left.value, top.value),
-                    size = Size(right.value - left.value, bottom.value - top.value),
+                    topLeft = Offset(targetRect.left, targetRect.top),
+                    size = Size(targetRect.width, targetRect.height),
                     cornerRadius = CornerRadius(20.dp.toPx()),
                     style = Stroke(width = 2.dp.toPx())
                 )
@@ -146,7 +127,7 @@ fun TutorialOverlay(
             val alignment = if (targetRect == null) {
                 Alignment.Center
             } else {
-                val targetIsLow = top.value > with(density) { screenHeight.toPx() } / 2
+                val targetIsLow = targetRect.top > with(density) { screenHeight.toPx() } / 2
                 if (targetIsLow) Alignment.TopCenter else Alignment.BottomCenter
             }
 
@@ -231,7 +212,7 @@ private fun TutorialCard(
                     )
                 ) {
                     Text(
-                        text = if (isLast) "Done" else "Next",
+                        text = if (isLast) stringResource(id = R.string.tutorial_done) else stringResource(id = R.string.tutorial_next),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -244,7 +225,7 @@ private fun TutorialCard(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Text(
-                        "Skip tour",
+                        stringResource(id = R.string.tutorial_skip_tour),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
