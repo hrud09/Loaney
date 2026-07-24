@@ -473,6 +473,23 @@
     <string name="home_tutorial_duedate_desc">We\'ll remind you here when a loan is coming due, and when someone repays you.</string>
     <string name="home_tutorial_customize_title">Make it yours</string>
     <string name="home_tutorial_customize_desc">Open your profile to change the currency, language, and theme. That\'s the tour — you\'re all set.</string>
+
+    <!-- Forced first-loan guided onboarding -->
+    <string name="dummy_label">Dummy</string>
+    <string name="guided_sample_name">Rahim</string>
+    <string name="guided_sample_email">rahim@example.com</string>
+    <string name="guided_must_save">Save your first loan to continue</string>
+    <string name="guided_addloan_title">Track your first loan</string>
+    <string name="guided_addloan_desc">We\'ve filled in a sample. Change the name and amount to a real loan, then tap the button below to start tracking.</string>
+    <string name="tracker_tour_loan_title">Your first tracked loan</string>
+    <string name="tracker_tour_loan_desc">This is your loan record — who owes what, and when it\'s due. It stays here until it\'s paid back.</string>
+    <string name="tracker_tour_reminder_title">Remind them in one tap</string>
+    <string name="tracker_tour_reminder_desc">Send a friendly reminder over WhatsApp, SMS, email or Messenger — the message is written for you.</string>
+    <string name="tracker_tour_auto_title">Reminders on autopilot</string>
+    <string name="tracker_tour_auto_desc">Turn this on and Loaney automatically emails a reminder when the due date arrives. No effort from you.</string>
+    <string name="tracker_tour_done_title">You\'re all set!</string>
+    <string name="tracker_tour_done_desc">That\'s the heart of Loaney — track a loan, then let it remind the other person for you. Tap Done to go to your home screen.</string>
+
     <string name="home_link_account">Link Account</string>
     <string name="home_remove_shared_account">Remove Shared Account</string>
     <string name="home_delete_bank_account">Delete Bank Account</string>

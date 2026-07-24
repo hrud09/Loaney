@@ -54,6 +54,7 @@ data class HomeUiState(
     val currencySymbol: String = "৳",
     val userProfilePhoto: String? = null,
     val hasSeenTutorial: Boolean = true, // Default true to avoid showing it while loading
+    val replayHomeTour: Boolean = false, // Armed by Settings "Replay tutorial"; drives the Home spotlight tour
     val draftBankAccountJson: String? = null
 )
 
@@ -192,7 +193,8 @@ class HomeViewModel @Inject constructor(
         settingsRepository.currencySymbolFlow,
         settingsRepository.userProfilePhotoFlow,
         settingsRepository.hasSeenTutorialFlow,
-        settingsRepository.draftBankAccountFlow
+        settingsRepository.draftBankAccountFlow,
+        settingsRepository.replayHomeTourFlow
     ) { args ->
         val summary = args[0] as HomeUiState
         @Suppress("UNCHECKED_CAST")
@@ -202,6 +204,7 @@ class HomeViewModel @Inject constructor(
         val photo = args[4] as String?
         val hasSeen = args[5] as Boolean
         val draftJson = args[6] as String?
+        val replayTour = args[7] as Boolean
 
         summary.copy(
             bankAccounts = accounts,
@@ -209,6 +212,7 @@ class HomeViewModel @Inject constructor(
             currencySymbol = currency,
             userProfilePhoto = photo,
             hasSeenTutorial = hasSeen,
+            replayHomeTour = replayTour,
             draftBankAccountJson = draftJson
         )
     }.stateIn(
@@ -386,6 +390,13 @@ class HomeViewModel @Inject constructor(
     fun setHasSeenTutorial(completed: Boolean) {
         viewModelScope.launch {
             settingsRepository.setHasSeenTutorial(completed)
+        }
+    }
+
+    /** Disarms the one-shot replay flag once the Home spotlight tour has finished. */
+    fun clearReplayHomeTour() {
+        viewModelScope.launch {
+            settingsRepository.setReplayHomeTour(false)
         }
     }
 

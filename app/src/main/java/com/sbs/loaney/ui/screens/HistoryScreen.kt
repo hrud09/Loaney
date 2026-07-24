@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.R
 import com.sbs.loaney.data.local.dao.LoanWithPayments
+import com.sbs.loaney.data.local.entity.getDisplayName
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.ui.theme.*
 import com.sbs.loaney.ui.viewmodel.HistoryViewModel
@@ -353,8 +354,9 @@ fun HistoryLoanCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val context = androidx.compose.ui.platform.LocalContext.current
                     Text(
-                        text = loan.personName,
+                        text = loan.getDisplayName(context),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,

@@ -20,7 +20,8 @@ data class SettingsUiState(
     val userName: String = "Sajibur",
     val userProfilePhoto: String? = null,
     val userAddress: String? = null,
-    val userDob: String? = null
+    val userDob: String? = null,
+    val hasSeenTutorial: Boolean = true // Default true so the guided flow never flashes while loading
 )
 
 enum class BackupState {
@@ -48,7 +49,8 @@ class SettingsViewModel @Inject constructor(
         settingsRepository.userNameFlow,
         settingsRepository.userProfilePhotoFlow,
         settingsRepository.userAddressFlow,
-        settingsRepository.userDobFlow
+        settingsRepository.userDobFlow,
+        settingsRepository.hasSeenTutorialFlow
     ) { values ->
         SettingsUiState(
             themeMode = values[0] as Int,
@@ -59,7 +61,8 @@ class SettingsViewModel @Inject constructor(
             userName = values[5] as String,
             userProfilePhoto = values[6] as String?,
             userAddress = values[7] as String?,
-            userDob = values[8] as String?
+            userDob = values[8] as String?,
+            hasSeenTutorial = values[9] as Boolean
         )
     }.stateIn(
         scope = viewModelScope,
@@ -97,10 +100,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    /** Clears the seen flag so the home screen runs the tour again on the next visit. */
+    /** Arms the one-shot flag so the Home spotlight tour runs again on the next Home visit. */
     fun replayTutorial() {
         viewModelScope.launch {
-            settingsRepository.setHasSeenTutorial(false)
+            settingsRepository.setReplayHomeTour(true)
         }
     }
 

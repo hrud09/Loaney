@@ -6,12 +6,33 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val cloudBackupRepository: CloudBackupRepository
 ) {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
     val currentUser get() = auth.currentUser
+
+    /**
+     * Pushes any data the user tracked as a guest up to their brand-new cloud account. Best-effort
+     * and time-boxed: a slow or failed upload must never turn a successful sign-up into an error.
+     */
+    private suspend fun backupGuestDataBestEffort() {
+        try {
+            val backedUpLoans = kotlinx.coroutines.withTimeout(15000L) {
+                cloudBackupRepository.uploadLocalDataToCloud()
+            }.getOrDefault(0)
+
+            // A guest who already had loans has been through first-run onboarding; converting to an
+            // account must not throw them back into the forced "track your first loan" guided flow.
+            if (backedUpLoans > 0) {
+                settingsRepository.setHasSeenTutorial(true)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("Auth", "Guest data cloud backup failed/timed out: ${e.message}")
+        }
+    }
 
     suspend fun continueAsGuest(name: String, currency: String): Result<Unit> {
         return try {
@@ -73,13 +94,16 @@ class AuthRepository @Inject constructor(
             settingsRepository.setUserDob(dateOfBirth)
             settingsRepository.setOnboardingCompleted(true)
             settingsRepository.setHasSeenTutorial(false) // First time sign up gets tutorial
- 
+
+            // Guest → account: back up everything they tracked offline to their new cloud account.
+            backupGuestDataBestEffort()
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
- 
+
     /**
      * Signs the user in, fetches their profile from Firestore,
      * and updates the local settings.
@@ -203,7 +227,7 @@ class AuthRepository @Inject constructor(
                 if (!finalProfilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = finalProfilePhotoUri
                 if (!address.isNullOrBlank()) userProfile["address"] = address
                 if (!dateOfBirth.isNullOrBlank()) userProfile["dateOfBirth"] = dateOfBirth
- 
+
                 try {
                     kotlinx.coroutines.withTimeout(8000L) {
                         firestore.collection("users").document(userId).set(userProfile).await()
@@ -211,6 +235,9 @@ class AuthRepository @Inject constructor(
                 } catch (e: Exception) {
                     android.util.Log.e("Auth", "Firestore credential save failed/timed out: ${e.message}")
                 }
+
+                // Guest → account: mirror any offline-tracked data to the new cloud account.
+                backupGuestDataBestEffort()
             } else {
                 // Existing user: skips tutorial
                 settingsRepository.setHasSeenTutorial(true)
@@ -296,7 +323,7 @@ class AuthRepository @Inject constructor(
                 val finalPhone = user.phoneNumber ?: ""
                 if (finalPhone.isNotBlank()) userProfile["phone"] = finalPhone
                 if (!finalProfilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = finalProfilePhotoUri
- 
+
                 try {
                     kotlinx.coroutines.withTimeout(8000L) {
                         firestore.collection("users").document(userId).set(userProfile).await()
@@ -304,6 +331,9 @@ class AuthRepository @Inject constructor(
                 } catch (e: Exception) {
                     android.util.Log.e("Auth", "Firestore credential save failed/timed out: ${e.message}")
                 }
+
+                // Guest → account: mirror any offline-tracked data to the new cloud account.
+                backupGuestDataBestEffort()
             } else {
                 // Existing user: skips tutorial
                 settingsRepository.setHasSeenTutorial(true)

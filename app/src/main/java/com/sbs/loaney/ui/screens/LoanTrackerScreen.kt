@@ -71,6 +71,10 @@ import com.sbs.loaney.util.sendMessengerReminder
 import com.sbs.loaney.util.sendGenericShareReminder
 import com.sbs.loaney.ui.components.ReminderChannelBottomSheet
 import com.sbs.loaney.ui.components.ReminderChannel
+import com.sbs.loaney.ui.components.TutorialOverlay
+import com.sbs.loaney.ui.components.TutorialStep
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.Image
@@ -116,11 +120,21 @@ fun LoanTrackerScreen(
     loanId: Long,
     onNavigateBack: () -> Unit,
     autoOpenReminder: Boolean = false,
+    guided: Boolean = false,
+    onLoanLoaded: () -> Unit = {},
     viewModel: LoanTrackerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // ── Guided feature tour (forced first-loan onboarding) ───────────────────────────────────
+    // Spotlight the MVP: sending reminders and the automatic due-date email toggle.
+    var headerCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var reminderCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var autoRemindCoords by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var showFeatureTour by remember { mutableStateOf(false) }
+    var featureTourDone by rememberSaveable { mutableStateOf(false) }
     var showEnlargedQr by remember { mutableStateOf(false) }
     var showAddPaymentSheet by remember { mutableStateOf(false) }
     var showAddLoanSheet by remember { mutableStateOf(false) }
@@ -164,6 +178,12 @@ fun LoanTrackerScreen(
 
     LaunchedEffect(loanId) {
         viewModel.selectLoan(loanId)
+    }
+
+    LaunchedEffect(uiState.selectedLoan) {
+        if (uiState.selectedLoan != null) {
+            onLoanLoaded()
+        }
     }
 
     if (showDeleteConfirmation && uiState.selectedLoan != null) {
@@ -419,7 +439,8 @@ fun LoanTrackerScreen(
                             // Send Reminder
                             TextButton(
                                 onClick = { showReminderSheet = true },
-                                 colors = ButtonDefaults.textButtonColors(contentColor = AlimGreen)
+                                modifier = Modifier.onGloballyPositioned { reminderCoords = it },
+                                colors = ButtonDefaults.textButtonColors(contentColor = AlimGreen)
                             ) {
                                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -439,7 +460,9 @@ fun LoanTrackerScreen(
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onGloballyPositioned { autoRemindCoords = it },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
@@ -529,7 +552,9 @@ fun LoanTrackerScreen(
 
                 // Header Card - Clean White Card
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned { headerCoords = it },
                     shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 2.dp
@@ -601,14 +626,31 @@ fun LoanTrackerScreen(
                         }
 
                         Column(horizontalAlignment = Alignment.End) {
-                             Text(
-                                text = "${uiState.currencySymbol}${String.format("%.0f", remaining)}",
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = if (loan.type == LoanType.LEND) AlimGreen.copy(alpha = 0.15f) else CoralRose.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = if (loan.type == LoanType.LEND) stringResource(id = R.string.given) else stringResource(id = R.string.taken),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (loan.type == LoanType.LEND) AlimGreen else CoralRose,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "${uiState.currencySymbol}${String.format("%.0f", remaining)}",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
                             Spacer(modifier = Modifier.height(6.dp)) // 8.dp * 0.75
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 8.dp * 0.75
                                 if (!loan.email.isNullOrBlank()) {
@@ -638,20 +680,6 @@ fun LoanTrackerScreen(
                     }
                 }
 
-                // Info Grid
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) { // 12.dp * 0.75
-                    InfoTile(
-                        title = stringResource(id = R.string.total_amount),
-                        value = "${uiState.currencySymbol}${String.format("%.0f", totalLoan)}",
-                        modifier = Modifier.weight(1f)
-                    )
-                    InfoTile(
-                        title = stringResource(id = R.string.loan_type),
-                        value = if (loan.type == LoanType.LEND) stringResource(id = R.string.given) else stringResource(id = R.string.taken),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
                 // Detailed Information
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -665,25 +693,35 @@ fun LoanTrackerScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
+                            if (!loan.purpose.isNullOrBlank()) {
+                                DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose)
+                            }
                             val localizedRelationship = when (loan.relationshipType) {
                                 "Friend" -> stringResource(id = R.string.relationship_friend)
                                 "Family" -> stringResource(id = R.string.relationship_family)
                                 "Colleague" -> stringResource(id = R.string.relationship_colleague)
                                 "Neighbor" -> stringResource(id = R.string.relationship_neighbor)
                                 "Other" -> stringResource(id = R.string.relationship_other)
-                                else -> loan.relationshipType ?: stringResource(id = R.string.not_specified)
+                                else -> loan.relationshipType
                             }
-                            DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = localizedRelationship)
+                            if (!localizedRelationship.isNullOrBlank() && localizedRelationship != stringResource(id = R.string.not_specified)) {
+                                DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = localizedRelationship)
+                            }
                             if (!loan.email.isNullOrBlank()) {
                                 DetailRow(icon = Icons.Default.Email, label = stringResource(id = R.string.email_optional), value = loan.email)
                             }
-                            DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.location_optional), value = loan.address ?: stringResource(id = R.string.not_specified))
-                            DetailRow(icon = Icons.Default.Group, label = stringResource(id = R.string.witness_optional), value = loan.witness ?: stringResource(id = R.string.not_specified))
+                            if (!loan.address.isNullOrBlank()) {
+                                DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.location_optional), value = loan.address)
+                            }
+                            if (!loan.witness.isNullOrBlank()) {
+                                DetailRow(icon = Icons.Default.Group, label = stringResource(id = R.string.witness_optional), value = loan.witness)
+                            }
                             if (loan.interest != null) {
                                 DetailRow(icon = Icons.Default.Percent, label = stringResource(id = R.string.interest_rate_optional), value = "${loan.interest}%")
                             }
-                            DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes ?: stringResource(id = R.string.no_notes))
+                            if (!loan.notes.isNullOrBlank()) {
+                                DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes)
+                            }
 
                             val statusColor = when {
                                 loan.deleted -> MaterialTheme.colorScheme.error
@@ -941,6 +979,64 @@ fun LoanTrackerScreen(
                         }
                     }
                 }
+            }
+        )
+    }
+
+    // ── Forced first-loan feature tour ───────────────────────────────────────────────────────
+    if (guided) {
+        val featureTourSteps = remember(headerCoords, reminderCoords, autoRemindCoords) {
+            buildList {
+                add(
+                    TutorialStep(
+                        title = context.getString(R.string.tracker_tour_loan_title),
+                        description = context.getString(R.string.tracker_tour_loan_desc),
+                        targetCoordinates = headerCoords
+                    )
+                )
+                add(
+                    TutorialStep(
+                        title = context.getString(R.string.tracker_tour_reminder_title),
+                        description = context.getString(R.string.tracker_tour_reminder_desc),
+                        targetCoordinates = reminderCoords
+                    )
+                )
+                // Auto-reminder toggle only exists for money we lent to someone with an email.
+                if (autoRemindCoords != null) {
+                    add(
+                        TutorialStep(
+                            title = context.getString(R.string.tracker_tour_auto_title),
+                            description = context.getString(R.string.tracker_tour_auto_desc),
+                            targetCoordinates = autoRemindCoords
+                        )
+                    )
+                }
+                add(
+                    TutorialStep(
+                        title = context.getString(R.string.tracker_tour_done_title),
+                        description = context.getString(R.string.tracker_tour_done_desc),
+                        targetCoordinates = null
+                    )
+                )
+            }
+        }
+
+        // Wait until the loan has loaded and the two mandatory spotlight targets are measured.
+        LaunchedEffect(featureTourDone, uiState.selectedLoan, headerCoords, reminderCoords) {
+            if (!featureTourDone && uiState.selectedLoan != null &&
+                headerCoords != null && reminderCoords != null
+            ) {
+                showFeatureTour = true
+            }
+        }
+
+        TutorialOverlay(
+            steps = featureTourSteps,
+            isVisible = showFeatureTour,
+            onComplete = {
+                showFeatureTour = false
+                featureTourDone = true
+                viewModel.markTutorialSeen()
             }
         )
     }
