@@ -626,14 +626,31 @@ fun LoanTrackerScreen(
                         }
 
                         Column(horizontalAlignment = Alignment.End) {
-                             Text(
-                                text = "${uiState.currencySymbol}${String.format("%.0f", remaining)}",
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = if (loan.type == LoanType.LEND) AlimGreen.copy(alpha = 0.15f) else CoralRose.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = if (loan.type == LoanType.LEND) stringResource(id = R.string.given) else stringResource(id = R.string.taken),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (loan.type == LoanType.LEND) AlimGreen else CoralRose,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "${uiState.currencySymbol}${String.format("%.0f", remaining)}",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
                             Spacer(modifier = Modifier.height(6.dp)) // 8.dp * 0.75
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) { // 8.dp * 0.75
                                 if (!loan.email.isNullOrBlank()) {
@@ -663,20 +680,6 @@ fun LoanTrackerScreen(
                     }
                 }
 
-                // Info Grid
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) { // 12.dp * 0.75
-                    InfoTile(
-                        title = stringResource(id = R.string.total_amount),
-                        value = "${uiState.currencySymbol}${String.format("%.0f", totalLoan)}",
-                        modifier = Modifier.weight(1f)
-                    )
-                    InfoTile(
-                        title = stringResource(id = R.string.loan_type),
-                        value = if (loan.type == LoanType.LEND) stringResource(id = R.string.given) else stringResource(id = R.string.taken),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
                 // Detailed Information
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -690,25 +693,35 @@ fun LoanTrackerScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose ?: stringResource(id = R.string.not_specified))
+                            if (!loan.purpose.isNullOrBlank()) {
+                                DetailRow(icon = Icons.Default.Info, label = stringResource(id = R.string.reason_for_loan), value = loan.purpose)
+                            }
                             val localizedRelationship = when (loan.relationshipType) {
                                 "Friend" -> stringResource(id = R.string.relationship_friend)
                                 "Family" -> stringResource(id = R.string.relationship_family)
                                 "Colleague" -> stringResource(id = R.string.relationship_colleague)
                                 "Neighbor" -> stringResource(id = R.string.relationship_neighbor)
                                 "Other" -> stringResource(id = R.string.relationship_other)
-                                else -> loan.relationshipType ?: stringResource(id = R.string.not_specified)
+                                else -> loan.relationshipType
                             }
-                            DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = localizedRelationship)
+                            if (!localizedRelationship.isNullOrBlank() && localizedRelationship != stringResource(id = R.string.not_specified)) {
+                                DetailRow(icon = Icons.Default.Person, label = stringResource(id = R.string.relationship), value = localizedRelationship)
+                            }
                             if (!loan.email.isNullOrBlank()) {
                                 DetailRow(icon = Icons.Default.Email, label = stringResource(id = R.string.email_optional), value = loan.email)
                             }
-                            DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.location_optional), value = loan.address ?: stringResource(id = R.string.not_specified))
-                            DetailRow(icon = Icons.Default.Group, label = stringResource(id = R.string.witness_optional), value = loan.witness ?: stringResource(id = R.string.not_specified))
+                            if (!loan.address.isNullOrBlank()) {
+                                DetailRow(icon = Icons.Default.LocationOn, label = stringResource(id = R.string.location_optional), value = loan.address)
+                            }
+                            if (!loan.witness.isNullOrBlank()) {
+                                DetailRow(icon = Icons.Default.Group, label = stringResource(id = R.string.witness_optional), value = loan.witness)
+                            }
                             if (loan.interest != null) {
                                 DetailRow(icon = Icons.Default.Percent, label = stringResource(id = R.string.interest_rate_optional), value = "${loan.interest}%")
                             }
-                            DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes ?: stringResource(id = R.string.no_notes))
+                            if (!loan.notes.isNullOrBlank()) {
+                                DetailRow(icon = Icons.AutoMirrored.Filled.Notes, label = stringResource(id = R.string.note_optional), value = loan.notes)
+                            }
 
                             val statusColor = when {
                                 loan.deleted -> MaterialTheme.colorScheme.error
