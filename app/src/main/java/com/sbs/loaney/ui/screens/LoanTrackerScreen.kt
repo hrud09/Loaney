@@ -48,6 +48,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sbs.loaney.data.model.LoanStatus
 import com.sbs.loaney.data.model.LoanType
+import com.sbs.loaney.data.model.RecoveryConfig
+import com.sbs.loaney.data.model.RecoveryStatus
+import com.sbs.loaney.ui.components.RecoveryRequestSheet
 import com.sbs.loaney.data.model.calculateLoaneyPiePoints
 import com.sbs.loaney.ui.components.DeletionReasonBottomSheet
 import com.sbs.loaney.ui.components.FullScreenImageViewer
@@ -146,6 +149,7 @@ fun LoanTrackerScreen(
     var isImageExpanded by remember { mutableStateOf(false) }
     var showEditLoanSheet by remember { mutableStateOf(false) }
     var showReminderSheet by remember { mutableStateOf(false) }
+    var showRecoverySheet by remember { mutableStateOf(false) }
 
     // Came in from the notification's "Send reminder" action: open the picker as soon as the
     // loan has actually loaded, otherwise the sheet has nothing to build a message from.
@@ -490,6 +494,87 @@ fun LoanTrackerScreen(
                                         checkedTrackColor = AlimGreen
                                     )
                                 )
+                            }
+                        }
+
+                        // ── Assisted recovery ────────────────────────────────────────────────
+                        // Only offered on overdue money we lent out, above the eligibility
+                        // threshold. If a request already exists we show its status instead.
+                        val recoveryLoan = uiState.selectedLoan
+                        if (recoveryLoan != null &&
+                            recoveryLoan.loan.type == LoanType.LEND &&
+                            recoveryLoan.loan.status == LoanStatus.OVERDUE
+                        ) {
+                            val outstanding = viewModel.outstandingBalance(recoveryLoan)
+                            val daysLate = viewModel.daysOverdue(recoveryLoan.loan)
+                            val existing = uiState.recoveryRequest
+                            val hasActiveRequest = existing != null &&
+                                existing.status != RecoveryStatus.CANCELLED.name
+
+                            val eligible = outstanding >= RecoveryConfig.MIN_ELIGIBLE_AMOUNT &&
+                                daysLate >= RecoveryConfig.MIN_DAYS_OVERDUE
+
+                            if (hasActiveRequest || eligible) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+
+                            if (hasActiveRequest) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.Shield,
+                                        contentDescription = null,
+                                        tint = AlimGreen,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            stringResource(id = R.string.recovery_status_review),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            stringResource(
+                                                id = R.string.recovery_status_review_desc,
+                                                recoveryLoan.loan.personName
+                                            ),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    TextButton(
+                                        onClick = { viewModel.cancelRecovery() },
+                                        colors = ButtonDefaults.textButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    ) {
+                                        Text(
+                                            stringResource(id = R.string.recovery_withdraw),
+                                            style = MaterialTheme.typography.labelMedium
+                                        )
+                                    }
+                                }
+                            } else if (eligible) {
+                                OutlinedButton(
+                                    onClick = { showRecoverySheet = true },
+                                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                                    shape = CircleShape,
+                                    border = BorderStroke(1.dp, AlimGreen),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AlimGreen)
+                                ) {
+                                    Icon(Icons.Default.Shield, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        stringResource(id = R.string.recovery_entry),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }
@@ -979,6 +1064,38 @@ fun LoanTrackerScreen(
                         }
                     }
                 }
+            }
+        )
+    }
+
+    // Assisted-recovery request sheet. Submitting only records the request — no borrower outreach
+    // happens while RecoveryConfig.IS_LIVE is false (enforced in RecoveryRepository).
+    if (showRecoverySheet && uiState.selectedLoan != null) {
+        val lwp = uiState.selectedLoan!!
+        val loan = lwp.loan
+        RecoveryRequestSheet(
+            borrowerName = loan.personName,
+            outstandingAmount = viewModel.outstandingBalance(lwp),
+            daysOverdue = viewModel.daysOverdue(loan),
+            currency = uiState.currencySymbol,
+            borrowerConfirmed = loan.linkedOwnerUid != null,
+            hasProof = !loan.proofUri.isNullOrBlank(),
+            hasWitness = !loan.witness.isNullOrBlank(),
+            paymentCount = lwp.payments.size,
+            onDismiss = { showRecoverySheet = false },
+            onSubmit = { note ->
+                viewModel.requestRecovery(note) { outcome ->
+                    val msgRes = when (outcome) {
+                        is com.sbs.loaney.data.repository.RecoveryRepository.SubmitOutcome.Success ->
+                            R.string.recovery_submitted_toast
+                        is com.sbs.loaney.data.repository.RecoveryRepository.SubmitOutcome.NeedsSignIn ->
+                            R.string.recovery_signin_toast
+                        is com.sbs.loaney.data.repository.RecoveryRepository.SubmitOutcome.Error ->
+                            R.string.recovery_error_toast
+                    }
+                    android.widget.Toast.makeText(context, context.getString(msgRes), android.widget.Toast.LENGTH_LONG).show()
+                }
+                showRecoverySheet = false
             }
         )
     }

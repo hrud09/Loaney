@@ -595,4 +595,30 @@
     <string name="payment_date">পেমেন্টের তারিখ</string>
     <string name="save_payment">পেমেন্ট সেভ করুন</string>
     <string name="widget_description">এক নজরে দেখুন কে আপনাকে কত টাকা দেবে, আর এক ট্যাপে নতুন লোন রেকর্ড করুন।</string>
+
+    <!-- Assisted recovery -->
+    <string name="recovery_entry">এই বকেয়া উদ্ধারে সহায়তা নিন</string>
+    <string name="recovery_title">এটি উদ্ধারে সহায়তা নিন</string>
+    <string name="recovery_explainer">এই বকেয়া টাকা উদ্ধারে Loaney-এর সহায়তা নিন। উদ্ধার হলে আপনি একটি ছোট সাফল্য ফি দেবেন — না হলে কিছুই নয়।</string>
+    <string name="recovery_early_access">আর্লি অ্যাক্সেস: আমরা আপনার অনুরোধ নথিভুক্ত করে কেসটি পর্যালোচনা করব। এখনই %1$s-এর সাথে যোগাযোগ করা হবে না।</string>
+    <string name="recovery_fee_label">সাফল্য ফি</string>
+    <string name="recovery_fee_value">যা উদ্ধার হবে তার %1$s%%</string>
+    <string name="recovery_fee_estimate">%2$s বকেয়ার উপর ≈ %1$s</string>
+    <string name="recovery_evidence_title">এক নজরে আপনার কেস</string>
+    <string name="recovery_ev_confirmed">গ্রহীতা অ্যাপে এই লোন নিশ্চিত করেছেন</string>
+    <string name="recovery_ev_proof">প্রমাণ ডকুমেন্ট সংযুক্ত</string>
+    <string name="recovery_ev_witness">সাক্ষী রেকর্ড করা আছে</string>
+    <string name="recovery_ev_payments">%1$d টি পেমেন্ট রেকর্ড করা আছে</string>
+    <string name="recovery_ev_missing_hint">গ্রহীতার নিশ্চিতকরণ ও প্রমাণ থাকলে কেস উদ্ধার করা অনেক সহজ হয়।</string>
+    <string name="recovery_note_hint">আমাদের কিছু জানানোর আছে? (ঐচ্ছিক)</string>
+    <string name="recovery_consent">আমি Loaney-কে এই কেস পর্যালোচনা করতে ও উদ্ধার বিষয়ে আমার সাথে যোগাযোগ করতে অনুমতি দিচ্ছি, এবং নিশ্চিত করছি এটি একটি প্রকৃত দেনা।</string>
+    <string name="recovery_jurisdiction">বাংলাদেশের লোনের জন্য প্রযোজ্য, লাইসেন্সপ্রাপ্ত পার্টনারের মাধ্যমে পরিচালিত।</string>
+    <string name="recovery_submit">উদ্ধারে সহায়তা চান</string>
+    <string name="recovery_cancel">এখন নয়</string>
+    <string name="recovery_status_review">উদ্ধারের অনুরোধ পর্যালোচনাধীন</string>
+    <string name="recovery_status_review_desc">আমরা আপনার অনুরোধ পেয়েছি এবং শীঘ্রই যোগাযোগ করব। %1$s-এর সাথে এখনও কোনো যোগাযোগ করা হয়নি।</string>
+    <string name="recovery_withdraw">প্রত্যাহার</string>
+    <string name="recovery_submitted_toast">অনুরোধ গৃহীত — আমরা আপনার কেস পর্যালোচনা করে যোগাযোগ করব।</string>
+    <string name="recovery_signin_toast">উদ্ধারে সহায়তা চাইতে সাইন ইন করুন।</string>
+    <string name="recovery_error_toast">অনুরোধ জমা দেওয়া যায়নি। আবার চেষ্টা করুন।</string>
 </resources>

@@ -9,7 +9,9 @@ import com.sbs.loaney.data.local.entity.LoanEntity
 import com.sbs.loaney.data.local.entity.LoanItemEntity
 import com.sbs.loaney.data.local.entity.PaymentEntity
 import com.sbs.loaney.data.model.LoanStatus
+import com.sbs.loaney.data.model.RecoveryRequest
 import com.sbs.loaney.data.repository.ILoanRepository
+import com.sbs.loaney.data.repository.RecoveryRepository
 import com.sbs.loaney.data.repository.SettingsRepository
 import com.sbs.loaney.data.repository.UserLinkRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +25,9 @@ data class LoanTrackerUiState(
     val selectedLoan: LoanWithPayments? = null,
     val isLoading: Boolean = false,
     val currencySymbol: String = "৳",
-    val userName: String = ""
+    val userName: String = "",
+    /** Existing assisted-recovery request for the selected loan, if any. */
+    val recoveryRequest: RecoveryRequest? = null
 )
 
 enum class DeletionReason {
@@ -39,7 +43,8 @@ class LoanTrackerViewModel @Inject constructor(
     private val repository: ILoanRepository,
     private val settingsRepository: SettingsRepository,
     private val analyticsHelper: AnalyticsHelper,
-    private val userLinkRepository: UserLinkRepository
+    private val userLinkRepository: UserLinkRepository,
+    private val recoveryRepository: RecoveryRepository
 ) : ViewModel() {
 
     private val _selectedLoanId = MutableStateFlow<Long?>(null)
@@ -47,12 +52,14 @@ class LoanTrackerViewModel @Inject constructor(
     val uiState: StateFlow<LoanTrackerUiState> = combine(
         _selectedLoanId.filterNotNull().flatMapLatest { id -> repository.getLoanById(id) },
         settingsRepository.currencySymbolFlow,
-        settingsRepository.userNameFlow
-    ) { loan, currency, userName ->
+        settingsRepository.userNameFlow,
+        _selectedLoanId.filterNotNull().flatMapLatest { id -> recoveryRepository.observeRequestForLoan(id) }
+    ) { loan, currency, userName, recovery ->
         LoanTrackerUiState(
             selectedLoan = loan,
             currencySymbol = currency,
-            userName = userName
+            userName = userName,
+            recoveryRequest = recovery
         )
     }.stateIn(
             scope = viewModelScope,
@@ -115,6 +122,61 @@ class LoanTrackerViewModel @Inject constructor(
     fun deleteLoan(loan: LoanEntity) {
         viewModelScope.launch {
             repository.softDeleteLoan(loan.id)
+        }
+    }
+
+    // ── Assisted recovery ────────────────────────────────────────────────────────────────────
+    // Records the lender's request only. While RecoveryConfig.IS_LIVE is false, nothing is sent to
+    // the borrower — the gate is enforced inside RecoveryRepository. See RecoveryRequest header.
+
+    /** Outstanding balance on the currently selected loan (used for the fee estimate + eligibility). */
+    fun outstandingBalance(loan: LoanWithPayments): Double {
+        val total = loan.loan.amount + loan.loanItems.sumOf { it.amount }
+        val paid = loan.payments.sumOf { it.amount }
+        return (total - paid).coerceAtLeast(0.0)
+    }
+
+    /** Whole days a loan is past its promised return date (0 if not yet due). */
+    fun daysOverdue(loan: LoanEntity): Int {
+        val diff = System.currentTimeMillis() - loan.promisedReturnDate.time
+        return (diff / (1000L * 60 * 60 * 24)).toInt().coerceAtLeast(0)
+    }
+
+    fun requestRecovery(
+        note: String,
+        onResult: (RecoveryRepository.SubmitOutcome) -> Unit
+    ) {
+        val loanId = _selectedLoanId.value ?: return
+        viewModelScope.launch {
+            val lwp = repository.getLoanById(loanId).firstOrNull()
+            if (lwp == null) {
+                onResult(RecoveryRepository.SubmitOutcome.Error("Loan not found"))
+                return@launch
+            }
+            val loan = lwp.loan
+            val currency = settingsRepository.currencySymbolFlow.first()
+            val request = RecoveryRequest(
+                loanId = loan.id,
+                borrowerName = loan.personName,
+                borrowerPhone = loan.phoneNumber,
+                borrowerEmail = loan.email ?: "",
+                outstandingAmount = outstandingBalance(lwp),
+                currency = currency,
+                daysOverdue = daysOverdue(loan),
+                borrowerConfirmed = loan.linkedOwnerUid != null,
+                hasProof = !loan.proofUri.isNullOrBlank(),
+                hasWitness = !loan.witness.isNullOrBlank(),
+                paymentCount = lwp.payments.size,
+                lenderNote = note.trim()
+            )
+            onResult(recoveryRepository.submitRequest(request))
+        }
+    }
+
+    fun cancelRecovery() {
+        val loanId = _selectedLoanId.value ?: return
+        viewModelScope.launch {
+            recoveryRepository.cancelRequest(loanId)
         }
     }
 

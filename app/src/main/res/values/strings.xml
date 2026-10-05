@@ -584,4 +584,30 @@
     <string name="shop_coming_soon_title">Rewards Shop Coming Soon</string>
     <string name="shop_coming_soon_desc">We are baking some amazing rewards for you! Track your loans, keep up the good credit, and collect more Loaney Pies to redeem them here soon.</string>
     <string name="shop_insufficient">INSUFFICIENT</string>
+
+    <!-- Assisted recovery -->
+    <string name="recovery_entry">Get help recovering this</string>
+    <string name="recovery_title">Get help recovering this</string>
+    <string name="recovery_explainer">Ask Loaney to help recover this overdue amount. If we recover it, you pay a small success fee — and nothing if we don\'t.</string>
+    <string name="recovery_early_access">Early access: we\'ll register your request and review your case. We won\'t contact %1$s yet.</string>
+    <string name="recovery_fee_label">Success fee</string>
+    <string name="recovery_fee_value">%1$s%% of what we recover</string>
+    <string name="recovery_fee_estimate">≈ %1$s on %2$s outstanding</string>
+    <string name="recovery_evidence_title">Your case at a glance</string>
+    <string name="recovery_ev_confirmed">Borrower confirmed this loan in-app</string>
+    <string name="recovery_ev_proof">Proof document attached</string>
+    <string name="recovery_ev_witness">Witness recorded</string>
+    <string name="recovery_ev_payments">%1$d payment(s) recorded</string>
+    <string name="recovery_ev_missing_hint">Cases with borrower confirmation and proof are far easier to recover.</string>
+    <string name="recovery_note_hint">Anything we should know? (optional)</string>
+    <string name="recovery_consent">I authorise Loaney to review this case and contact me about recovery, and I confirm this is a genuine debt.</string>
+    <string name="recovery_jurisdiction">Available for loans in Bangladesh, handled with a licensed partner.</string>
+    <string name="recovery_submit">Request recovery help</string>
+    <string name="recovery_cancel">Not now</string>
+    <string name="recovery_status_review">Recovery request under review</string>
+    <string name="recovery_status_review_desc">We\'ve received your request and will reach out. No contact has been made with %1$s.</string>
+    <string name="recovery_withdraw">Withdraw</string>
+    <string name="recovery_submitted_toast">Request received — we\'ll review your case and reach out.</string>
+    <string name="recovery_signin_toast">Please sign in to request recovery help.</string>
+    <string name="recovery_error_toast">Couldn\'t submit your request. Please try again.</string>
 </resources>
