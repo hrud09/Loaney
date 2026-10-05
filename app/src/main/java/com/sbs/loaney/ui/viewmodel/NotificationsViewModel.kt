@@ -27,6 +27,8 @@ class NotificationsViewModel @Inject constructor(
     private val shareRepository: BankAccountShareRepository
 ) : ViewModel() {
 
+    private val processedSyncNotificationIds = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+
     val notifications: StateFlow<List<LinkedLoanNotification>> = userLinkRepository
         .observeIncomingNotifications()
         .stateIn(
@@ -34,6 +36,137 @@ class NotificationsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    init {
+        viewModelScope.launch {
+            notifications.collect { list ->
+                for (notif in list) {
+                    processIncomingSyncNotification(notif)
+                }
+            }
+        }
+    }
+
+    private suspend fun processIncomingSyncNotification(notification: LinkedLoanNotification) {
+        val syncType = notification.notificationType
+        if (syncType != "LINK_ACCEPTED" && syncType != "LINK_REJECTED" &&
+            syncType != "PAYMENT_ADDED" && syncType != "LOAN_ITEM_ADDED" &&
+            syncType != "LOAN_STATUS_UPDATED" && syncType != "LOAN_UPDATED") {
+            return
+        }
+
+        if (!processedSyncNotificationIds.add(notification.id)) return
+
+        val localLoanIdStr = notification.recipientLoanId ?: return
+        val localLoanId = localLoanIdStr.toLongOrNull() ?: return
+
+        when (syncType) {
+            "LINK_ACCEPTED" -> {
+                val remoteLoanId = notification.senderLoanId ?: return
+                repository.acceptLoanLink(localLoanId, notification.senderUid, remoteLoanId)
+            }
+            "LINK_REJECTED" -> {
+                val localLoanWithPayments = repository.getLoanById(localLoanId).firstOrNull() ?: return
+                repository.updateLoan(localLoanWithPayments.loan.copy(
+                    linkedOwnerUid = null,
+                    linkedLoanId = null
+                ))
+            }
+            "PAYMENT_ADDED" -> {
+                val localLoanWithPayments = repository.getLoanById(localLoanId).firstOrNull() ?: return
+                val amount = notification.paymentAmount ?: notification.amount
+                if (amount <= 0.0) return
+
+                val paymentTime = notification.paymentDateMillis ?: notification.createdAt
+                val syncKey = notification.paymentSyncId
+                val alreadyExists = localLoanWithPayments.payments.any { existing ->
+                    (existing.amount == amount && Math.abs(existing.date.time - paymentTime) < 5000) ||
+                            (syncKey != null && existing.note?.contains(syncKey) == true)
+                }
+
+                if (!alreadyExists) {
+                    val payment = com.sbs.loaney.data.local.entity.PaymentEntity(
+                        loanId = localLoanId,
+                        amount = amount,
+                        date = Date(paymentTime),
+                        method = notification.paymentMethod ?: "Online",
+                        note = notification.paymentNote ?: "Synced payment from ${notification.senderName}"
+                    )
+                    repository.insertPayment(payment)
+                    updateLoanStatus(localLoanId)
+                }
+            }
+            "LOAN_ITEM_ADDED" -> {
+                val localLoanWithPayments = repository.getLoanById(localLoanId).firstOrNull() ?: return
+                val amount = notification.itemAmount ?: notification.amount
+                if (amount <= 0.0) return
+
+                val itemTime = notification.itemDateMillis ?: notification.createdAt
+                val syncKey = notification.itemSyncId
+                val alreadyExists = localLoanWithPayments.loanItems.any { existing ->
+                    (existing.amount == amount && Math.abs(existing.date.time - itemTime) < 5000) ||
+                            (syncKey != null && existing.note?.contains(syncKey) == true)
+                }
+
+                if (!alreadyExists) {
+                    val item = com.sbs.loaney.data.local.entity.LoanItemEntity(
+                        loanId = localLoanId,
+                        amount = amount,
+                        date = Date(itemTime),
+                        note = notification.itemNote ?: "Synced item from ${notification.senderName}"
+                    )
+                    repository.insertLoanItem(item)
+                    updateLoanStatus(localLoanId)
+                }
+            }
+            "LOAN_STATUS_UPDATED" -> {
+                val localLoanWithPayments = repository.getLoanById(localLoanId).firstOrNull() ?: return
+                val statusStr = notification.loanStatus ?: return
+                try {
+                    val newStatus = LoanStatus.valueOf(statusStr)
+                    if (localLoanWithPayments.loan.status != newStatus) {
+                        repository.updateLoan(localLoanWithPayments.loan.copy(
+                            status = newStatus,
+                            removedAt = if (newStatus == LoanStatus.FULLY_PAID) System.currentTimeMillis() else null
+                        ))
+                    }
+                } catch (_: Exception) {}
+            }
+            "LOAN_UPDATED" -> {
+                val localLoanWithPayments = repository.getLoanById(localLoanId).firstOrNull() ?: return
+                val currentLoan = localLoanWithPayments.loan
+                val updatedLoan = currentLoan.copy(
+                    amount = if (notification.amount > 0.0) notification.amount else currentLoan.amount,
+                    promisedReturnDate = if (notification.promisedReturnDateMillis > 0L) Date(notification.promisedReturnDateMillis) else currentLoan.promisedReturnDate,
+                    purpose = notification.purpose ?: currentLoan.purpose,
+                    notes = notification.notes ?: currentLoan.notes
+                )
+                repository.updateLoan(updatedLoan)
+                updateLoanStatus(localLoanId)
+            }
+        }
+    }
+
+    private suspend fun updateLoanStatus(loanId: Long) {
+        val loanWithPayments = repository.getLoanById(loanId).firstOrNull() ?: return
+        val totalLoan = loanWithPayments.loan.amount + loanWithPayments.loanItems.sumOf { it.amount }
+        val totalPaid = loanWithPayments.payments.sumOf { it.amount }
+        val loan = loanWithPayments.loan
+
+        val newStatus = when {
+            totalPaid >= totalLoan -> LoanStatus.FULLY_PAID
+            totalPaid > 0 -> LoanStatus.PARTIALLY_PAID
+            Date().after(loan.promisedReturnDate) -> LoanStatus.OVERDUE
+            else -> LoanStatus.ACTIVE
+        }
+
+        if (newStatus != loan.status) {
+            repository.updateLoan(loan.copy(
+                status = newStatus,
+                removedAt = if (newStatus == LoanStatus.FULLY_PAID) System.currentTimeMillis() else null
+            ))
+        }
+    }
 
     fun markAsRead(notificationId: String) {
         viewModelScope.launch {
@@ -80,7 +213,7 @@ class NotificationsViewModel @Inject constructor(
         }
     }
 
-    fun importLinkedLoan(notification: LinkedLoanNotification) {
+    fun approveLoanRequest(notification: LinkedLoanNotification) {
         viewModelScope.launch {
             val senderRefLoanId = notification.senderLoanId ?: notification.id
             
@@ -95,13 +228,27 @@ class NotificationsViewModel @Inject constructor(
             }
 
             val myType = if (notification.loanType == "LEND") LoanType.BORROW else LoanType.LEND
+            val loanDate = if (notification.loanDateMillis != null && notification.loanDateMillis > 0L) {
+                Date(notification.loanDateMillis)
+            } else {
+                Date(notification.createdAt)
+            }
+            val returnDate = if (notification.promisedReturnDateMillis > 0L) {
+                Date(notification.promisedReturnDateMillis)
+            } else {
+                Date(notification.createdAt)
+            }
+
             val loan = LoanEntity(
                 type = myType,
                 personName = notification.senderName,
-                phoneNumber = "", // Will require manual update if needed
+                phoneNumber = "", // Recipient can update contact details if needed
                 amount = notification.amount,
-                loanDate = Date(notification.createdAt),
-                promisedReturnDate = Date(notification.promisedReturnDateMillis),
+                loanDate = loanDate,
+                promisedReturnDate = returnDate,
+                purpose = notification.purpose,
+                notes = notification.notes,
+                interest = notification.interest,
                 status = LoanStatus.ACTIVE,
                 linkedOwnerUid = notification.senderUid,
                 linkedLoanId = senderRefLoanId
@@ -115,11 +262,29 @@ class NotificationsViewModel @Inject constructor(
                 loanType = myType.name,
                 notificationType = "LINK_ACCEPTED",
                 senderLoanId = myLoanId.toString(),
-                recipientLoanId = senderRefLoanId
+                recipientLoanId = senderRefLoanId,
+                amount = notification.amount,
+                currency = notification.currency
             )
             
             userLinkRepository.deleteNotification(notification.id)
         }
+    }
+
+    fun rejectLoanRequest(notification: LinkedLoanNotification) {
+        viewModelScope.launch {
+            val senderRefLoanId = notification.senderLoanId ?: notification.id
+            userLinkRepository.sendLinkRejectedNotification(
+                recipientUid = notification.senderUid,
+                senderLoanId = null,
+                recipientLoanId = senderRefLoanId
+            )
+            userLinkRepository.deleteNotification(notification.id)
+        }
+    }
+
+    fun importLinkedLoan(notification: LinkedLoanNotification) {
+        approveLoanRequest(notification)
     }
 
     fun confirmLoanUpdate(notification: LinkedLoanNotification) {

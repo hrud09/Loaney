@@ -26,17 +26,14 @@ android {
     signingConfigs {
         create("release") {
             val storeFilePath = keystoreProperties.getProperty("storeFile")
-            storeFile =
-                file("D:\\Non-Game Projects\\Apps Projects\\Github\\Loaney\\Keystore\\keystore")
-            storePassword = "loaney"
-            keyAlias = "loaney"
-            keyPassword = "loaney"
-            if (storeFilePath != null) {
-                storeFile = file(storeFilePath)
-                storePassword = keystoreProperties.getProperty("storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
+            storeFile = if (storeFilePath != null) {
+                file(storeFilePath)
+            } else {
+                rootProject.file("Keystore/keystore")
             }
+            storePassword = keystoreProperties.getProperty("storePassword") ?: "loaney"
+            keyAlias = keystoreProperties.getProperty("keyAlias") ?: "loaney"
+            keyPassword = keystoreProperties.getProperty("keyPassword") ?: "loaney"
         }
     }
 

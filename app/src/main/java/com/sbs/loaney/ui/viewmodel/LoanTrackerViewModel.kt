@@ -92,6 +92,18 @@ class LoanTrackerViewModel @Inject constructor(
             repository.insertPayment(payment)
             analyticsHelper.logPaymentCompleted(amount)
             updateLoanStatus(loanId)
+
+            val currentLoan = repository.getLoanById(loanId).firstOrNull()?.loan
+            if (currentLoan != null && currentLoan.linkedOwnerUid != null && currentLoan.linkedLoanId != null) {
+                val currency = settingsRepository.currencySymbolFlow.first()
+                userLinkRepository.sendPaymentNotification(
+                    recipientUid = currentLoan.linkedOwnerUid,
+                    senderLoanId = loanId,
+                    recipientLoanId = currentLoan.linkedLoanId,
+                    payment = payment,
+                    currency = currency
+                )
+            }
         }
     }
 
@@ -107,6 +119,18 @@ class LoanTrackerViewModel @Inject constructor(
             )
             repository.insertLoanItem(loanItem)
             updateLoanStatus(loanId)
+
+            val currentLoan = repository.getLoanById(loanId).firstOrNull()?.loan
+            if (currentLoan != null && currentLoan.linkedOwnerUid != null && currentLoan.linkedLoanId != null) {
+                val currency = settingsRepository.currencySymbolFlow.first()
+                userLinkRepository.sendLoanItemNotification(
+                    recipientUid = currentLoan.linkedOwnerUid,
+                    senderLoanId = loanId,
+                    recipientLoanId = currentLoan.linkedLoanId,
+                    loanItem = loanItem,
+                    currency = currency
+                )
+            }
         }
     }
 
@@ -231,10 +255,19 @@ class LoanTrackerViewModel @Inject constructor(
                 // Add a final payment to settle
                 addPayment(balance, "Settled", "Final settlement")
             } else {
-                repository.updateLoan(loanWithPayments.loan.copy(
+                val updated = loanWithPayments.loan.copy(
                     status = LoanStatus.FULLY_PAID,
                     removedAt = System.currentTimeMillis()
-                ))
+                )
+                repository.updateLoan(updated)
+                if (updated.linkedOwnerUid != null && updated.linkedLoanId != null) {
+                    userLinkRepository.sendLoanStatusNotification(
+                        recipientUid = updated.linkedOwnerUid,
+                        senderLoanId = loanId,
+                        recipientLoanId = updated.linkedLoanId,
+                        status = LoanStatus.FULLY_PAID.name
+                    )
+                }
             }
         }
     }
@@ -243,10 +276,19 @@ class LoanTrackerViewModel @Inject constructor(
         val loanId = _selectedLoanId.value ?: return
         viewModelScope.launch {
             val loanWithPayments = repository.getLoanById(loanId).firstOrNull() ?: return@launch
-            repository.updateLoan(loanWithPayments.loan.copy(
+            val updated = loanWithPayments.loan.copy(
                 status = LoanStatus.FORGIVEN,
                 removedAt = System.currentTimeMillis()
-            ))
+            )
+            repository.updateLoan(updated)
+            if (updated.linkedOwnerUid != null && updated.linkedLoanId != null) {
+                userLinkRepository.sendLoanStatusNotification(
+                    recipientUid = updated.linkedOwnerUid,
+                    senderLoanId = loanId,
+                    recipientLoanId = updated.linkedLoanId,
+                    status = LoanStatus.FORGIVEN.name
+                )
+            }
         }
     }
 
@@ -286,8 +328,21 @@ class LoanTrackerViewModel @Inject constructor(
                 profilePhotoUri = profilePhotoUri
             )
             
-            if (currentLoan.linkedOwnerUid != null) {
-                // If it's a linked loan, propose changes instead of immediate save
+            if (currentLoan.linkedOwnerUid != null && currentLoan.linkedLoanId != null) {
+                repository.updateLoan(updatedLoan)
+                updateLoanStatus(loanId)
+
+                userLinkRepository.sendLoanUpdatedNotification(
+                    recipientUid = currentLoan.linkedOwnerUid,
+                    senderLoanId = loanId,
+                    recipientLoanId = currentLoan.linkedLoanId,
+                    amount = amount,
+                    promisedReturnDateMillis = returnDate.time,
+                    purpose = purpose,
+                    notes = notes
+                )
+            } else if (currentLoan.linkedOwnerUid != null) {
+                // If it's a loan waiting for approval, propose changes instead of immediate save
                 val pendingJson = Gson().toJson(updatedLoan)
                 val newLoan = currentLoan.copy(pendingUpdateJson = pendingJson)
                 repository.updateLoan(newLoan)
@@ -324,10 +379,20 @@ class LoanTrackerViewModel @Inject constructor(
         }
 
         if (newStatus != loan.status) {
-            repository.updateLoan(loan.copy(
+            val updated = loan.copy(
                 status = newStatus,
                 removedAt = if (newStatus == LoanStatus.FULLY_PAID) System.currentTimeMillis() else null
-            ))
+            )
+            repository.updateLoan(updated)
+
+            if (updated.linkedOwnerUid != null && updated.linkedLoanId != null) {
+                userLinkRepository.sendLoanStatusNotification(
+                    recipientUid = updated.linkedOwnerUid,
+                    senderLoanId = loanId,
+                    recipientLoanId = updated.linkedLoanId,
+                    status = newStatus.name
+                )
+            }
         }
     }
 }

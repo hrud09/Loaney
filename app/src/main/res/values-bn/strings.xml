@@ -316,6 +316,16 @@
     <string name="notifsheet_amount_return">পরিমাণ: %1$s%2$s\nফেরত: %3$s</string>
     <string name="notifsheet_view_pdf">পিডিএফ দেখুন</string>
     <string name="notifsheet_import_link">ইমপোর্ট ও লিংক করুন</string>
+    <string name="notifsheet_loan_approval_title">লোন অনুমোদনের অনুরোধ</string>
+    <string name="notifsheet_approve">অনুমোদন করুন</string>
+    <string name="notifsheet_decline">প্রত্যাখ্যান করুন</string>
+    <string name="notifsheet_loan_declined">আপনার লোনের অনুরোধ প্রত্যাখ্যান করেছেন</string>
+    <string name="notifsheet_payment_recorded">%1$s%2$s পরিশোধের রেকর্ড যুক্ত করেছেন</string>
+    <string name="notifsheet_item_added">একটি আইটেম যুক্ত করেছেন: %1$s (%2$s%3$s)</string>
+    <string name="notifsheet_status_updated">লোনের স্ট্যাটাস পরিবর্তন করেছেন: %1$s</string>
+    <string name="notifsheet_details_updated">সংযুক্ত লোনের বিবরণ আপডেট করেছেন</string>
+    <string name="tracker_linked_synced">%1$s এর সাথে সংযুক্ত (অটো-সিঙ্ক)</string>
+    <string name="tracker_waiting_approval">%1$s এর অনুমোদনের অপেক্ষায়</string>
     <string name="notifsheet_confirm">নিশ্চিত করুন</string>
     <string name="notifsheet_reject">প্রত্যাখ্যান</string>
     <string name="notifsheet_acknowledge">বুঝেছি</string>

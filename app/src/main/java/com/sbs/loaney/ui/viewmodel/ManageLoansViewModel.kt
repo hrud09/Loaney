@@ -143,6 +143,11 @@ class ManageLoansViewModel @Inject constructor(
         onSuccess: (Long) -> Unit = {}
     ) {
         viewModelScope.launch {
+            val hasIdentifier = !email.isNullOrBlank() || phone.isNotBlank()
+            val recipientUid = if (hasIdentifier) {
+                userLinkRepository.lookupUid(email = email, phone = phone)
+            } else null
+
             val loan = LoanEntity(
                 type = type,
                 personName = name,
@@ -159,7 +164,9 @@ class ManageLoansViewModel @Inject constructor(
                 profilePhotoUri = profilePhotoUri,
                 relationshipType = relationshipType,
                 witness = witness,
-                status = LoanStatus.ACTIVE
+                status = LoanStatus.ACTIVE,
+                linkedOwnerUid = recipientUid,
+                linkedLoanId = null
             )
             val loanId = repository.insertLoan(loan)
             
@@ -168,9 +175,7 @@ class ManageLoansViewModel @Inject constructor(
             // ── Cross-user notification ──────────────────────────────────────
             // If the email or phone belongs to a registered Loaney user, send them a
             // notification so they see this loan from their side as well.
-            val hasIdentifier = !email.isNullOrBlank() || phone.isNotBlank()
             if (hasIdentifier) {
-                val recipientUid = userLinkRepository.lookupUid(email = email, phone = phone)
                 val currencySymbol = settingsRepository.currencySymbolFlow.first()
                 
                 // Generate PDF bytes and encode to Base64
@@ -193,6 +198,10 @@ class ManageLoansViewModel @Inject constructor(
                         amount = amount,
                         currency = currencySymbol,
                         promisedReturnDateMillis = returnDate.time,
+                        loanDateMillis = loanDate.time,
+                        purpose = purpose,
+                        notes = notes,
+                        interest = interest,
                         pdfBase64 = pdfBase64
                     )
                 }

@@ -326,6 +326,16 @@
     <string name="notifsheet_amount_return">Amount: %1$s%2$s\nReturn: %3$s</string>
     <string name="notifsheet_view_pdf">View PDF</string>
     <string name="notifsheet_import_link">Import &amp; Link</string>
+    <string name="notifsheet_loan_approval_title">Loan Approval Request</string>
+    <string name="notifsheet_approve">Approve</string>
+    <string name="notifsheet_decline">Decline</string>
+    <string name="notifsheet_loan_declined">declined your loan request</string>
+    <string name="notifsheet_payment_recorded">recorded a payment of %1$s%2$s</string>
+    <string name="notifsheet_item_added">added an item: %1$s (%2$s%3$s)</string>
+    <string name="notifsheet_status_updated">updated loan status to %1$s</string>
+    <string name="notifsheet_details_updated">updated details of your linked loan</string>
+    <string name="tracker_linked_synced">Linked with %1$s (Auto-Synced)</string>
+    <string name="tracker_waiting_approval">Waiting for %1$s to approve</string>
     <string name="notifsheet_confirm">Confirm</string>
     <string name="notifsheet_reject">Reject</string>
     <string name="notifsheet_acknowledge">Acknowledge</string>

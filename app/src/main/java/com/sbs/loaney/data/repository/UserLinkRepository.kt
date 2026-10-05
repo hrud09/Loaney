@@ -153,6 +153,10 @@ class UserLinkRepository @Inject constructor() {
         amount: Double,
         currency: String,
         promisedReturnDateMillis: Long,
+        loanDateMillis: Long = System.currentTimeMillis(),
+        purpose: String? = null,
+        notes: String? = null,
+        interest: Double? = null,
         pdfBase64: String? = null
     ) {
         val currentUser = auth.currentUser ?: return
@@ -177,9 +181,14 @@ class UserLinkRepository @Inject constructor() {
                 loanType = loanType,
                 amount = amount,
                 currency = currency,
+                loanDateMillis = loanDateMillis,
                 promisedReturnDateMillis = promisedReturnDateMillis,
+                purpose = purpose,
+                notes = notes,
+                interest = interest,
                 createdAt = System.currentTimeMillis(),
                 isRead = false,
+                notificationType = "LOAN_REQUEST",
                 pdfBase64 = pdfBase64
             )
 
@@ -193,6 +202,233 @@ class UserLinkRepository @Inject constructor() {
             Log.d(TAG, "Loan notification sent to UID: $recipientUid")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send loan notification: ${e.message}")
+        }
+    }
+
+    /**
+     * Sends a rejection notification back to the loan creator when the counterparty declines.
+     */
+    suspend fun sendLinkRejectedNotification(
+        recipientUid: String,
+        senderLoanId: String?,
+        recipientLoanId: String?
+    ) {
+        val currentUser = auth.currentUser ?: return
+        if (currentUser.uid == recipientUid) return
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION).document(currentUser.uid).get().await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+            val notificationId = "link_rej_${System.currentTimeMillis()}"
+
+            val notification = LinkedLoanNotification(
+                id = notificationId,
+                senderName = senderName,
+                senderUid = currentUser.uid,
+                senderLoanId = senderLoanId,
+                recipientLoanId = recipientLoanId,
+                notificationType = "LINK_REJECTED",
+                createdAt = System.currentTimeMillis(),
+                isRead = false
+            )
+
+            firestore.collection(USERS_COLLECTION)
+                .document(recipientUid)
+                .collection(NOTIFICATIONS_SUBCOLLECTION)
+                .document(notificationId)
+                .set(notification)
+                .await()
+
+            Log.d(TAG, "Loan link rejected notification sent to UID: $recipientUid")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send link rejected notification: ${e.message}")
+        }
+    }
+
+    /**
+     * Sends a payment notification to the linked loan partner so it is added to their tracked data.
+     */
+    suspend fun sendPaymentNotification(
+        recipientUid: String,
+        senderLoanId: Long,
+        recipientLoanId: String,
+        payment: com.sbs.loaney.data.local.entity.PaymentEntity,
+        currency: String = "৳"
+    ) {
+        val currentUser = auth.currentUser ?: return
+        if (currentUser.uid == recipientUid) return
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION).document(currentUser.uid).get().await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+            val notificationId = "pay_${currentUser.uid}_${payment.id}_${System.currentTimeMillis()}"
+
+            val notification = LinkedLoanNotification(
+                id = notificationId,
+                senderName = senderName,
+                senderUid = currentUser.uid,
+                senderLoanId = senderLoanId.toString(),
+                recipientLoanId = recipientLoanId,
+                notificationType = "PAYMENT_ADDED",
+                amount = payment.amount,
+                currency = currency,
+                createdAt = System.currentTimeMillis(),
+                isRead = false,
+                paymentAmount = payment.amount,
+                paymentMethod = payment.method,
+                paymentNote = payment.note,
+                paymentDateMillis = payment.date.time,
+                paymentSyncId = "${currentUser.uid}_${payment.id}_${payment.date.time}"
+            )
+
+            firestore.collection(USERS_COLLECTION)
+                .document(recipientUid)
+                .collection(NOTIFICATIONS_SUBCOLLECTION)
+                .document(notificationId)
+                .set(notification)
+                .await()
+
+            Log.d(TAG, "Payment sync notification sent to UID: $recipientUid")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send payment notification: ${e.message}")
+        }
+    }
+
+    /**
+     * Sends a loan item notification to the linked loan partner so it is added to their tracked data.
+     */
+    suspend fun sendLoanItemNotification(
+        recipientUid: String,
+        senderLoanId: Long,
+        recipientLoanId: String,
+        loanItem: com.sbs.loaney.data.local.entity.LoanItemEntity,
+        currency: String = "৳"
+    ) {
+        val currentUser = auth.currentUser ?: return
+        if (currentUser.uid == recipientUid) return
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION).document(currentUser.uid).get().await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+            val notificationId = "item_${currentUser.uid}_${loanItem.id}_${System.currentTimeMillis()}"
+
+            val notification = LinkedLoanNotification(
+                id = notificationId,
+                senderName = senderName,
+                senderUid = currentUser.uid,
+                senderLoanId = senderLoanId.toString(),
+                recipientLoanId = recipientLoanId,
+                notificationType = "LOAN_ITEM_ADDED",
+                amount = loanItem.amount,
+                currency = currency,
+                createdAt = System.currentTimeMillis(),
+                isRead = false,
+                itemAmount = loanItem.amount,
+                itemNote = loanItem.note,
+                itemDateMillis = loanItem.date.time,
+                itemSyncId = "${currentUser.uid}_${loanItem.id}_${loanItem.date.time}"
+            )
+
+            firestore.collection(USERS_COLLECTION)
+                .document(recipientUid)
+                .collection(NOTIFICATIONS_SUBCOLLECTION)
+                .document(notificationId)
+                .set(notification)
+                .await()
+
+            Log.d(TAG, "Loan item sync notification sent to UID: $recipientUid")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send loan item notification: ${e.message}")
+        }
+    }
+
+    /**
+     * Sends a loan status change notification (e.g. FULLY_PAID, FORGIVEN, ACTIVE) to the linked partner.
+     */
+    suspend fun sendLoanStatusNotification(
+        recipientUid: String,
+        senderLoanId: Long,
+        recipientLoanId: String,
+        status: String
+    ) {
+        val currentUser = auth.currentUser ?: return
+        if (currentUser.uid == recipientUid) return
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION).document(currentUser.uid).get().await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+            val notificationId = "status_${currentUser.uid}_${System.currentTimeMillis()}"
+
+            val notification = LinkedLoanNotification(
+                id = notificationId,
+                senderName = senderName,
+                senderUid = currentUser.uid,
+                senderLoanId = senderLoanId.toString(),
+                recipientLoanId = recipientLoanId,
+                notificationType = "LOAN_STATUS_UPDATED",
+                loanStatus = status,
+                createdAt = System.currentTimeMillis(),
+                isRead = false
+            )
+
+            firestore.collection(USERS_COLLECTION)
+                .document(recipientUid)
+                .collection(NOTIFICATIONS_SUBCOLLECTION)
+                .document(notificationId)
+                .set(notification)
+                .await()
+
+            Log.d(TAG, "Loan status sync notification sent to UID: $recipientUid")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send loan status notification: ${e.message}")
+        }
+    }
+
+    /**
+     * Sends updated loan details (e.g. return date, notes, amount) to the linked partner.
+     */
+    suspend fun sendLoanUpdatedNotification(
+        recipientUid: String,
+        senderLoanId: Long,
+        recipientLoanId: String,
+        amount: Double,
+        promisedReturnDateMillis: Long,
+        purpose: String?,
+        notes: String?
+    ) {
+        val currentUser = auth.currentUser ?: return
+        if (currentUser.uid == recipientUid) return
+
+        try {
+            val senderDoc = firestore.collection(USERS_COLLECTION).document(currentUser.uid).get().await()
+            val senderName = senderDoc.getString("name") ?: currentUser.displayName ?: "Someone"
+            val notificationId = "upd_${currentUser.uid}_${System.currentTimeMillis()}"
+
+            val notification = LinkedLoanNotification(
+                id = notificationId,
+                senderName = senderName,
+                senderUid = currentUser.uid,
+                senderLoanId = senderLoanId.toString(),
+                recipientLoanId = recipientLoanId,
+                notificationType = "LOAN_UPDATED",
+                amount = amount,
+                promisedReturnDateMillis = promisedReturnDateMillis,
+                purpose = purpose,
+                notes = notes,
+                createdAt = System.currentTimeMillis(),
+                isRead = false
+            )
+
+            firestore.collection(USERS_COLLECTION)
+                .document(recipientUid)
+                .collection(NOTIFICATIONS_SUBCOLLECTION)
+                .document(notificationId)
+                .set(notification)
+                .await()
+
+            Log.d(TAG, "Loan updated notification sent to UID: $recipientUid")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send loan updated notification: ${e.message}")
         }
     }
 

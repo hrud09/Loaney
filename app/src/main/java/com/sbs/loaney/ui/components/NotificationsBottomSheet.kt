@@ -35,6 +35,8 @@ import com.sbs.loaney.util.PdfReceiptGenerator
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,7 +103,8 @@ fun NotificationsBottomSheet(
                             },
                             onImportClick = { viewModel.importSharedBankAccount(notification) },
                             onAcceptShareClick = { viewModel.acceptSharedBankAccount(notification) },
-                            onImportLoanClick = { viewModel.importLinkedLoan(notification) },
+                            onApproveLoanClick = { viewModel.approveLoanRequest(notification) },
+                            onDeclineLoanClick = { viewModel.rejectLoanRequest(notification) },
                             onConfirmUpdateClick = { viewModel.confirmLoanUpdate(notification) },
                             onRejectUpdateClick = { viewModel.rejectLoanUpdate(notification) },
                             onSyncResponseClick = { viewModel.handleSyncResponse(notification) }
@@ -120,7 +123,8 @@ private fun NotificationItem(
     onNotificationClick: () -> Unit,
     onImportClick: () -> Unit,
     onAcceptShareClick: () -> Unit,
-    onImportLoanClick: () -> Unit,
+    onApproveLoanClick: () -> Unit,
+    onDeclineLoanClick: () -> Unit,
     onConfirmUpdateClick: () -> Unit,
     onRejectUpdateClick: () -> Unit,
     onSyncResponseClick: () -> Unit
@@ -200,11 +204,38 @@ private fun NotificationItem(
                     val actionText = when (notification.notificationType) {
                         "UPDATE_PROPOSAL" -> stringResource(R.string.notifsheet_proposed_changes)
                         "LINK_ACCEPTED" -> stringResource(R.string.notifsheet_linked_to_loan)
+                        "LINK_REJECTED" -> stringResource(R.string.notifsheet_loan_declined)
                         "UPDATE_ACCEPTED" -> stringResource(R.string.notifsheet_accepted_changes)
                         "UPDATE_REJECTED" -> stringResource(R.string.notifsheet_rejected_changes)
+                        "PAYMENT_ADDED" -> stringResource(
+                            R.string.notifsheet_payment_recorded,
+                            notification.currency,
+                            String.format(Locale.getDefault(), "%,.0f", notification.paymentAmount ?: notification.amount)
+                        )
+                        "LOAN_ITEM_ADDED" -> stringResource(
+                            R.string.notifsheet_item_added,
+                            notification.itemNote ?: "Item",
+                            notification.currency,
+                            String.format(Locale.getDefault(), "%,.0f", notification.itemAmount ?: notification.amount)
+                        )
+                        "LOAN_STATUS_UPDATED" -> stringResource(
+                            R.string.notifsheet_status_updated,
+                            notification.loanStatus ?: ""
+                        )
+                        "LOAN_UPDATED" -> stringResource(R.string.notifsheet_details_updated)
                         // loanType is the *sender's* side, so it reads inverted here:
                         // they lent → they lent you; they borrowed → they want to borrow.
                         else -> if (notification.loanType == "LEND") stringResource(R.string.notifsheet_lent_you) else stringResource(R.string.notifsheet_wants_to_borrow)
+                    }
+
+                    if (notification.notificationType == "LOAN_REQUEST") {
+                        Text(
+                            text = stringResource(R.string.notifsheet_loan_approval_title),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AlimGreen
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
                     }
 
                     Text(
@@ -217,6 +248,28 @@ private fun NotificationItem(
                     if (notification.notificationType == "LOAN_REQUEST" || notification.notificationType == "UPDATE_PROPOSAL") {
                         Text(
                             text = stringResource(R.string.notifsheet_amount_return, notification.currency, notification.amount, dateFormat.format(Date(notification.promisedReturnDateMillis))),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (!notification.purpose.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Purpose: ${notification.purpose}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (!notification.notes.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Notes: ${notification.notes}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else if (notification.notificationType == "PAYMENT_ADDED" && !notification.paymentNote.isNullOrBlank()) {
+                        Text(
+                            text = "Note: ${notification.paymentNote}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -280,19 +333,33 @@ private fun NotificationItem(
                 // Two-Way Sync Actions
                 if (!isShareType) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         when (notification.notificationType) {
                             "LOAN_REQUEST" -> {
-                                OutlinedButton(
-                                    onClick = onImportLoanClick,
+                                Button(
+                                    onClick = onApproveLoanClick,
                                     shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                    modifier = Modifier.height(32.dp),
-                                    border = BorderStroke(1.dp, AlimGreen)
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                    modifier = Modifier.height(34.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = AlimGreen)
                                 ) {
-                                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp), tint = AlimGreen)
+                                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text(stringResource(R.string.notifsheet_import_link), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AlimGreen)
+                                    Text(stringResource(R.string.notifsheet_approve), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                                OutlinedButton(
+                                    onClick = onDeclineLoanClick,
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                    modifier = Modifier.height(34.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                                ) {
+                                    Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.notifsheet_decline), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                                 }
                             }
                             "UPDATE_PROPOSAL" -> {
@@ -315,7 +382,8 @@ private fun NotificationItem(
                                     Text(stringResource(R.string.notifsheet_reject), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                                 }
                             }
-                            "LINK_ACCEPTED", "UPDATE_ACCEPTED", "UPDATE_REJECTED" -> {
+                            "LINK_ACCEPTED", "LINK_REJECTED", "UPDATE_ACCEPTED", "UPDATE_REJECTED",
+                            "PAYMENT_ADDED", "LOAN_ITEM_ADDED", "LOAN_STATUS_UPDATED", "LOAN_UPDATED" -> {
                                 Button(
                                     onClick = onSyncResponseClick,
                                     shape = RoundedCornerShape(8.dp),

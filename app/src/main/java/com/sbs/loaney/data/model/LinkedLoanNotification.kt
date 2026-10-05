@@ -73,5 +73,21 @@ data class LinkedLoanNotification(
     
     // System notification fields
     val title: String? = null,
-    val message: String? = null
+    val message: String? = null,
+
+    // Additional fields for Loan Details, Payments, Items & Status Sync
+    val loanDateMillis: Long? = null,
+    val purpose: String? = null,
+    val notes: String? = null,
+    val interest: Double? = null,
+    val paymentAmount: Double? = null,
+    val paymentMethod: String? = null,
+    val paymentNote: String? = null,
+    val paymentDateMillis: Long? = null,
+    val paymentSyncId: String? = null,
+    val itemAmount: Double? = null,
+    val itemNote: String? = null,
+    val itemDateMillis: Long? = null,
+    val itemSyncId: String? = null,
+    val loanStatus: String? = null
 )
