@@ -46,7 +46,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.annotation.DrawableRes
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.FacebookSdk
+import com.facebook.login.LoginManager
+import com.facebook.login.LoginResult
 import com.google.firebase.FirebaseException
+import com.google.firebase.FirebaseTooManyRequestsException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
@@ -85,6 +96,9 @@ fun AuthScreen(
     var showDatePicker by remember { mutableStateOf(false) }
 
     var verificationId by remember { mutableStateOf("") }
+    var resendToken by remember { mutableStateOf<PhoneAuthProvider.ForceResendingToken?>(null) }
+    // The number actually sent to Firebase, in E.164 (+8801XXXXXXXXX) form.
+    var normalizedPhone by remember { mutableStateOf<String?>(null) }
     var localError by remember { mutableStateOf<String?>(null) }
     var isVerifyingPhone by remember { mutableStateOf(false) }
 
@@ -108,10 +122,18 @@ fun AuthScreen(
         }
     }
 
-    // A Facebook sign-in can outlive this Activity — the Custom Tab may hand control back to a
-    // freshly recreated process. Pick the result back up instead of stranding the user.
-    LaunchedEffect(Unit) {
-        authViewModel.checkPendingFacebookAuth()
+    // --- Facebook Login (SDK) ---
+    // Firebase only accepts Facebook on Android via the Facebook SDK's access token.
+    val facebookConfigured = remember { context.getString(R.string.facebook_app_id).isNotBlank() }
+    val facebookCallbackManager = remember { CallbackManager.Factory.create() }
+    DisposableEffect(facebookCallbackManager) {
+        onDispose {
+            try {
+                if (FacebookSdk.isInitialized()) {
+                    LoginManager.getInstance().unregisterCallback(facebookCallbackManager)
+                }
+            } catch (_: Exception) { }
+        }
     }
 
 
@@ -122,23 +144,66 @@ fun AuthScreen(
         profilePhotoUri = uri?.toString()
     }
 
-    // --- Phone Auth Callbacks ---
+    // --- Phone Auth ---
+    // Signs in with a verified phone credential, carrying the sign-up form along so a new account
+    // gets the same profile whether the code was typed or auto-read from the SMS.
+    fun signInWithPhoneCredential(credential: PhoneAuthCredential) {
+        authViewModel.signInWithCredential(
+            credential = credential,
+            name = name.takeIf { isSignUp && it.isNotBlank() },
+            currency = selectedCurrency,
+            email = email.trim().takeIf { isSignUp && it.isNotBlank() },
+            phone = normalizedPhone,
+            profilePhotoUri = profilePhotoUri.takeIf { isSignUp },
+            address = address.takeIf { isSignUp && it.isNotBlank() },
+            dateOfBirth = dateOfBirth.takeIf { isSignUp && it.isNotBlank() }
+        )
+    }
+
     val callbacks = remember {
         object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                // Instant verification or SMS auto-retrieval: no code to type.
                 isVerifyingPhone = false
-                authViewModel.signInWithCredential(credential, name.takeIf { isSignUp }, selectedCurrency)
+                credential.smsCode?.let { otpCode = it }
+                signInWithPhoneCredential(credential)
             }
             override fun onVerificationFailed(e: FirebaseException) {
                 isVerifyingPhone = false
-                localError = e.message ?: context.getString(R.string.auth_phone_verification_failed)
+                android.util.Log.e("AuthScreen", "Phone verification failed", e)
+                localError = context.getString(phoneVerificationErrorMessage(e))
             }
             override fun onCodeSent(verId: String, token: PhoneAuthProvider.ForceResendingToken) {
                 isVerifyingPhone = false
                 verificationId = verId
+                resendToken = token
+                otpCode = ""
                 isOtpMode = true
             }
         }
+    }
+
+    fun sendVerificationCode(resend: Boolean) {
+        val host = activity
+        if (host == null) {
+            localError = context.getString(R.string.auth_activity_required_phone)
+            return
+        }
+        val e164 = normalizePhoneNumber(phoneNumber, selectedCurrency)
+        if (e164 == null) {
+            localError = context.getString(R.string.auth_phone_invalid_number)
+            return
+        }
+        normalizedPhone = e164
+        isVerifyingPhone = true
+        val builder = PhoneAuthOptions.newBuilder(FirebaseAuth.getInstance())
+            .setPhoneNumber(e164)
+            .setTimeout(60L, TimeUnit.SECONDS)
+            .setActivity(host)
+            .setCallbacks(callbacks)
+        val token = resendToken
+        if (resend && token != null) builder.setForceResendingToken(token)
+        PhoneAuthProvider.verifyPhoneNumber(builder.build())
     }
 
     Scaffold(
@@ -321,13 +386,14 @@ fun AuthScreen(
 
             // Dynamic User Form
             if (!isGuestMode && isOtpMode) {
-                Text(stringResource(R.string.auth_otp_sent, phoneNumber), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.auth_otp_sent, normalizedPhone ?: phoneNumber), style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = otpCode,
-                    onValueChange = { otpCode = it; localError = null },
+                    onValueChange = { input -> otpCode = input.filter { it.isDigit() }.take(6); localError = null },
                     label = { Text(stringResource(R.string.auth_sms_code)) },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -339,8 +405,10 @@ fun AuthScreen(
                     value = phoneNumber,
                     onValueChange = { phoneNumber = it; localError = null },
                     label = { Text(stringResource(R.string.auth_phone_with_country_code)) },
+                    placeholder = { Text("+8801XXXXXXXXX") },
                     leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AlimGreen) },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -570,32 +638,20 @@ fun AuthScreen(
                             authViewModel.continueAsGuest(name, selectedCurrency)
                         }
                     } else if (isOtpMode) {
-                        try {
-                            val credential = PhoneAuthProvider.getCredential(verificationId, otpCode)
-                            authViewModel.signInWithCredential(
-                                credential = credential,
-                                name = name.takeIf { isSignUp },
-                                currency = selectedCurrency,
-                                email = email.takeIf { isSignUp },
-                                phone = phoneNumber.takeIf { isSignUp },
-                                profilePhotoUri = profilePhotoUri.takeIf { isSignUp },
-                                address = address.takeIf { isSignUp },
-                                dateOfBirth = dateOfBirth.takeIf { isSignUp }
-                            )
-                        } catch (e: Exception) {
+                        if (otpCode.length != 6 || verificationId.isBlank()) {
                             localError = context.getString(R.string.auth_invalid_sms_code)
+                        } else {
+                            try {
+                                signInWithPhoneCredential(PhoneAuthProvider.getCredential(verificationId, otpCode))
+                            } catch (e: Exception) {
+                                localError = context.getString(R.string.auth_invalid_sms_code)
+                            }
                         }
                     } else if (isPhoneMode) {
-                        if (activity != null) {
-                            isVerifyingPhone = true
-                            val builder = PhoneAuthOptions.newBuilder(FirebaseAuth.getInstance())
-                                .setPhoneNumber(phoneNumber)
-                                .setTimeout(60L, TimeUnit.SECONDS)
-                                .setActivity(activity)
-                                .setCallbacks(callbacks)
-                            PhoneAuthProvider.verifyPhoneNumber(builder.build())
+                        if (isSignUp && name.isBlank()) {
+                            localError = context.getString(R.string.auth_enter_name_to_continue)
                         } else {
-                            localError = context.getString(R.string.auth_activity_required_phone)
+                            sendVerificationCode(resend = false)
                         }
                     } else {
                         if (isSignUp) {
@@ -668,7 +724,7 @@ fun AuthScreen(
                             } else {
                                 authViewModel.signInWithGoogle(
                                     activity = activity,
-                                    name = name.takeIf { it.isNotBlank() },
+                                    name = name.takeIf { isSignUp && it.isNotBlank() },
                                     currency = selectedCurrency
                                 )
                             }
@@ -682,13 +738,42 @@ fun AuthScreen(
                         onClick = {
                             keyboardController?.hide()
                             localError = null
-                            if (activity == null) {
+                            val registryOwner = activity as? ActivityResultRegistryOwner
+                            if (!facebookConfigured || !FacebookSdk.isInitialized()) {
+                                localError = context.getString(R.string.auth_facebook_not_configured)
+                            } else if (registryOwner == null) {
                                 localError = context.getString(R.string.auth_facebook_signin_failed)
                             } else {
-                                authViewModel.signInWithFacebook(
-                                    activity = activity,
-                                    name = name.takeIf { it.isNotBlank() },
-                                    currency = selectedCurrency
+                                val loginManager = LoginManager.getInstance()
+                                // Drop any previous Facebook session so the user can pick an account.
+                                loginManager.logOut()
+                                loginManager.registerCallback(
+                                    facebookCallbackManager,
+                                    object : FacebookCallback<LoginResult> {
+                                        override fun onSuccess(result: LoginResult) {
+                                            authViewModel.signInWithFacebook(
+                                                accessToken = result.accessToken.token,
+                                                name = name.takeIf { isSignUp && it.isNotBlank() },
+                                                currency = selectedCurrency
+                                            )
+                                        }
+
+                                        override fun onCancel() {
+                                            authViewModel.resetState()
+                                        }
+
+                                        override fun onError(error: FacebookException) {
+                                            android.util.Log.e("AuthScreen", "Facebook login failed", error)
+                                            authViewModel.reportError(
+                                                context.getString(R.string.auth_facebook_signin_failed)
+                                            )
+                                        }
+                                    }
+                                )
+                                loginManager.logIn(
+                                    registryOwner,
+                                    facebookCallbackManager,
+                                    listOf("email", "public_profile")
                                 )
                             }
                         }
@@ -726,7 +811,13 @@ fun AuthScreen(
                 
             } else {
                 Spacer(modifier = Modifier.height(24.dp))
-                TextButton(onClick = { isOtpMode = false }) {
+                TextButton(
+                    onClick = { localError = null; sendVerificationCode(resend = true) },
+                    enabled = !isMainLoading
+                ) {
+                    Text(stringResource(R.string.auth_resend_code), color = AlimGreen)
+                }
+                TextButton(onClick = { isOtpMode = false; otpCode = ""; localError = null }) {
                     Text(stringResource(R.string.auth_back_to_sign_in), color = AlimGreen)
                 }
             }
@@ -760,5 +851,57 @@ private fun SocialSignInButton(
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(text, fontWeight = FontWeight.Bold)
+    }
+}
+
+/**
+ * Turns what the user typed into the E.164 form Firebase requires (e.g. +8801712345678).
+ * Local numbers without a country code ("01712345678") get one inferred from the chosen
+ * currency, defaulting to Bangladesh. Returns null if it can't be a valid phone number.
+ */
+internal fun normalizePhoneNumber(raw: String, currencySymbol: String): String? {
+    val trimmed = raw.trim()
+    val digits = trimmed.filter { it.isDigit() }
+    if (digits.isEmpty()) return null
+
+    val withCountry = when {
+        trimmed.startsWith("+") -> digits
+        digits.startsWith("00") -> digits.drop(2)
+        else -> {
+            val countryCode = when (currencySymbol) {
+                "₹" -> "91"
+                "$" -> "1"
+                "£" -> "44"
+                else -> "880"
+            }
+            when {
+                // Already starts with the country code, just without the "+".
+                digits.startsWith(countryCode) && digits.length > 10 -> digits
+                digits.startsWith("0") -> countryCode + digits.drop(1)
+                else -> countryCode + digits
+            }
+        }
+    }
+    // E.164 allows at most 15 digits; anything under 8 can't be a real mobile number.
+    return if (withCountry.length in 8..15) "+$withCountry" else null
+}
+
+/** Maps a phone verification failure to a message the user can act on. */
+private fun phoneVerificationErrorMessage(e: FirebaseException): Int {
+    val raw = e.message.orEmpty()
+    return when {
+        e is FirebaseTooManyRequestsException -> R.string.auth_phone_too_many_requests
+        e is FirebaseAuthInvalidCredentialsException -> R.string.auth_phone_invalid_number
+        // Phone Auth is switched off, or the Firebase project has no billing account for SMS.
+        raw.contains("BILLING_NOT_ENABLED", ignoreCase = true) ||
+            raw.contains("OPERATION_NOT_ALLOWED", ignoreCase = true) ||
+            raw.contains("not enabled", ignoreCase = true) -> R.string.auth_phone_not_enabled
+        // App verification (Play Integrity / reCAPTCHA) failed: SHA-1/SHA-256 not registered.
+        raw.contains("not authorized", ignoreCase = true) ||
+            raw.contains("app verification", ignoreCase = true) ||
+            raw.contains("Play Integrity", ignoreCase = true) ||
+            raw.contains("recaptcha", ignoreCase = true) -> R.string.auth_phone_app_not_verified
+        raw.contains("network", ignoreCase = true) -> R.string.auth_error_network
+        else -> R.string.auth_phone_verification_failed
     }
 }

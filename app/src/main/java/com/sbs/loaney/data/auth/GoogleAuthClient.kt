@@ -1,11 +1,14 @@
 package com.sbs.loaney.data.auth
 
 import android.content.Context
+import android.util.Log
+import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.GetCredentialInterruptedException
 import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -49,18 +52,54 @@ class GoogleAuthClient @Inject constructor(
             ) {
                 Result.success(GoogleIdTokenCredential.createFrom(credential.data).idToken)
             } else {
-                Result.failure(Exception("Unexpected credential type from Google"))
+                Log.e(TAG, "Unexpected credential type: ${credential.type}")
+                Result.failure(Exception(appContext.getString(R.string.auth_google_error_generic)))
             }
         } catch (e: GetCredentialCancellationException) {
             Result.failure(GoogleSignInCancelled())
+        } catch (e: GetCredentialInterruptedException) {
+            // The picker was interrupted (e.g. app backgrounded). Treat it like a dismissal.
+            Result.failure(GoogleSignInCancelled())
         } catch (e: NoCredentialException) {
-            Result.failure(Exception("No Google account on this device. Add one in Settings, then try again."))
+            Log.w(TAG, "No Google credential available", e)
+            Result.failure(Exception(appContext.getString(R.string.auth_google_error_no_account)))
         } catch (e: GoogleIdTokenParsingException) {
-            Result.failure(Exception("Could not read your Google account details. Please try again."))
+            Log.e(TAG, "Could not parse Google ID token", e)
+            Result.failure(Exception(appContext.getString(R.string.auth_google_error_generic)))
         } catch (e: GetCredentialException) {
-            // Overwhelmingly the cause here is a SHA-1 fingerprint that is not registered against
-            // this package in the Firebase console, which surfaces as a generic provider failure.
-            Result.failure(Exception("Google sign-in is unavailable right now. Please try another method."))
+            // Log the real cause — the generic UI message hides it, and it is the only way to tell
+            // a misconfigured Firebase project apart from a flaky network.
+            Log.e(TAG, "Google sign-in failed: type=${e.type} message=${e.errorMessage}", e)
+            Result.failure(Exception(appContext.getString(messageFor(e))))
         }
+    }
+
+    /**
+     * Forgets the account chosen last time, so the next sign-in shows the account picker again
+     * instead of silently reusing the previous Google account. Best-effort.
+     */
+    suspend fun clearCredentialState() {
+        try {
+            credentialManager.clearCredentialState(ClearCredentialStateRequest())
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not clear credential state: ${e.message}")
+        }
+    }
+
+    private fun messageFor(e: GetCredentialException): Int {
+        val raw = "${e.type} ${e.errorMessage}".lowercase()
+        return when {
+            // [28444] "Developer console is not set up correctly" / [10] DEVELOPER_ERROR: the
+            // signing certificate's SHA-1 is not registered for com.sbs.loaney in Firebase, or
+            // google-services.json is stale.
+            "28444" in raw || "developer console" in raw || "developer_error" in raw ||
+                "[10]" in raw -> R.string.auth_google_error_not_configured
+            "network" in raw || "7:" in raw -> R.string.auth_error_network
+            else -> R.string.auth_google_error_generic
+        }
+    }
+
+    private companion object {
+        const val TAG = "GoogleAuthClient"
     }
 }

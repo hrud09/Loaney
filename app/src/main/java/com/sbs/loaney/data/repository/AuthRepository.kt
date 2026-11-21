@@ -1,13 +1,18 @@
 package com.sbs.loaney.data.repository
 
+import com.facebook.FacebookSdk
+import com.facebook.login.LoginManager
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
+import com.sbs.loaney.data.auth.GoogleAuthClient
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class AuthRepository @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val cloudBackupRepository: CloudBackupRepository
+    private val cloudBackupRepository: CloudBackupRepository,
+    private val googleAuthClient: GoogleAuthClient
 ) {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
@@ -174,6 +179,15 @@ class AuthRepository @Inject constructor(
             }
         }
         auth.signOut()
+
+        // Also end the provider sessions, otherwise the next "Continue with Google/Facebook"
+        // silently reuses the previous account and the user can't switch.
+        googleAuthClient.clearCredentialState()
+        try {
+            if (FacebookSdk.isInitialized()) LoginManager.getInstance().logOut()
+        } catch (e: Exception) {
+            android.util.Log.w("Auth", "Facebook logout failed: ${e.message}")
+        }
     }
  
     /**
@@ -279,102 +293,6 @@ class AuthRepository @Inject constructor(
     }
 
     /**
-     * Completes synchronization after a browser/tab-based OAuth flow finishes.
-     */
-    suspend fun handlePostOAuthLogin(
-        authResult: com.google.firebase.auth.AuthResult,
-        defaultName: String? = null,
-        defaultCurrency: String? = null
-    ): Result<Unit> {
-        return try {
-            val user = authResult.user ?: throw Exception("Authentication user is null")
-            val userId = user.uid
-            
-            val document = try {
-                kotlinx.coroutines.withTimeout(8000L) {
-                    firestore.collection("users").document(userId).get().await()
-                }
-            } catch (e: Exception) {
-                null
-            }
-
-            val finalName = if (document != null && document.exists() && document.getString("name") != null) {
-                document.getString("name")!!
-            } else {
-                defaultName ?: user.displayName ?: "User"
-            }
-
-            val finalCurrency = if (document != null && document.exists() && document.getString("currency") != null) {
-                document.getString("currency")!!
-            } else {
-                defaultCurrency ?: "৳"
-            }
-
-            val finalProfilePhotoUri = if (document != null && document.exists() && document.getString("profilePhotoUri") != null) {
-                document.getString("profilePhotoUri")
-            } else {
-                user.photoUrl?.toString()
-            }
-
-            val finalAddress = if (document != null && document.exists() && document.getString("address") != null) {
-                document.getString("address")
-            } else {
-                null
-            }
-
-            val finalDob = if (document != null && document.exists() && document.getString("dateOfBirth") != null) {
-                document.getString("dateOfBirth")
-            } else {
-                null
-            }
-
-            if (document == null || !document.exists()) {
-                // New user: gets tutorial
-                settingsRepository.setHasSeenTutorial(false)
-
-                val sdf = java.text.SimpleDateFormat("yyMMddHHmmss", java.util.Locale.getDefault())
-                val username = finalName.replace(" ", "").lowercase() + "_" + sdf.format(java.util.Date())
- 
-                val userProfile = mutableMapOf<String, Any>(
-                    "name" to finalName,
-                    "username" to username,
-                    "currency" to finalCurrency,
-                    "email" to (user.email ?: "").trim().lowercase(),
-                    "createdAt" to System.currentTimeMillis()
-                )
-                val finalPhone = user.phoneNumber ?: ""
-                if (finalPhone.isNotBlank()) userProfile["phone"] = finalPhone
-                if (!finalProfilePhotoUri.isNullOrBlank()) userProfile["profilePhotoUri"] = finalProfilePhotoUri
-
-                try {
-                    kotlinx.coroutines.withTimeout(8000L) {
-                        firestore.collection("users").document(userId).set(userProfile).await()
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("Auth", "Firestore credential save failed/timed out: ${e.message}")
-                }
-
-                // Guest → account: mirror any offline-tracked data to the new cloud account.
-                backupGuestDataBestEffort()
-            } else {
-                // Existing user: skips tutorial
-                settingsRepository.setHasSeenTutorial(true)
-            }
-
-            settingsRepository.setUserName(finalName)
-            settingsRepository.setCurrencySymbol(finalCurrency)
-            settingsRepository.setUserProfilePhoto(finalProfilePhotoUri)
-            settingsRepository.setUserAddress(finalAddress)
-            settingsRepository.setUserDob(finalDob)
-            settingsRepository.setOnboardingCompleted(true)
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(friendly(e))
-        }
-    }
-
-    /**
      * Firebase's raw provider exceptions read like stack traces. Rewrite the ones a user can
      * actually act on; pass everything else through untouched.
      */
@@ -385,9 +303,26 @@ class AuthRepository @Inject constructor(
             "An account already exists with this email address. Sign in using the method you " +
                 "originally registered with."
         )
-        is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException -> Exception(
-            "That sign-in attempt was rejected. Please try again."
+        is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException -> when (e.errorCode) {
+            "ERROR_INVALID_VERIFICATION_CODE" -> Exception(
+                "That code is incorrect. Check the SMS and try again."
+            )
+            "ERROR_SESSION_EXPIRED", "ERROR_INVALID_VERIFICATION_ID" -> Exception(
+                "That code has expired. Request a new one and try again."
+            )
+            else -> Exception("That sign-in attempt was rejected. Please try again.")
+        }
+        is com.google.firebase.FirebaseTooManyRequestsException -> Exception(
+            "Too many attempts from this device. Please wait a while and try again."
         )
+        is FirebaseAuthException -> when (e.errorCode) {
+            // The provider is switched off under Authentication > Sign-in method.
+            "ERROR_OPERATION_NOT_ALLOWED" -> Exception(
+                "This sign-in method is not enabled yet. Please try another method."
+            )
+            "ERROR_USER_DISABLED" -> Exception("This account has been disabled.")
+            else -> e
+        }
         is com.google.firebase.FirebaseNetworkException -> Exception(
             "No internet connection. Check your network and try again."
         )

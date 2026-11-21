@@ -26,6 +26,7 @@ firebaseAuth = "23.1.0"
 playServicesAuth = "21.3.0"
 credentials = "1.3.0"
 googleid = "1.1.1"
+facebookLogin = "18.0.3"
 lottie = "6.6.0"
 zxing = "3.5.3"
 zxingEmbedded = "4.3.0"
@@ -74,6 +75,7 @@ firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
+facebook-login = { group = "com.facebook.android", name = "facebook-login", version.ref = "facebookLogin" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }

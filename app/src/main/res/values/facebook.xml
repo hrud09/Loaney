@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Facebook Login configuration. Fill these in from developers.facebook.com:
+      App ID       -> App settings > Basic > App ID
+      Client token -> App settings > Advanced > Security > Client token
+    fb_login_protocol_scheme must be "fb" followed by the App ID (e.g. fb1234567890).
+
+    While facebook_app_id is empty the "Continue with Facebook" button shows a
+    "not set up" message instead of crashing.
+-->
+<resources>
+    <string name="facebook_app_id" translatable="false"></string>
+    <string name="facebook_client_token" translatable="false"></string>
+    <string name="fb_login_protocol_scheme" translatable="false">fb</string>
+</resources>

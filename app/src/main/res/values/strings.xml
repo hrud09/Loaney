@@ -620,4 +620,15 @@
     <string name="recovery_submitted_toast">Request received — we\'ll review your case and reach out.</string>
     <string name="recovery_signin_toast">Please sign in to request recovery help.</string>
     <string name="recovery_error_toast">Couldn\'t submit your request. Please try again.</string>
+    <!-- Sign-in provider errors -->
+    <string name="auth_google_error_generic">Google sign-in didn\'t work. Please try again or use another method.</string>
+    <string name="auth_google_error_no_account">No Google account on this device. Add one in Settings, then try again.</string>
+    <string name="auth_google_error_not_configured">Google sign-in isn\'t set up for this version of the app yet. Please use another method.</string>
+    <string name="auth_error_network">No internet connection. Check your network and try again.</string>
+    <string name="auth_facebook_not_configured">Facebook sign-in isn\'t available yet. Please use another method.</string>
+    <string name="auth_phone_invalid_number">Enter a valid mobile number, e.g. 01712345678 or +8801712345678.</string>
+    <string name="auth_phone_too_many_requests">Too many attempts from this device. Please wait a while and try again.</string>
+    <string name="auth_phone_not_enabled">Phone sign-in isn\'t available right now. Please use another method.</string>
+    <string name="auth_phone_app_not_verified">We couldn\'t verify this copy of the app. Update the app from the Play Store and try again.</string>
+    <string name="auth_resend_code">Resend code</string>
 </resources>

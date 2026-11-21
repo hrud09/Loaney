@@ -631,4 +631,15 @@
     <string name="recovery_submitted_toast">অনুরোধ গৃহীত — আমরা আপনার কেস পর্যালোচনা করে যোগাযোগ করব।</string>
     <string name="recovery_signin_toast">উদ্ধারে সহায়তা চাইতে সাইন ইন করুন।</string>
     <string name="recovery_error_toast">অনুরোধ জমা দেওয়া যায়নি। আবার চেষ্টা করুন।</string>
+    <!-- Sign-in provider errors -->
+    <string name="auth_google_error_generic">Google সাইন-ইন কাজ করেনি। আবার চেষ্টা করুন বা অন্য পদ্ধতি ব্যবহার করুন।</string>
+    <string name="auth_google_error_no_account">এই ডিভাইসে কোনো Google অ্যাকাউন্ট নেই। সেটিংসে একটি যোগ করে আবার চেষ্টা করুন।</string>
+    <string name="auth_google_error_not_configured">অ্যাপের এই সংস্করণে Google সাইন-ইন এখনো চালু হয়নি। অন্য পদ্ধতি ব্যবহার করুন।</string>
+    <string name="auth_error_network">ইন্টারনেট সংযোগ নেই। নেটওয়ার্ক পরীক্ষা করে আবার চেষ্টা করুন।</string>
+    <string name="auth_facebook_not_configured">Facebook সাইন-ইন এখনো উপলব্ধ নয়। অন্য পদ্ধতি ব্যবহার করুন।</string>
+    <string name="auth_phone_invalid_number">সঠিক মোবাইল নম্বর দিন, যেমন 01712345678 বা +8801712345678।</string>
+    <string name="auth_phone_too_many_requests">এই ডিভাইস থেকে অনেকবার চেষ্টা করা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।</string>
+    <string name="auth_phone_not_enabled">ফোন সাইন-ইন এখন উপলব্ধ নয়। অন্য পদ্ধতি ব্যবহার করুন।</string>
+    <string name="auth_phone_app_not_verified">অ্যাপের এই কপিটি যাচাই করা যায়নি। Play Store থেকে অ্যাপটি আপডেট করে আবার চেষ্টা করুন।</string>
+    <string name="auth_resend_code">আবার কোড পাঠান</string>
 </resources>

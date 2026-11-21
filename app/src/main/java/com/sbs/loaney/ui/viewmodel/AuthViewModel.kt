@@ -5,6 +5,7 @@ import com.sbs.loaney.util.AnalyticsHelper
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.GoogleAuthProvider
 import com.sbs.loaney.data.auth.GoogleAuthClient
 import com.sbs.loaney.data.auth.GoogleSignInCancelled
@@ -140,49 +141,21 @@ class AuthViewModel @Inject constructor(
     }
 
     /**
-     * Signs in with Facebook through Firebase's OAuth flow, which hands off to a Custom Tab.
+     * Exchanges a Facebook access token (from the Facebook Login SDK) for a Firebase sign-in.
      * As with Google, one call covers both sign-up and sign-in.
+     *
+     * Firebase refuses Facebook through its generic OAuthProvider on Android (Facebook's terms
+     * require their SDK), so the screen runs the SDK login and hands the token over here.
      */
     fun signInWithFacebook(
-        activity: Activity,
+        accessToken: String,
         name: String? = null,
         currency: String? = null
     ) {
         _authState.value = AuthState.Loading
-
-        val provider = com.google.firebase.auth.OAuthProvider.newBuilder("facebook.com")
-            .setScopes(listOf("email", "public_profile"))
-            .build()
-
-        com.google.firebase.auth.FirebaseAuth.getInstance()
-            .startActivityForSignInWithProvider(activity, provider)
-            .addOnSuccessListener { authResult -> completeOAuth(authResult, name, currency) }
-            .addOnFailureListener { e -> reportOAuthFailure(e) }
-    }
-
-    /**
-     * Resumes a Facebook sign-in that was still in flight when the activity was destroyed —
-     * the Custom Tab hands control back to a fresh process. Safe to call on every screen entry.
-     */
-    fun checkPendingFacebookAuth(
-        name: String? = null,
-        currency: String? = null
-    ) {
-        val pending = com.google.firebase.auth.FirebaseAuth.getInstance().pendingAuthResult ?: return
-
-        _authState.value = AuthState.Loading
-        pending
-            .addOnSuccessListener { authResult -> completeOAuth(authResult, name, currency) }
-            .addOnFailureListener { e -> reportOAuthFailure(e) }
-    }
-
-    private fun completeOAuth(
-        authResult: com.google.firebase.auth.AuthResult,
-        name: String?,
-        currency: String?
-    ) {
         viewModelScope.launch {
-            authRepository.handlePostOAuthLogin(authResult, name, currency)
+            val credential = FacebookAuthProvider.getCredential(accessToken)
+            authRepository.signInWithCredential(credential, name, currency)
                 .onSuccess {
                     analyticsHelper.logEvent("login_complete")
                     _authState.value = AuthState.Success
@@ -193,14 +166,8 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    private fun reportOAuthFailure(e: Exception) {
-        // Closing the Custom Tab surfaces as a generic web exception rather than a cancel type,
-        // so match on the message. A user backing out should not be shown a red error.
-        val cancelled = e.message?.contains("cancel", ignoreCase = true) == true
-        _authState.value = if (cancelled) {
-            AuthState.Idle
-        } else {
-            AuthState.Error(e.message ?: "Facebook login failed")
-        }
+    /** Puts a provider failure that happened outside the view model (SDK callbacks) on screen. */
+    fun reportError(message: String) {
+        _authState.value = AuthState.Error(message)
     }
 }

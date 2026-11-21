@@ -139,6 +139,9 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
 
+    // Facebook Login (Firebase only accepts Facebook sign-in through the official SDK on Android)
+    implementation(libs.facebook.login)
+
     implementation(libs.google.api.client.android)
     implementation(libs.google.api.services.drive)
     implementation(libs.google.http.client.gson)
