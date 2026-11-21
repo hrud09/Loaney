@@ -24,10 +24,22 @@ import javax.inject.Inject
 class NotificationsViewModel @Inject constructor(
     private val userLinkRepository: UserLinkRepository,
     private val repository: ILoanRepository,
-    private val shareRepository: BankAccountShareRepository
+    private val shareRepository: BankAccountShareRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context
 ) : ViewModel() {
 
-    private val processedSyncNotificationIds = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    // Sync notifications stay in Firestore, so which ones were already applied must survive
+    // restarts. Otherwise every launch re-applies them, clobbering newer edits and re-adding
+    // payments the user deleted.
+    private val syncPrefs = context.getSharedPreferences("linked_loan_sync", android.content.Context.MODE_PRIVATE)
+    private val processedSyncNotificationIds: MutableSet<String> = java.util.Collections.synchronizedSet(
+        LinkedHashSet(syncPrefs.getString(KEY_PROCESSED_IDS, null)?.split(',')?.filter { it.isNotBlank() } ?: emptyList())
+    )
+
+    private fun persistProcessedIds() {
+        val ids = synchronized(processedSyncNotificationIds) { processedSyncNotificationIds.toList() }
+        syncPrefs.edit().putString(KEY_PROCESSED_IDS, ids.takeLast(MAX_REMEMBERED_IDS).joinToString(",")).apply()
+    }
 
     val notifications: StateFlow<List<LinkedLoanNotification>> = userLinkRepository
         .observeIncomingNotifications()
@@ -40,7 +52,8 @@ class NotificationsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             notifications.collect { list ->
-                for (notif in list) {
+                // The query is newest-first; apply oldest-first so the latest update wins.
+                for (notif in list.sortedBy { it.createdAt }) {
                     processIncomingSyncNotification(notif)
                 }
             }
@@ -55,7 +68,8 @@ class NotificationsViewModel @Inject constructor(
             return
         }
 
-        if (!processedSyncNotificationIds.add(notification.id)) return
+        if (notification.id.isBlank() || !processedSyncNotificationIds.add(notification.id)) return
+        persistProcessedIds()
 
         val localLoanIdStr = notification.recipientLoanId ?: return
         val localLoanId = localLoanIdStr.toLongOrNull() ?: return
@@ -372,5 +386,10 @@ class NotificationsViewModel @Inject constructor(
             
             userLinkRepository.deleteNotification(notification.id)
         }
+    }
+
+    private companion object {
+        const val KEY_PROCESSED_IDS = "processed_sync_notification_ids"
+        const val MAX_REMEMBERED_IDS = 1000
     }
 }

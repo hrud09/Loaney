@@ -173,9 +173,10 @@ fun MainScreen(
                 androidx.compose.material3.TextButton(onClick = {
                     showLogoutDialog = false
                     scope.launch { drawerState.close() }
-                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                    navController.navigate(Screen.Auth.createRoute()) {
-                        popUpTo(navController.graph.id) { inclusive = true }
+                    settingsViewModel.signOut {
+                        navController.navigate(Screen.Auth.createRoute()) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
                     }
                 }) { androidx.compose.material3.Text(stringResource(R.string.main_sign_out), color = androidx.compose.material3.MaterialTheme.colorScheme.error) }
             },

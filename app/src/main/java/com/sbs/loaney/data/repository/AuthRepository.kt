@@ -20,6 +20,16 @@ class AuthRepository @Inject constructor(
      */
     private suspend fun backupGuestDataBestEffort() {
         try {
+            // Never push data that belongs to a different account (e.g. user A signed out and
+            // user B signed up on the same phone) into this account's cloud.
+            val uid = auth.currentUser?.uid ?: return
+            val owner = settingsRepository.getLocalDataOwnerUid()
+            if (owner != null && owner != uid) {
+                android.util.Log.w("Auth", "Local data belongs to another account; skipping cloud upload")
+                return
+            }
+            settingsRepository.setLocalDataOwnerUid(uid)
+
             val backedUpLoans = kotlinx.coroutines.withTimeout(15000L) {
                 cloudBackupRepository.uploadLocalDataToCloud()
             }.getOrDefault(0)
@@ -150,7 +160,19 @@ class AuthRepository @Inject constructor(
         }
     }
  
-    fun signOut() {
+    /**
+     * Signs out of Firebase. Local data is kept (it is the only full copy), but it is tagged
+     * with the outgoing uid so it can't be uploaded into another account that signs up next.
+     */
+    suspend fun signOut() {
+        val uid = auth.currentUser?.uid
+        if (uid != null && settingsRepository.getLocalDataOwnerUid() == null) {
+            try {
+                settingsRepository.setLocalDataOwnerUid(uid)
+            } catch (e: Exception) {
+                android.util.Log.e("Auth", "Could not tag local data owner: ${e.message}")
+            }
+        }
         auth.signOut()
     }
  

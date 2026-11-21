@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
@@ -30,6 +31,8 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val REPLAY_HOME_TOUR = booleanPreferencesKey("replay_home_tour")
         val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
         val DRAFT_BANK_ACCOUNT = stringPreferencesKey("draft_bank_account")
+        /** Firebase uid whose data is in the local DB; null means guest (unclaimed) data. */
+        val LOCAL_DATA_OWNER_UID = stringPreferencesKey("local_data_owner_uid")
     }
 
     // --- Flows ---
@@ -248,6 +251,17 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             } else {
                 preferences[PreferencesKeys.DRAFT_BANK_ACCOUNT] = json
             }
+        }
+    }
+
+    suspend fun getLocalDataOwnerUid(): String? =
+        dataStore.data.map { it[PreferencesKeys.LOCAL_DATA_OWNER_UID] }
+            .catch { emit(null) }
+            .first()
+
+    suspend fun setLocalDataOwnerUid(uid: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LOCAL_DATA_OWNER_UID] = uid
         }
     }
 }

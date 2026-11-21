@@ -27,3 +27,8 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 .env.local
 .env*.local
+
+# Signing keys and credentials (never commit)
+/Keystore/
+*.jks
+*.keystore

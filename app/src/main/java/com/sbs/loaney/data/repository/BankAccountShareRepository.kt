@@ -256,9 +256,11 @@ class BankAccountShareRepository @Inject constructor(
     }
 
     fun observeIncomingShares(): Flow<List<BankAccountShare>> = callbackFlow {
+        // The only consumer mirrors this list into the local DB and deletes anything missing
+        // from it, so this flow must emit ONLY authoritative server state. Emitting an empty
+        // list for "not signed in", an error, or an offline cache would wipe shared accounts.
         val uid = auth.currentUser?.uid
         if (uid == null) {
-            trySend(emptyList())
             close()
             return@callbackFlow
         }
@@ -269,9 +271,10 @@ class BankAccountShareRepository @Inject constructor(
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    trySend(emptyList())
+                    Log.e(TAG, "Incoming shares listener failed: ${error.message}")
                     return@addSnapshotListener
                 }
+                if (snapshot == null || snapshot.metadata.isFromCache) return@addSnapshotListener
                 val items = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(BankAccountShare::class.java)?.copy(shareId = doc.id)
                 }?.filter { it.statusEnum != ShareStatus.REVOKED } ?: emptyList()

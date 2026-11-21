@@ -23,17 +23,27 @@ android {
         keystoreProperties.load(FileInputStream(keystorePropertiesFile))
     }
 
+    // Signing secrets come only from local.properties (or env vars on CI). There is no
+    // default password: without these values the release build is simply left unsigned.
+    fun signingProp(key: String, env: String): String? =
+        keystoreProperties.getProperty(key) ?: System.getenv(env)
+
+    val releaseStorePassword = signingProp("storePassword", "LOANEY_STORE_PASSWORD")
+    val releaseKeyAlias = signingProp("keyAlias", "LOANEY_KEY_ALIAS")
+    val releaseKeyPassword = signingProp("keyPassword", "LOANEY_KEY_PASSWORD")
+    val releaseStoreFile = (signingProp("storeFile", "LOANEY_STORE_FILE")?.let { file(it) }
+        ?: rootProject.file("Keystore/keystore")).takeIf { it.exists() }
+    val hasReleaseSigning = releaseStoreFile != null && releaseStorePassword != null &&
+        releaseKeyAlias != null && releaseKeyPassword != null
+
     signingConfigs {
         create("release") {
-            val storeFilePath = keystoreProperties.getProperty("storeFile")
-            storeFile = if (storeFilePath != null) {
-                file(storeFilePath)
-            } else {
-                rootProject.file("Keystore/keystore")
+            if (hasReleaseSigning) {
+                storeFile = releaseStoreFile
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
             }
-            storePassword = keystoreProperties.getProperty("storePassword") ?: "loaney"
-            keyAlias = keystoreProperties.getProperty("keyAlias") ?: "loaney"
-            keyPassword = keystoreProperties.getProperty("keyPassword") ?: "loaney"
         }
     }
 
@@ -55,7 +65,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (signingConfigs.getByName("release").storeFile != null) {
+            if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }

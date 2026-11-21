@@ -19,7 +19,7 @@ import com.sbs.loaney.data.local.dao.DepositDao
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class, BankAccountEntity::class, EmiEntity::class, DepositEntity::class], version = 13, exportSchema = false)
+@Database(entities = [LoanEntity::class, PaymentEntity::class, LoanItemEntity::class, BankAccountEntity::class, EmiEntity::class, DepositEntity::class], version = 14, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun loanDao(): LoanDao
@@ -137,6 +137,38 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * The linking columns were added to LoanEntity without a version bump, so some
+         * dev installs at version 13 may already have them. Only add what's missing.
+         */
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val existing = mutableSetOf<String>()
+                db.query("PRAGMA table_info(`loans`)").use { cursor ->
+                    val nameIndex = cursor.getColumnIndex("name")
+                    while (cursor.moveToNext()) existing.add(cursor.getString(nameIndex))
+                }
+                listOf("linkedOwnerUid", "linkedLoanId", "pendingUpdateJson")
+                    .filterNot { it in existing }
+                    .forEach { db.execSQL("ALTER TABLE loans ADD COLUMN `$it` TEXT DEFAULT NULL") }
+            }
+        }
+
+        /** Must match `version` in @Database above; a restored backup must not be newer. */
+        const val SCHEMA_VERSION = 14
+
+        /**
+         * Closes the shared instance and forgets it, so the database files can be replaced
+         * (Drive restore). Callers must restart the process afterwards: Hilt still holds
+         * DAOs bound to the closed instance.
+         */
+        fun closeForReplacement() {
+            synchronized(this) {
+                INSTANCE?.close()
+                INSTANCE = null
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -154,7 +186,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_9_10,
                     MIGRATION_10_11,
                     MIGRATION_11_12,
-                    MIGRATION_12_13
+                    MIGRATION_12_13,
+                    MIGRATION_13_14
                 )
                 // No fallbackToDestructiveMigration: this database is the source of truth
                 // for the user's loans and savings, and there is no cloud backup to restore

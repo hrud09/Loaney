@@ -31,6 +31,7 @@ enum class BackupState {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
+    private val authRepository: com.sbs.loaney.data.repository.AuthRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
@@ -181,10 +182,20 @@ class SettingsViewModel @Inject constructor(
             result.onSuccess {
                 _backupState.value = BackupState.SUCCESS
                 onSuccess()
+                // The database file was swapped underneath Room; relaunch so every screen,
+                // the widget and Hilt's DAOs reopen the restored data.
+                com.sbs.loaney.util.GoogleDriveBackupManager.restartApp(context)
             }.onFailure { error ->
                 _backupState.value = BackupState.ERROR
                 _backupErrorMessage.value = error.message ?: "Restore failed"
             }
+        }
+    }
+
+    fun signOut(onSignedOut: () -> Unit) {
+        viewModelScope.launch {
+            authRepository.signOut()
+            onSignedOut()
         }
     }
 
